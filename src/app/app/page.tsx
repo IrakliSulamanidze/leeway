@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/session";
 import { MAX_ITEM_LENGTH } from "@/lib/config";
+import { CalendarHome } from "@/components/calendar-home";
 import { addItem } from "./actions";
 
 export const metadata = { title: "Your courses" };
@@ -50,6 +51,7 @@ export default async function AppHome() {
           </li>
         ))}
       </ul>
+      <CalendarHome />
     </main>
   );
 }
