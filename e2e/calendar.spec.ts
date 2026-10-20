@@ -114,6 +114,37 @@ test("today", async ({ page }) => {
   );
 });
 
+test("schedule: tomorrow on home, plan a skip in one tap", async ({ page }) => {
+  const d = new Date(`${madridToday()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  const tomorrow = d.toISOString().slice(0, 10);
+  const user = await seedCalendarUser({
+    courses: ["Microeconomics"],
+    classes: [
+      { key: "m", course: "Microeconomics", day: tomorrow, hourUtc: 9 },
+    ],
+  });
+  await logIn(page, user);
+  const row = page
+    .getByRole("region", { name: "Tomorrow" })
+    .getByTestId("schedule-class");
+  await expect(row).toHaveCount(1);
+  await expect(row).toContainText("If skipped: 5 left");
+  await row
+    .getByRole("button", { name: /Plan to skip Microeconomics/ })
+    .click();
+  await expect(row).toContainText("Planned skip");
+  await expect(page.getByTestId("core-item")).toHaveCount(1);
+
+  await page.getByRole("link", { name: "Whole week" }).click();
+  await expect(page).toHaveURL(/\/app\/schedule$/);
+  await expect(page.getByTestId("schedule-class").first()).toBeVisible();
+  await page
+    .getByRole("button", { name: /Cancel the skip of Microeconomics/ })
+    .click();
+  await expect(page.getByText("If skipped: 5 left")).toBeVisible();
+});
+
 test("typing in core-input during a sync keeps the text", async ({ page }) => {
   const user = await seedCalendarUser({
     courses: ["Microeconomics"],
@@ -166,7 +197,7 @@ test.describe("phone and accessibility", () => {
     hasTouch: true,
   });
 
-  for (const path of ["/app/calendar", "/app/plan"]) {
+  for (const path of ["/app/calendar", "/app/plan", "/app/schedule"]) {
     test(`${path} at 375px with axe`, async ({ page }) => {
       const user = await seedCalendarUser({
         courses: ["Statistics II"],

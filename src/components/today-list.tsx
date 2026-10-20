@@ -5,6 +5,7 @@ import {
 } from "@/app/app/calendar/actions";
 import {
   dedupeClasses,
+  isPlanned,
   isTestDay,
   type WeekAssessment,
   madridDate,
@@ -92,7 +93,7 @@ function ClassRow({
           >
             <span
               aria-hidden="true"
-              className={`relative h-7 w-12 rounded-full ${on ? "bg-primary" : "bg-[var(--switch-off)]"}`}
+              className={`relative h-7 w-12 rounded-full ${on ? "bg-primary" : "bg-used"}`}
             >
               <span
                 className={`absolute top-0.5 h-6 w-6 rounded-full bg-surface ${on ? "left-[22px]" : "left-0.5"}`}
@@ -129,7 +130,6 @@ export function TodayList({
   const todays = all.filter(
     (c) => madridDate(c.starts_at) === today && c.kind !== "deadline",
   );
-  const linked = new Set(skips.map((s) => s.class_session_id));
 
   const isSunday = new Date(`${today}T12:00:00Z`).getUTCDay() === 0;
   const week = weekRange(today);
@@ -156,7 +156,7 @@ export function TodayList({
                 key={c.id}
                 c={c}
                 name={names.get(c.course_id)!}
-                on={linked.has(c.id)}
+                on={isPlanned(c, skips)}
                 when={weekday(c.starts_at)}
                 testId="weekly-class"
               />
@@ -184,7 +184,7 @@ export function TodayList({
                 key={c.id}
                 c={c}
                 name={names.get(c.course_id)!}
-                on={linked.has(c.id)}
+                on={isPlanned(c, skips)}
                 when={time(c.starts_at)}
                 testId="today-class"
                 testDay={isTestDay(c, assessments)}

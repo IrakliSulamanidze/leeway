@@ -3,9 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { RemoveCourse, SkipButton } from "@/components/course-actions";
 import { courseMeta, courseViews, PACE_COLOR } from "@/components/course-list";
 import { CourseNumbers } from "@/components/course-numbers";
-import { Hearts } from "@/components/hearts";
+import { HeartsRow } from "@/components/hearts";
 import { skipMeta } from "@/components/recent-skips";
-import { TestMarks } from "@/components/test-marks";
+import { dateLabel, MarkTestForm } from "@/components/test-marks";
 import { APP_NAME } from "@/lib/config";
 import { madridToday } from "@/lib/rules/dates";
 import {
@@ -68,6 +68,33 @@ export default async function CoursePage({
       : Number(course.participation_weight),
   );
 
+  const numbers = (
+    <section className="grid gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
+      <h2 className="m-0 text-base font-semibold">Sessions</h2>
+      {c.missedBefore === 0 && (
+        <p className="m-0 text-sm text-muted">Counting from today</p>
+      )}
+      <CourseNumbers
+        id={c.id}
+        name={c.name}
+        sessions={c.sessions}
+        missedBefore={c.missedBefore}
+      />
+      {c.estimated && syllabusReadEnabled() && (
+        <p className="m-0 text-sm text-muted">
+          Not sure?{" "}
+          <Link
+            href={`/app/courses/${c.id}/syllabus`}
+            className="inline-flex min-h-11 items-center font-semibold text-ink underline"
+          >
+            Import the syllabus
+          </Link>{" "}
+          and {APP_NAME} reads it for you.
+        </p>
+      )}
+    </section>
+  );
+
   return (
     <main className="mx-auto grid w-full max-w-2xl content-start gap-5 px-5 py-5">
       <Link
@@ -92,35 +119,9 @@ export default async function CoursePage({
           <small className="text-[12.5px] text-muted">of {c.lives} left</small>
         </div>
       </div>
-      <Hearts lives={c.lives} left={c.left} planned={c.planned} />
+      <HeartsRow lives={c.lives} left={c.left} planned={c.planned} />
 
-      <section className="grid gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
-        <h2 className="m-0 text-base font-semibold">Course numbers</h2>
-        {c.missedBefore === 0 && (
-          <p className="m-0 text-sm text-muted">Counting from today</p>
-        )}
-        <CourseNumbers
-          id={c.id}
-          name={c.name}
-          sessions={c.sessions}
-          missedBefore={c.missedBefore}
-        />
-        {c.estimated && syllabusReadEnabled() && (
-          <p className="m-0 text-sm text-muted">
-            Not sure?{" "}
-            <Link
-              href={`/app/courses/${c.id}/syllabus`}
-              className="inline-flex min-h-11 items-center font-semibold text-ink underline"
-            >
-              Import the syllabus
-            </Link>{" "}
-            and {APP_NAME} reads it for you.
-          </p>
-        )}
-      </section>
-
-      <TestMarks courseId={c.id} />
-
+      {numbers}
       <section className="grid gap-3">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="m-0 text-xl font-bold tracking-tight">Skips</h2>
@@ -159,57 +160,65 @@ export default async function CoursePage({
         )}
       </section>
 
-      {(testRows.length > 0 || syllabusReadEnabled()) && (
-        <section className="grid gap-3">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 className="m-0 text-xl font-bold tracking-tight">Tests</h2>
-            {next && (
-              <span data-testid="test-countdown" className="text-sm">
-                {next}
-              </span>
-            )}
-          </div>
-          {testRows.length > 0 && (
-            <ul className="overflow-hidden rounded-xl border border-line bg-surface">
-              {testRows.map((t) => (
-                <li
-                  key={`${t.session_number}-${t.title}`}
-                  data-testid="course-test"
-                  className="border-t border-line px-4 py-3 first:border-t-0"
-                >
-                  <b>
-                    {t.session_number
-                      ? `Session ${t.session_number}`
-                      : t.on_date}
-                  </b>{" "}
-                  · {t.title}
-                  {t.weight != null && ` · ${t.weight}%`}
-                  {t.session_number != null &&
-                    isExamPrep(t.session_number - 1, testRows) && (
-                      <span className="block text-[13.5px] text-muted">
-                        Session {t.session_number - 1}: {EXAM_PREP}
-                      </span>
-                    )}
-                </li>
-              ))}
-            </ul>
+      <section aria-labelledby="tests-h" className="grid gap-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 id="tests-h" className="m-0 text-xl font-bold tracking-tight">
+            Tests
+          </h2>
+          {next && (
+            <span data-testid="test-countdown" className="text-sm">
+              {next}
+            </span>
           )}
-          {participation && (
-            <p className="m-0 text-sm text-muted">{participation}</p>
-          )}
-          {syllabusReadEnabled() && (
-            <Link
-              href={`/app/courses/${c.id}/syllabus`}
-              data-testid="syllabus-import"
-              className="flex min-h-11 items-center justify-center rounded-xl border border-line-input bg-surface px-4 font-semibold"
-            >
-              {testRows.length
-                ? "Import a newer syllabus"
-                : "Import a syllabus"}
-            </Link>
-          )}
-        </section>
-      )}
+        </div>
+        {testRows.length > 0 ? (
+          <ul className="overflow-hidden rounded-xl border border-line bg-surface">
+            {testRows.map((t) => (
+              <li
+                key={`${t.session_number}-${t.on_date}-${t.title}`}
+                data-testid="course-test"
+                className="border-t border-line px-4 py-3 first:border-t-0"
+              >
+                <b>
+                  {t.session_number
+                    ? `Session ${t.session_number}`
+                    : t.on_date
+                      ? dateLabel(t.on_date)
+                      : ""}
+                </b>{" "}
+                · {t.title}
+                {t.weight != null && ` · ${t.weight}%`}
+                {t.session_number != null &&
+                  isExamPrep(t.session_number - 1, testRows) && (
+                    <span className="block text-[13.5px] text-muted">
+                      Session {t.session_number - 1}: {EXAM_PREP}
+                    </span>
+                  )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="m-0 text-sm text-muted">
+            No tests yet. Mark your test days so Plan never suggests skipping
+            one.
+          </p>
+        )}
+        {participation && (
+          <p className="m-0 text-sm text-muted">{participation}</p>
+        )}
+        <MarkTestForm courseId={c.id} />
+        {syllabusReadEnabled() && (
+          <Link
+            href={`/app/courses/${c.id}/syllabus`}
+            data-testid="syllabus-import"
+            className="flex min-h-11 items-center justify-center rounded-xl border border-line-input bg-surface px-4 font-semibold"
+          >
+            {testRows.length
+              ? "Import a newer syllabus"
+              : "Import the syllabus to fill these in"}
+          </Link>
+        )}
+      </section>
 
       <RemoveCourse id={c.id} name={c.name} />
     </main>

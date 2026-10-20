@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { addDays } from "@/lib/rules/dates";
+import { ScheduleDay } from "./schedule-day";
 import {
   loadFeeds,
   loadNotices,
@@ -18,9 +21,11 @@ export async function CalendarHome() {
   const now = requestTime();
   const today = madridDate(new Date(now).toISOString());
   const supabase = await createClient();
-  const [notices, week, checks] = await Promise.all([
+  const tomorrow = addDays(today, 1);
+  const [notices, week, soon, checks] = await Promise.all([
     loadNotices(),
     loadWeekData(weekRange(today)),
+    loadWeekData({ from: today, to: tomorrow }),
     supabase
       .from("weekly_checks")
       .select("week_start")
@@ -37,6 +42,25 @@ export async function CalendarHome() {
         assessments={week.assessments}
         checkedThisWeek={(checks.data ?? []).length > 0}
       />
+      <section aria-labelledby="tomorrow-h" className="grid gap-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 id="tomorrow-h" className="m-0 text-lg font-bold">
+            Tomorrow
+          </h2>
+          <Link
+            href="/app/schedule"
+            className="inline-flex min-h-11 items-center text-[15px] font-semibold underline"
+          >
+            Whole week
+          </Link>
+        </div>
+        <ScheduleDay
+          day={tomorrow}
+          today={today}
+          data={soon}
+          empty="No classes tomorrow."
+        />
+      </section>
       <SyncStatus feeds={feeds} now={now} />
     </>
   );

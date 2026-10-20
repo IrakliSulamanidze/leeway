@@ -10,9 +10,14 @@ export const TABS = [
     icon: "M4 11 12 4l8 7v9h-5v-6H9v6H4z",
   },
   {
+    href: "/app/schedule",
+    label: "Schedule",
+    icon: "M5 5h14v15H5zM5 9h14M9 3v4M15 3v4",
+  },
+  {
     href: "/app/plan",
     label: "Plan",
-    icon: "M5 5h14v15H5zM5 9h14M9 3v4M15 3v4",
+    icon: "M6 21V4h11l-2.5 4 2.5 4H6",
   },
   {
     href: "/app/settings",
@@ -27,7 +32,7 @@ export function BottomTabs() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-10 grid lg:hidden grid-cols-3 border-t border-line bg-bg/95 px-2 pt-1 pb-[max(8px,env(safe-area-inset-bottom))]"
+      className="fixed inset-x-0 bottom-0 z-10 grid lg:hidden grid-cols-4 border-t border-line bg-bg/95 px-2 pt-1 pb-[max(8px,env(safe-area-inset-bottom))]"
     >
       {TABS.map((t) => {
         const on = path === t.href;
