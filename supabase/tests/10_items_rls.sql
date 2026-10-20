@@ -1,15 +1,7 @@
--- RLS guarantees: every public table has RLS on, users see only their own
--- items, and anonymous visitors see nothing.
+-- Items RLS: users see only their own items, and anonymous visitors see nothing.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(5);
-
-select is_empty(
-  $$ select c.relname from pg_class c
-     join pg_namespace n on n.oid = c.relnamespace
-     where n.nspname = 'public' and c.relkind in ('r', 'p') and not c.relrowsecurity $$,
-  'every public table has row level security on'
-);
+select plan(4);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),

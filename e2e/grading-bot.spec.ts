@@ -135,9 +135,13 @@ test("6. the public REST API returns no rows without a session", async ({
     .join("\n");
   const tables = [
     ...new Set(
-      [...sql.matchAll(/create table (?:if not exists )?public\.(\w+)/gi)].map(
-        (m) => m[1],
-      ),
+      [
+        ...sql.matchAll(
+          /create\s+table\s+(?:if\s+not\s+exists\s+)?(?:"?(\w+)"?\.)?"?(\w+)"?/gi,
+        ),
+      ]
+        .filter((m) => !m[1] || m[1].toLowerCase() === "public")
+        .map((m) => m[2]),
     ),
   ];
   expect(tables.length).toBeGreaterThan(0);
