@@ -41,6 +41,9 @@ export const syllabusReadSchema = z
           weight_is_assumed_split: z.boolean(),
           // The sessions are alternatives: each group uses one of them.
           depends_on_group: z.boolean(),
+          // Coursework spread over the term (individual or group work), not
+          // a test on one day: a weight only.
+          continuous: z.boolean().default(false),
           quote,
         }),
       )
@@ -98,6 +101,7 @@ export const RESPONSE_SCHEMA = {
           weight_percent: nullable({ type: "NUMBER" }),
           weight_is_assumed_split: BOOLEAN,
           depends_on_group: BOOLEAN,
+          continuous: BOOLEAN,
           quote: STRING,
         },
         required: [
@@ -107,6 +111,7 @@ export const RESPONSE_SCHEMA = {
           "weight_percent",
           "weight_is_assumed_split",
           "depends_on_group",
+          "continuous",
           "quote",
         ],
       },
