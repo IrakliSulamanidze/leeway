@@ -23,3 +23,32 @@ An automated bot grades this app on its public Vercel URL, acting like a strange
 - Row Level Security ON for every table, with policies based on `auth.uid()`. Nobody can read anything without logging in.
 - Only the Supabase URL and the publishable (anon) key may reach the browser. Never put the secret/service_role key or any AI API key in the frontend or in GitHub.
 - Keep keys in `.env.local` (listed in `.gitignore`) and in Vercel environment variables.
+
+# This app
+
+Leeway, built from IrakliSulamanidze/app-template. `docs/spec.md` is the source
+of truth for what to build; `docs/process.md` for how it is built and checked.
+The app name and pitch live in one place: `src/lib/config.ts`.
+
+## Stack
+
+Next.js + TypeScript, Supabase (email + password auth, Postgres with RLS),
+deployed on Vercel. No payments, no waitlist.
+
+## Commands
+
+- npm run dev local server
+- npm run check format, typecheck, lint, unit, contract and hygiene checks; prints at most 40 lines
+- npm run test:e2e Playwright (grading-bot sim needs local Supabase: `supabase start`)
+- npm run deploy production deploy (always ask first)
+
+## Rules
+
+- Secrets live in .env.local, never in git. .env.example lists names only.
+- Schema changes only as new files from `supabase migration new <name>`; never edit an applied migration.
+- Don't add dependencies without asking. Reuse the existing components.
+- Commit after each working step (Conventional Commits).
+
+## Next.js version
+
+@AGENTS.md

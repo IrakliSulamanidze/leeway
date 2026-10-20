@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Colours and sizes from docs/tokens.css (design sign-off 2026-10-20). */
+:root {
+  --bg: #f6f6f4;
+  --surface: #ffffff;
+  --line: #e4e4e0;
+  --line-input: #cfcfca;
+  --text: #16161a;
+  --muted: #5e5e66;
+  --primary: #16161a;
+  --on-primary: #ffffff;
+  --danger: #c21f3a;
+  --font:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-line-input: var(--line-input);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-danger: var(--danger);
+  --font-sans: var(--font);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+}
