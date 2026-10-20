@@ -279,7 +279,8 @@ function userFeedState(db: Db, feedId: string): FeedState {
         await db.rpc("finish_feed_sync", {
           p_feed: feedId,
           p_status: status,
-          p_error: error,
+          // Generated types mark every arg non-null; the function takes null for "ok".
+          p_error: error as string,
         }),
         "finish",
       );
