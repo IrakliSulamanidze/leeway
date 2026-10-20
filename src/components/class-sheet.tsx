@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { markTest, toggleSkipped } from "@/app/app/calendar/actions";
+import {
+  markTest,
+  toggleSkipped,
+  unmarkTest,
+} from "@/app/app/calendar/actions";
 import { ink } from "@/lib/course-color";
 import { clock } from "@/lib/rules/grid";
 import {
   classCost,
   isPlanned,
   isTestDay,
+  madridDate,
   skippable,
   type WeekAssessment,
   type WeekClass,
@@ -63,6 +68,13 @@ export function ClassSheet({
   const started = cls.starts_at <= now;
   const taken = isPlanned(cls, skips);
   const test = isTestDay(cls, assessments);
+  const day = madridDate(cls.starts_at);
+  // Marked on this class or its date, so "Not a test" can take it back.
+  const marked = assessments.some(
+    (a) =>
+      a.class_session_id === cls.id ||
+      (a.course_id === cls.course_id && a.on_date === day),
+  );
   const canSkip = skippable(cls);
   const cost = classCost(cls);
   const after = course.left - cost;
@@ -113,9 +125,21 @@ export function ClassSheet({
               : "Exams aren't skippable classes."}
           </p>
         ) : test ? (
-          <p className="m-0 font-semibold">
-            Test day. Skip a different class instead.
-          </p>
+          <div className="grid gap-2">
+            <p className="m-0 font-semibold">
+              Test day. Skip a different class instead.
+            </p>
+            {marked && (
+              <form action={unmarkTest}>
+                <input type="hidden" name="course" value={cls.course_id} />
+                <input type="hidden" name="class" value={cls.id} />
+                <input type="hidden" name="date" value={day} />
+                <button className="min-h-11 rounded-xl border border-line-input px-4 font-semibold">
+                  Not a test
+                </button>
+              </form>
+            )}
+          </div>
         ) : taken ? (
           <p className="m-0 text-[17px]">
             {started ? "Marked as missed." : "You're skipping this one."}{" "}
