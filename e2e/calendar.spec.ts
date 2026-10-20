@@ -207,8 +207,11 @@ test("add all: one tap adds every course, sections share one", async ({
   await page.goto("/app/calendar");
   await page.getByRole("button", { name: "Add all 3" }).click();
   await expect(page.getByText(/We found/)).toHaveCount(0);
+  // The new courses have no classes yet, so the schedule syncs right away.
+  const synced = page.waitForRequest("**/api/calendar/sync");
   await page.getByRole("link", { name: "See your week" }).click();
   await expect(page).toHaveURL(/\/app\/schedule$/);
+  await synced;
   await page.goto("/app");
   await expect(page.getByRole("link", { name: /Statistics II/ })).toHaveCount(
     1,

@@ -23,6 +23,26 @@ export async function loadFeeds() {
   return data ?? [];
 }
 
+// True when a course was linked to the calendar but has no classes yet: the
+// sync that stores them hasn't run since (it is throttled to one per 30
+// seconds, and the client retry dies if the student leaves the page).
+export async function hasUnsyncedCourses(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data: maps } = await supabase
+    .from("feed_course_map")
+    .select("course_id")
+    .eq("status", "mapped")
+    .not("course_id", "is", null);
+  const ids = [...new Set((maps ?? []).map((m) => m.course_id as string))];
+  if (ids.length === 0) return false;
+  const { data: rows } = await supabase
+    .from("class_sessions")
+    .select("course_id")
+    .in("course_id", ids);
+  const withClasses = new Set((rows ?? []).map((r) => r.course_id));
+  return ids.some((id) => !withClasses.has(id));
+}
+
 // Request time, read once on the server and passed down as a prop.
 export function requestTime(): number {
   return Date.now();
