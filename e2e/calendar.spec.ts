@@ -168,6 +168,14 @@ test("calendar: tap a class tomorrow, skip it, then undo", async ({ page }) => {
   await sheet.getByRole("button", { name: "Undo skip" }).click();
   await expect(sheet.getByTestId("sheet-cost")).toBeVisible();
   await expect(block).not.toContainText("Skipping");
+
+  // Marking a midterm makes it a test day: no skip offered.
+  await sheet.getByRole("button", { name: "Midterm" }).click();
+  await expect(sheet).toContainText("Test day.");
+  await expect(
+    sheet.getByRole("button", { name: "Skip this class" }),
+  ).toHaveCount(0);
+  await expect(block).toContainText("Test");
 });
 
 test("typing in core-input during a sync keeps the text", async ({ page }) => {

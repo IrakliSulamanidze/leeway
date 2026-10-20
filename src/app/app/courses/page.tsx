@@ -4,6 +4,7 @@ import { CourseList, courseViews } from "@/components/course-list";
 import { GetStarted } from "@/components/get-started";
 import { Notices } from "@/components/notices";
 import { RiskLine } from "@/components/risk-line";
+import { SyllabusImport } from "@/components/syllabus-import";
 import { TERM } from "@/lib/config";
 import { courseColors } from "@/lib/course-color";
 import {
@@ -89,9 +90,16 @@ export default async function CoursesPage() {
           <CourseList courses={past} linked colors={colors} />
         </details>
       )}
+      {syllabusReadEnabled() && (
+        <SyllabusImport
+          courses={[...current]
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(({ id, name }) => ({ id, name }))}
+        />
+      )}
       <GetStarted
         calendar={calendar !== null}
-        syllabus={syllabusReadEnabled()}
+        syllabus={false}
         courses={views.length}
         guessed={current
           .filter((c) => c.estimated)

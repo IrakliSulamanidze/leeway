@@ -13,6 +13,17 @@ export function MarkTestForm({ courseId }: { courseId: string }) {
   return (
     <form action={markTest} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="course" value={courseId} />
+      <label className="grid gap-1 text-sm">
+        Type
+        <select
+          name="title"
+          className="min-h-11 rounded-xl border border-line-input bg-surface px-2 text-[17px]"
+        >
+          <option>Quiz</option>
+          <option>Midterm</option>
+          <option>Final</option>
+        </select>
+      </label>
       <label className="grid flex-1 gap-1 text-sm">
         Test day
         <input

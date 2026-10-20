@@ -173,12 +173,25 @@ export function ClassSheet({
 
         <div className="flex items-center justify-between gap-3">
           {canSkip && !test ? (
-            <form action={markTest}>
+            <form
+              action={markTest}
+              role="group"
+              aria-label="Mark a test in this class"
+              className="flex flex-wrap items-center gap-1.5"
+            >
               <input type="hidden" name="course" value={cls.course_id} />
               <input type="hidden" name="class" value={cls.id} />
-              <button className="min-h-11 text-[15px] text-muted underline">
-                Mark as test day
-              </button>
+              <span className="text-sm text-muted">Test?</span>
+              {["Quiz", "Midterm", "Final"].map((t) => (
+                <button
+                  key={t}
+                  name="title"
+                  value={t}
+                  className="min-h-11 rounded-full border border-line-input px-3 text-[15px]"
+                >
+                  {t}
+                </button>
+              ))}
             </form>
           ) : (
             <span />

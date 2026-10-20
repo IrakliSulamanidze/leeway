@@ -208,10 +208,15 @@ export default async function CalendarPage({
 
   return (
     <main className="mx-auto grid w-full max-w-6xl flex-1 content-start gap-4 px-4 py-5 lg:px-8">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <h1 className="m-0 text-[26px] font-bold">
           {fmt(day, { month: "long", year: "numeric" })}
         </h1>
+        <Link href="/app/plan" className={pill}>
+          Plan a trip
+        </Link>
+      </div>
+      <div className="-mt-1 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <Link
             href={href(addDays(day, -7), view)}
@@ -246,9 +251,6 @@ export default async function CalendarPage({
               Week
             </Link>
           </span>
-          <Link href="/app/plan" className={`${pill} hidden lg:flex`}>
-            Plan a trip
-          </Link>
         </div>
       </div>
 
@@ -377,12 +379,6 @@ export default async function CalendarPage({
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <SyncStatus feeds={feeds} now={requestTime()} unsynced={unsynced} />
-        <Link
-          href="/app/plan"
-          className="flex min-h-11 items-center text-[15px] font-semibold underline lg:hidden"
-        >
-          Plan a trip
-        </Link>
       </div>
 
       {sheetClass && (
