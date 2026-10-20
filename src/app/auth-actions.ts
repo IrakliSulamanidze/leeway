@@ -29,6 +29,8 @@ export async function signUp(
     };
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error?.code === "user_already_exists")
+    return { message: "You already have an account. Log in instead." };
   if (error) return { message: error.message };
   // With email confirmation off (the grading contract), sign-up returns a session.
   if (!data.session) return { message: "Account created. Log in to continue." };
