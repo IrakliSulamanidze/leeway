@@ -126,7 +126,7 @@ export function SkipForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-2.5" noValidate>
+    <form method="post" onSubmit={onSubmit} className="grid gap-2.5" noValidate>
       <label htmlFor="core-input" className="text-base font-semibold">
         Which class are you skipping?
       </label>

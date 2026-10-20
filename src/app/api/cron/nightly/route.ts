@@ -5,7 +5,7 @@ import { runNightly } from "@/lib/server/nightly";
 
 // Vercel Cron calls this at 19:00 and 20:00 UTC; the job runs only at 21:xx Madrid.
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function authorized(header: string | null, secret: string): boolean {
   const got = Buffer.from(header ?? "");
