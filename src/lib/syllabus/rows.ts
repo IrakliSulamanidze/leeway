@@ -34,12 +34,47 @@ export type Review = {
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+const TEST_SESSION = new Set(["test", "exam", "presentation"]);
+const words = (s: string) =>
+  s
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 4);
+
+// Test, exam or presentation sessions whose title shares a word with the
+// assessment's name ("Final exam" -> "Session 30: FINAL EXAM").
+function scheduledFor(name: string, sessions: SyllabusRead["sessions"]) {
+  const want = new Set(words(name));
+  return sessions
+    .filter(
+      (s) =>
+        TEST_SESSION.has(s.kind) && words(s.title).some((w) => want.has(w)),
+    )
+    .map((s) => s.number);
+}
+
 export function reviewFromRead(read: SyllabusRead): Review {
   const tests: TestLine[] = [];
   let participation: number | null = null;
   for (const a of read.assessments) {
-    if (a.kind === "participation" || a.sessions.length === 0) {
-      if (a.kind === "participation") participation = a.weight_percent;
+    if (a.kind === "participation") {
+      participation = a.weight_percent;
+      continue;
+    }
+    // Many syllabi weigh the tests in one table and date them elsewhere, so
+    // the read can come back with no session. Find it in the schedule by
+    // name; failing that, keep the test without a date rather than drop it.
+    if (a.sessions.length === 0) {
+      const found = scheduledFor(a.name, read.sessions);
+      tests.push({
+        key: `${a.name}|none`,
+        title: a.name.slice(0, 200),
+        session: found.length === 1 ? found[0] : null,
+        options: found.length > 1 ? found : [],
+        weight: a.weight_percent,
+        assumed: false,
+        quote: a.quote,
+      });
       continue;
     }
     if (a.depends_on_group) {
@@ -100,7 +135,8 @@ export const confirmSchema = z.object({
   tests: z
     .array(
       z.object({
-        session_number: z.number().int().min(1).max(200),
+        // Null when the syllabus never says which session the test is in.
+        session_number: z.number().int().min(1).max(200).nullable(),
         title: z.string().trim().min(1).max(200),
         weight: z.number().min(0).max(100).nullable(),
         weight_assumed: z.boolean(),
@@ -134,7 +170,7 @@ const testText = (t: SavedTest) =>
 const topicText = (t: SavedTopic) =>
   t.pre_reading ? `${t.topic} · ${t.pre_reading}` : t.topic;
 
-function diffBy<T extends { session_number: number }>(
+function diffBy<T extends { session_number: number | null }>(
   what: Change["what"],
   before: T[],
   after: T[],
@@ -143,8 +179,11 @@ function diffBy<T extends { session_number: number }>(
   // A session can hold two lines (a presentation and the final), so join them.
   const bySession = (rows: T[]) => {
     const m = new Map<number, string[]>();
-    for (const r of rows)
-      m.set(r.session_number, [...(m.get(r.session_number) ?? []), text(r)]);
+    // Session 0 holds the tests the syllabus gives no session for.
+    for (const r of rows) {
+      const n = r.session_number ?? 0;
+      m.set(n, [...(m.get(n) ?? []), text(r)]);
+    }
     return new Map([...m].map(([k, v]) => [k, v.sort().join(" + ")]));
   };
   const old = bySession(before);

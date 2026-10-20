@@ -180,11 +180,12 @@ export default async function CoursePage({
                 className="border-t border-line px-4 py-3 first:border-t-0"
               >
                 <b>
-                  {t.session_number
-                    ? `Session ${t.session_number}`
-                    : t.on_date
-                      ? dateLabel(t.on_date)
-                      : ""}
+                  {[
+                    t.on_date && dateLabel(t.on_date),
+                    t.session_number && `Session ${t.session_number}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Date not set"}
                 </b>{" "}
                 · {t.title}
                 {t.weight != null && ` · ${t.weight}%`}

@@ -26,6 +26,54 @@ describe("reviewFromRead", () => {
     );
   });
 
+  it("keeps a test whose session the read left out", () => {
+    const read = {
+      ...SYLLABUS_READ,
+      assessments: [
+        {
+          name: "Final exam",
+          kind: "exam" as const,
+          sessions: [],
+          weight_percent: 40,
+          weight_is_assumed_split: false,
+          depends_on_group: false,
+          quote: "Final exam 40%",
+        },
+        {
+          name: "Case write-up",
+          kind: "other" as const,
+          sessions: [],
+          weight_percent: 15,
+          weight_is_assumed_split: false,
+          depends_on_group: false,
+          quote: "Case write-up 15%",
+        },
+      ],
+      sessions: [
+        ...SYLLABUS_READ.sessions.filter((s) => s.number !== 12),
+        {
+          number: 12,
+          title: "FINAL EXAM",
+          kind: "exam" as const,
+          pre_reading: null,
+          inferred: false,
+        },
+      ],
+    };
+    const r = reviewFromRead(read);
+    // Matched by name to the session the schedule marks as the exam.
+    expect(r.tests.find((t) => t.title === "Final exam")).toMatchObject({
+      session: 12,
+      weight: 40,
+    });
+    // No session anywhere: still listed, saved without a date.
+    expect(r.tests.find((t) => t.title === "Case write-up")).toMatchObject({
+      session: null,
+      options: [],
+      weight: 15,
+    });
+  });
+
   it("keeps the retake rule as not stated", () => {
     expect(review.retake).toEqual({ general: null, statedHere: false });
   });

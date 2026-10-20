@@ -47,9 +47,10 @@ export async function confirmSyllabus(input: unknown): Promise<ConfirmResult> {
             c.tests.map((t) => ({
               course_id: c.courseId,
               session_number: t.session_number,
-              on_date: dates.has(t.session_number)
-                ? madridDate(dates.get(t.session_number)!)
-                : null,
+              on_date:
+                t.session_number != null && dates.has(t.session_number)
+                  ? madridDate(dates.get(t.session_number)!)
+                  : null,
               title: t.title,
               weight: t.weight,
               weight_assumed: t.weight_assumed,
