@@ -1,30 +1,40 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
+import { APP_NAME, APP_TAGLINE } from "@/lib/config";
+import { getSignedInEmail } from "@/lib/supabase/session";
+import { logOut } from "./auth-actions";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "App name",
-  description: "One sentence on what this app does.",
+  title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
+  description: APP_TAGLINE,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const email = await getSignedInEmail();
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className="h-full antialiased">
+      <body className="flex min-h-full flex-col">
+        <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-2">
+          <Link
+            href={email !== null ? "/app" : "/"}
+            className="flex min-h-11 items-center font-bold"
+          >
+            {APP_NAME}
+          </Link>
+          {email !== null && (
+            <form action={logOut}>
+              <button
+                type="submit"
+                data-testid="logout"
+                className="min-h-11 rounded-xl px-3 text-sm font-semibold underline"
+              >
+                Log out
+              </button>
+            </form>
+          )}
+        </header>
         {children}
         <Analytics />
       </body>
