@@ -82,6 +82,21 @@ export default async function CoursesPage() {
       {current.length > 0 && (
         <CourseList courses={current} linked colors={colors} />
       )}
+      {current.length > 0 && (
+        <Link
+          href="/app/courses/missed"
+          className="flex min-h-[52px] items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4"
+        >
+          <span>
+            {current.some((c) => c.missedBefore > 0)
+              ? "Classes you missed before joining"
+              : "Missed classes before you joined?"}
+          </span>
+          <span className="font-semibold underline">
+            {current.some((c) => c.missedBefore > 0) ? "Edit" : "Add them"}
+          </span>
+        </Link>
+      )}
       {past.length > 0 && (
         <details className="grid gap-3">
           <summary className="flex min-h-11 cursor-pointer items-center font-semibold">

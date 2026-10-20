@@ -236,11 +236,18 @@ test("course row: a guessed course links to setting its real sessions", async ({
   await card.getByRole("link", { name: "Set the real number" }).click();
   await expect(page).toHaveURL(/\/app\/courses\/[0-9a-f-]+$/);
   const sessions = page.getByLabel("Sessions in this course:");
-  const missed = page.getByLabel("Missed before today:");
   await expect(sessions).toHaveValue("30");
-  await expect(missed).toHaveValue("0");
+  // The skip logged today already counts as missed; − can't take it back.
+  const missed = page.getByRole("status", { name: /missed in Algorithms/ });
+  await expect(missed).toHaveAccessibleName("1 missed in Algorithms");
+  await expect(
+    page.getByRole("button", { name: "One fewer missed in Algorithms" }),
+  ).toBeDisabled();
+  await page
+    .getByRole("button", { name: "One more missed in Algorithms" })
+    .click();
+  await expect(missed).toHaveAccessibleName("2 missed in Algorithms");
   await sessions.fill("15");
-  await missed.fill("1");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
   await toCourses(page);
@@ -271,7 +278,7 @@ test("remove course: course page deletes skips, keeps the course, then removes i
     .click();
   await expect(page).toHaveURL(/\/app\/courses\/[0-9a-f-]+$/);
   await expect(page.getByRole("heading", { name: "Marketing" })).toBeVisible();
-  await expect(page.getByText("Counting from today")).toBeVisible();
+  await expect(page.getByText("Missed so far")).toBeVisible();
   const rows = page.getByTestId("course-skip");
   await expect(rows).toHaveCount(2);
   await rows.getByRole("button", { name: "Cancel" }).click();

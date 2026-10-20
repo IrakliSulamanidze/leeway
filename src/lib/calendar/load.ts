@@ -139,6 +139,7 @@ export async function loadWeekData(range: { from: string; to: string }) {
       id: c.id,
       name: c.name,
       left: livesLeft(c, skipRows).left,
+      missedBefore: c.missed_before,
     })),
     sessions: (sessions.data ?? []) as WeekClass[],
     skips: skipRows as WeekSkip[],

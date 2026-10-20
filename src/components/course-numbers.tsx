@@ -3,28 +3,24 @@
 import { useState, useTransition } from "react";
 import { setCourseNumbers } from "@/app/app/actions";
 
-// "Sessions in this course: 30 · Missed before today: 0", editable in place.
-// Used inline on a new course's card and on the course page.
+// "Sessions in this course: 30", editable in place on the course page.
 export function CourseNumbers({
   id,
   name,
   sessions,
-  missedBefore,
 }: {
   id: string;
   name: string;
   sessions: number;
-  missedBefore: number;
 }) {
   const [s, setS] = useState(String(sessions));
-  const [m, setM] = useState(String(missedBefore));
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function onSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     startTransition(async () => {
-      const res = await setCourseNumbers(id, Number(s), Number(m));
+      const res = await setCourseNumbers(id, Number(s));
       setMessage(res.ok ? "Saved." : (res.message ?? "Couldn't save."));
     });
   }
@@ -48,18 +44,6 @@ export function CourseNumbers({
           max={200}
           value={s}
           onChange={(e) => setS(e.target.value)}
-          className={field}
-        />
-      </label>
-      <label className="flex items-center gap-2">
-        Missed before today:
-        <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={200}
-          value={m}
-          onChange={(e) => setM(e.target.value)}
           className={field}
         />
       </label>

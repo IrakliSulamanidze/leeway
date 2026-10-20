@@ -192,6 +192,17 @@ export function ClassSheet({
                 </button>
               </form>
             )}
+            {started && !taken && (course.missedBefore ?? 0) > 0 && (
+              <form action={toggleSkipped}>
+                <input type="hidden" name="class" value={cls.id} />
+                <input type="hidden" name="counted" value="1" />
+                <button
+                  className={`${big} border border-line-input bg-surface`}
+                >
+                  One of the {course.missedBefore} I already counted
+                </button>
+              </form>
+            )}
           </>
         )}
 

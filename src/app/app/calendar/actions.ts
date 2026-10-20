@@ -172,17 +172,25 @@ export async function toggleSkipped(form: FormData) {
   } else {
     const { data: course } = await supabase
       .from("courses")
-      .select("name")
+      .select("name, missed_before")
       .eq("id", cls.course_id)
       .single();
     if (!course) return;
-    await supabase.from("skips").insert({
+    const sessions = cls.session_numbers.length >= 2 ? 2 : 1;
+    const { error } = await supabase.from("skips").insert({
       course_id: cls.course_id,
       class_session_id: cls.id,
       text_typed: course.name,
       skip_date: madridDate(cls.starts_at),
-      sessions: cls.session_numbers.length >= 2 ? 2 : 1,
+      sessions,
     });
+    // "One of the ones I counted": the miss moves from the missed-so-far
+    // number onto this class, so it isn't counted twice.
+    if (!error && field(form, "counted") === "1" && course.missed_before > 0)
+      await supabase
+        .from("courses")
+        .update({ missed_before: Math.max(0, course.missed_before - sessions) })
+        .eq("id", cls.course_id);
   }
   refresh();
 }

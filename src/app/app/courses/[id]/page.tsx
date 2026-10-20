@@ -4,6 +4,7 @@ import { RemoveCourse, SkipButton } from "@/components/course-actions";
 import { courseMeta, courseViews, PACE_COLOR } from "@/components/course-list";
 import { CourseNumbers } from "@/components/course-numbers";
 import { HeartsRow } from "@/components/hearts";
+import { MissedStepper } from "@/components/missed-stepper";
 import { skipMeta } from "@/components/recent-skips";
 import { dateLabel, MarkTestForm } from "@/components/test-marks";
 import { APP_NAME } from "@/lib/config";
@@ -57,6 +58,10 @@ export default async function CoursePage({
 
   const today = madridToday();
   const [c] = courseViews([course], skips ?? [], today);
+  // Skips on days already here; the stepper shows them with missed_before.
+  const marked = (skips ?? [])
+    .filter((s) => !(s.planned && s.skip_date > today))
+    .reduce((n, s) => n + s.sessions, 0);
   const testRows = (tests ?? []).map((t) => ({
     ...t,
     weight: t.weight == null ? null : Number(t.weight),
@@ -70,16 +75,21 @@ export default async function CoursePage({
 
   const numbers = (
     <section className="grid gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
-      <h2 className="m-0 text-base font-semibold">Sessions</h2>
-      {c.missedBefore === 0 && (
-        <p className="m-0 text-sm text-muted">Counting from today</p>
-      )}
-      <CourseNumbers
-        id={c.id}
-        name={c.name}
-        sessions={c.sessions}
-        missedBefore={c.missedBefore}
-      />
+      <div className="flex items-center justify-between gap-3">
+        <div className="grid">
+          <h2 className="m-0 text-base font-semibold">Missed so far</h2>
+          <span className="text-sm text-muted">
+            Including before you joined
+          </span>
+        </div>
+        <MissedStepper
+          id={c.id}
+          name={c.name}
+          before={c.missedBefore}
+          marked={marked}
+        />
+      </div>
+      <CourseNumbers id={c.id} name={c.name} sessions={c.sessions} />
       {c.estimated && syllabusReadEnabled() && (
         <p className="m-0 text-sm text-muted">
           Not sure?{" "}
