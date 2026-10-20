@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/session";
-import { loadWeekData, requestTime } from "@/lib/calendar/load";
+import { loadFeeds, loadWeekData, requestTime } from "@/lib/calendar/load";
 import {
   canISkip,
   ifYouHaveToMissOne,
@@ -106,7 +107,10 @@ export default async function PlanPage({
   const to = typeof sp.to === "string" && DATE.test(sp.to) ? sp.to : "";
   const trip = from && to && from <= to ? { from, to } : null;
 
-  const data = await loadWeekData(trip ?? week);
+  const [data, feeds] = await Promise.all([
+    loadWeekData(trip ?? week),
+    loadFeeds(),
+  ]);
   const thisWeek = trip ? await loadWeekData(week) : data;
   const args = [
     thisWeek.sessions,
@@ -124,6 +128,23 @@ export default async function PlanPage({
 
   return (
     <main className="mx-auto grid w-full max-w-2xl flex-1 content-start gap-6 px-5 py-6">
+      {feeds.length === 0 && (
+        <section
+          data-testid="plan-no-calendar"
+          className="grid gap-3 rounded-xl border border-line bg-surface p-4"
+        >
+          <p className="m-0">
+            Plan works from your class timetable. Connect your calendar and your
+            classes show up here.
+          </p>
+          <Link
+            href="/app/calendar"
+            className="flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 font-semibold text-on-primary"
+          >
+            Connect your calendar
+          </Link>
+        </section>
+      )}
       <section aria-labelledby="miss-h" className="grid gap-3">
         <h1 id="miss-h" className="text-[28px] font-bold">
           If you have to miss one
