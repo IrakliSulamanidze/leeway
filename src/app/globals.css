@@ -11,6 +11,10 @@
   --primary: #16161a;
   --on-primary: #ffffff;
   --danger: #c21f3a;
+  --heart: #e0243a;
+  --used: #8c8c94;
+  --safe: #1a7346;
+  --warn: #a35400;
   --font:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
@@ -26,6 +30,10 @@
   --color-primary: var(--primary);
   --color-on-primary: var(--on-primary);
   --color-danger: var(--danger);
+  --color-heart: var(--heart);
+  --color-used: var(--used);
+  --color-safe: var(--safe);
+  --color-warn: var(--warn);
   --font-sans: var(--font);
 }
 
