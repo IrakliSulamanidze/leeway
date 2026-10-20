@@ -152,8 +152,11 @@ const RULES = [
   },
   {
     // The feed link is a secret: no client-side or route query may read it.
+    // Exception: the nightly cron's admin path, which has no logged-in user for
+    // feed_url_for_sync and runs only behind CRON_SECRET.
     name: "calendar_feeds url never selected",
     check: perFile((file, text) =>
+      file !== join("src", "lib", "server", "nightly.ts") &&
       /from\(\s*["']calendar_feeds["']\s*\)[\s\S]{0,200}?\.select\(\s*["'`][^"'`]*(\*|\burl\b)/.test(
         text,
       )
