@@ -131,7 +131,7 @@ export function SkipForm({
         Which class are you skipping?
       </label>
       <div
-        className="-mx-5 flex h-11 gap-2 overflow-x-auto px-5 [scrollbar-width:none]"
+        className="-mx-5 flex h-11 gap-2 overflow-x-auto px-5 [scrollbar-width:none] lg:mx-0 lg:h-auto lg:min-h-11 lg:flex-wrap lg:overflow-visible lg:px-0"
         aria-label={courses.length ? "Your courses" : undefined}
         role={courses.length ? "group" : undefined}
       >
@@ -210,7 +210,7 @@ export function SkipForm({
           role="switch"
           aria-checked={double}
           onClick={() => setDouble((v) => !v)}
-          className="flex min-h-11 items-center gap-2 text-[15px] text-ink"
+          className="flex min-h-11 items-center gap-2 text-[15px] whitespace-nowrap text-ink"
         >
           <span
             aria-hidden="true"
