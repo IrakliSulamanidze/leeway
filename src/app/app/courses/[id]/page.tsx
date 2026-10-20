@@ -6,6 +6,7 @@ import { CourseNumbers } from "@/components/course-numbers";
 import { Hearts } from "@/components/hearts";
 import { skipMeta } from "@/components/recent-skips";
 import { TestMarks } from "@/components/test-marks";
+import { APP_NAME } from "@/lib/config";
 import { madridToday } from "@/lib/rules/dates";
 import {
   EXAM_PREP,
@@ -104,6 +105,18 @@ export default async function CoursePage({
           sessions={c.sessions}
           missedBefore={c.missedBefore}
         />
+        {c.estimated && syllabusReadEnabled() && (
+          <p className="m-0 text-sm text-muted">
+            Not sure?{" "}
+            <Link
+              href={`/app/courses/${c.id}/syllabus`}
+              className="inline-flex min-h-11 items-center font-semibold text-ink underline"
+            >
+              Import the syllabus
+            </Link>{" "}
+            and {APP_NAME} reads it for you.
+          </p>
+        )}
       </section>
 
       <TestMarks courseId={c.id} />

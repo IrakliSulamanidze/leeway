@@ -3,7 +3,7 @@ import { CourseList, courseViews } from "@/components/course-list";
 import { RecentSkips } from "@/components/recent-skips";
 import { CalendarHome } from "@/components/calendar-home";
 import { RiskLine } from "@/components/risk-line";
-import { SetupLinks } from "@/components/setup-links";
+import { GetStarted } from "@/components/get-started";
 import { SkipForm } from "@/components/skip-form";
 import { TERM } from "@/lib/config";
 import {
@@ -52,6 +52,15 @@ export default async function AppHome() {
   const past = views.filter((c) => calendar?.thisTerm.get(c.id) === false);
   const current = views.filter((c) => !past.includes(c));
   const week = weekOfTerm(today, TERM.start);
+  const setup = (
+    <GetStarted
+      calendar={calendar !== null}
+      courses={views.length}
+      guessed={current
+        .filter((c) => c.estimated)
+        .map(({ id, name }) => ({ id, name }))}
+    />
+  );
 
   return (
     <main className="mx-auto grid w-full max-w-5xl content-start gap-6 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-12 lg:px-12">
@@ -70,6 +79,7 @@ export default async function AppHome() {
         />
       </div>
       <div className="grid content-start gap-5">
+        {views.length === 0 && setup}
         <section className="grid gap-3">
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="m-0 text-xl font-bold tracking-tight">
@@ -94,35 +104,12 @@ export default async function AppHome() {
               )}
             </>
           ) : (
-            <>
-              <p className="m-0 text-sm text-muted">
-                No skips yet. Type a class to see what skipping it would cost.
-              </p>
-              <div aria-hidden="true">
-                <CourseList
-                  courses={[
-                    {
-                      id: "example",
-                      name: "Example course",
-                      lives: 6,
-                      left: 6,
-                      planned: 0,
-                      pace: "safe",
-                      weeksToGo: weeksToGo(today, TERM.end),
-                      estimated: false,
-                      sessions: 30,
-                      missedBefore: 0,
-                    },
-                  ]}
-                />
-              </div>
-            </>
+            <p className="m-0 text-sm text-muted">
+              No skips yet. Your courses show up here with their lives.
+            </p>
           )}
         </section>
-        <SetupLinks
-          calendar={calendar !== null}
-          courses={current.map(({ id, name }) => ({ id, name }))}
-        />
+        {views.length > 0 && setup}
         <RecentSkips skips={skips ?? []} />
         <CalendarHome />
       </div>

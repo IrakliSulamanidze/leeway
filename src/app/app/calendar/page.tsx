@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/session";
@@ -9,10 +10,10 @@ import { ConnectForm } from "./connect-form";
 
 export const metadata = { title: "Calendar" };
 
-const SOURCES = [
-  ["Blackboard", "Calendar, gear icon, Get external calendar link"],
-  ["My IE Agenda", "Copy the subscription link"],
-  ["Google, iPhone or Outlook", "Any calendar link that ends in .ics"],
+const STEPS = [
+  "Open Blackboard and go to Calendar.",
+  "Tap the gear icon, then Get external calendar link.",
+  "Copy the link and paste it below.",
 ];
 
 const norm = (s: string) =>
@@ -56,7 +57,13 @@ export default async function CalendarPage() {
   const existing = courses.data ?? [];
 
   return (
-    <main className="mx-auto grid w-full max-w-2xl flex-1 content-start gap-5 px-5 py-6">
+    <main className="mx-auto grid w-full max-w-2xl flex-1 content-start gap-5 px-5 py-5">
+      <Link
+        href="/app"
+        className="-my-2 justify-self-start py-3 text-[15px] font-semibold text-ink underline"
+      >
+        Back to your courses
+      </Link>
       {pending.length > 0 && (
         <section aria-labelledby="mapping-h" className="grid gap-3">
           <h1 id="mapping-h" className="text-[28px] font-bold">
@@ -188,20 +195,32 @@ export default async function CalendarPage() {
             Connect your calendar
           </h1>
           <p className="m-0 text-sm text-muted">
-            {APP_NAME} counts your sessions and finds your exams. Your link
-            stays private.
+            {APP_NAME} adds your courses, counts their sessions and warns you
+            the night before a risky class. Only you can see your link.
           </p>
-          <ol className="divide-y divide-line rounded-xl border border-line bg-surface">
-            {SOURCES.map(([title, steps], i) => (
-              <li key={title} className="grid px-4 py-3">
-                <span className={i === 0 ? "font-bold" : "font-semibold"}>
-                  {title}
+          <ol className="m-0 grid gap-2.5 rounded-xl border border-line bg-surface px-4 py-3.5">
+            {STEPS.map((step, i) => (
+              <li key={step} className="flex gap-3">
+                <span
+                  aria-hidden="true"
+                  className="grid h-6 w-6 flex-none place-items-center rounded-full border border-line-input text-[13px] font-bold"
+                >
+                  {i + 1}
                 </span>
-                <span className="text-sm text-muted">{steps}</span>
+                <span>{step}</span>
               </li>
             ))}
           </ol>
           <ConnectForm />
+          <details className="text-sm text-muted">
+            <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-ink">
+              Using My IE Agenda or another calendar?
+            </summary>
+            <p className="m-0">
+              My IE Agenda: copy its subscription link. Google, iPhone or
+              Outlook: any calendar link that ends in .ics works too.
+            </p>
+          </details>
           <p className="m-0 text-sm text-muted">
             You can skip this. Everything works without a calendar.
           </p>
