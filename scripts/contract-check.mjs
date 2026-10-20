@@ -26,8 +26,13 @@ const PDFJS_ALLOWED_DIR = join(
   "[id]",
   "syllabus",
 );
-// The Gemini key is read in one server-only module, imported by one route.
+// The Gemini key is read in one server-only module, imported by one route. The
+// course and import pages (server components) import only syllabusReadEnabled.
 const GEMINI_FILE = join("src", "lib", "server", "gemini.ts");
+const GEMINI_PAGES = [
+  join("src", "app", "app", "courses", "[id]", "page.tsx"),
+  join(PDFJS_ALLOWED_DIR, "page.tsx"),
+];
 const GEMINI_IMPORTER = join(
   "src",
   "app",
@@ -130,7 +135,13 @@ const RULES = [
         .filter(
           ({ file, text }) =>
             /["']@\/lib\/server\/gemini["']/.test(text) &&
-            file !== GEMINI_IMPORTER,
+            file !== GEMINI_IMPORTER &&
+            !(
+              GEMINI_PAGES.includes(file) &&
+              /import \{ syllabusReadEnabled \} from "@\/lib\/server\/gemini"/.test(
+                text,
+              )
+            ),
         )
         .map(({ file }) => `${file}: only ${GEMINI_IMPORTER} imports gemini`),
       ...(existsSync(GEMINI_FILE) &&
