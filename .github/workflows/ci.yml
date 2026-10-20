@@ -64,6 +64,9 @@ jobs:
 
   secrets:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # gitleaks lists the PR's commits
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with: { fetch-depth: 0 }
@@ -71,6 +74,7 @@ jobs:
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false # account artifact quota; findings still fail the job
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
       - run: npm ci
@@ -119,6 +123,8 @@ jobs:
       - name: Read local keys at runtime (never written to the repo)
         run: bash scripts/supabase-env.sh >> "$GITHUB_ENV"
       - run: npm ci
+      - name: Integration tests (calendar sync vs local Supabase)
+        run: bash scripts/test-integration.sh
       - run: npx playwright install --with-deps chromium
       - run: npx next build
       - run: npx playwright test e2e/grading-bot.spec.ts e2e/calendar.spec.ts e2e/plan.spec.ts
