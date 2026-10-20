@@ -35,10 +35,12 @@ export function SyncStatus({
   feeds,
   now,
   mapped = 0,
+  unsynced = false,
 }: {
   feeds: SyncFeed[];
   now: number;
   mapped?: number;
+  unsynced?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -79,13 +81,14 @@ export function SyncStatus({
     const due = feeds
       .filter(
         (f) =>
+          unsynced ||
           !f.last_synced_at ||
           now - new Date(f.last_synced_at).getTime() > FRESH_MS,
       )
       .map((f) => f.id);
     const t = setTimeout(() => void sync(due), 0);
     return () => clearTimeout(t);
-  }, [feeds, now, sync]);
+  }, [feeds, now, sync, unsynced]);
 
   // A newly mapped course needs its classes: sync again when the count changes.
   const mappedSeen = useRef(mapped);

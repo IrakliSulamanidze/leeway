@@ -4,6 +4,7 @@ import { addDays } from "@/lib/rules/dates";
 import { ScheduleDay } from "./schedule-day";
 import {
   loadFeeds,
+  hasUnsyncedCourses,
   loadNotices,
   loadWeekData,
   requestTime,
@@ -22,7 +23,7 @@ export async function CalendarHome() {
   const today = madridDate(new Date(now).toISOString());
   const supabase = await createClient();
   const tomorrow = addDays(today, 1);
-  const [notices, week, soon, checks] = await Promise.all([
+  const [notices, week, soon, checks, unsynced] = await Promise.all([
     loadNotices(),
     loadWeekData(weekRange(today)),
     loadWeekData({ from: today, to: tomorrow }),
@@ -30,6 +31,7 @@ export async function CalendarHome() {
       .from("weekly_checks")
       .select("week_start")
       .eq("week_start", weekStart(today)),
+    hasUnsyncedCourses(),
   ]);
   return (
     <>
@@ -61,7 +63,7 @@ export async function CalendarHome() {
           empty="No classes tomorrow."
         />
       </section>
-      <SyncStatus feeds={feeds} now={now} />
+      <SyncStatus feeds={feeds} now={now} unsynced={unsynced} />
     </>
   );
 }

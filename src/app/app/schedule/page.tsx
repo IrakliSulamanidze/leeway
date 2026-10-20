@@ -2,7 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { NoCalendar } from "@/components/no-calendar";
 import { ScheduleDay } from "@/components/schedule-day";
-import { loadFeeds, loadWeekData, requestTime } from "@/lib/calendar/load";
+import { SyncStatus } from "@/components/sync-status";
+import {
+  hasUnsyncedCourses,
+  loadFeeds,
+  loadWeekData,
+  requestTime,
+} from "@/lib/calendar/load";
 import { addDays } from "@/lib/rules/dates";
 import { madridDate, weekRange } from "@/lib/rules/week";
 import { createClient } from "@/lib/supabase/server";
@@ -33,7 +39,8 @@ export default async function SchedulePage({
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims?.claims) redirect("/login");
 
-  if ((await loadFeeds()).length === 0)
+  const feeds = await loadFeeds();
+  if (feeds.length === 0)
     return (
       <NoCalendar title="Your schedule">
         <p className="m-0 text-muted">
@@ -49,7 +56,10 @@ export default async function SchedulePage({
     typeof sp.week === "string" && DATE.test(sp.week) ? sp.week : today;
   const week = weekRange(picked);
   const thisWeek = week.from === weekRange(today).from;
-  const data = await loadWeekData(week);
+  const [data, unsynced] = await Promise.all([
+    loadWeekData(week),
+    hasUnsyncedCourses(),
+  ]);
   const days = Array.from({ length: 7 }, (_, i) => addDays(week.from, i));
   const hasClasses = new Set(data.sessions.map((c) => madridDate(c.starts_at)));
   // This week starts at today; earlier days fold away.
@@ -127,6 +137,7 @@ export default async function SchedulePage({
           ))}
         </details>
       )}
+      <SyncStatus feeds={feeds} now={requestTime()} unsynced={unsynced} />
     </main>
   );
 }
