@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { livesLeft } from "@/lib/rules/lives";
 import type {
   WeekAssessment,
   WeekClass,
@@ -48,26 +49,6 @@ export async function loadNotices() {
   return data ?? [];
 }
 
-// Lives as in tech-plan 2: sessions typed > syllabus > calendar > 30, lives are
-// 20% rounded down, minus sessions skipped (logged or planned) and missed before.
-function leftFor(
-  c: {
-    id: string;
-    sessions_typed: number | null;
-    sessions_syllabus: number | null;
-    sessions_calendar: number | null;
-    missed_before: number;
-  },
-  skips: { course_id: string; sessions: number }[],
-): number {
-  const sessions =
-    c.sessions_typed ?? c.sessions_syllabus ?? c.sessions_calendar ?? 30;
-  const used = skips
-    .filter((s) => s.course_id === c.id)
-    .reduce((n, s) => n + s.sessions, 0);
-  return Math.floor(sessions * 0.2) - used - c.missed_before;
-}
-
 // Everything the week tools need for a date range.
 export async function loadWeekData(range: { from: string; to: string }) {
   const supabase = await createClient();
@@ -90,7 +71,7 @@ export async function loadWeekData(range: { from: string; to: string }) {
       .order("starts_at"),
     supabase
       .from("skips")
-      .select("course_id, class_session_id, skip_date, sessions"),
+      .select("course_id, class_session_id, skip_date, sessions, planned"),
     supabase
       .from("assessments")
       .select("course_id, class_session_id, session_number, on_date"),
@@ -100,7 +81,7 @@ export async function loadWeekData(range: { from: string; to: string }) {
     courses: (courses.data ?? []).map((c): WeekCourse => ({
       id: c.id,
       name: c.name,
-      left: leftFor(c, skipRows),
+      left: livesLeft(c, skipRows).left,
     })),
     sessions: (sessions.data ?? []) as WeekClass[],
     skips: skipRows as WeekSkip[],
