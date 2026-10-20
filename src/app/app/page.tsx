@@ -1,9 +1,15 @@
 import { redirect } from "next/navigation";
 import { CourseList, courseViews } from "@/components/course-list";
 import { RecentSkips } from "@/components/recent-skips";
+import { CalendarHome } from "@/components/calendar-home";
 import { RiskLine } from "@/components/risk-line";
 import { SkipForm } from "@/components/skip-form";
 import { TERM } from "@/lib/config";
+import {
+  loadCourseCalendar,
+  loadFeeds,
+  requestTime,
+} from "@/lib/calendar/load";
 import { madridToday, weekOfTerm, weeksToGo } from "@/lib/rules/dates";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/session";
@@ -31,7 +37,19 @@ export default async function AppHome() {
   ]);
 
   const today = madridToday();
-  const views = courseViews(courses ?? [], skips ?? [], today);
+  // With a calendar: "Attendance safe" from the classes still ahead, and courses
+  // with no class this term move to a collapsed "Past courses" group.
+  const calendar = (await loadFeeds()).length
+    ? await loadCourseCalendar(new Date(requestTime()).toISOString(), TERM)
+    : null;
+  const views = courseViews(
+    courses ?? [],
+    skips ?? [],
+    today,
+    calendar?.remaining,
+  );
+  const past = views.filter((c) => calendar?.thisTerm.get(c.id) === false);
+  const current = views.filter((c) => !past.includes(c));
   const week = weekOfTerm(today, TERM.start);
 
   return (
@@ -63,7 +81,17 @@ export default async function AppHome() {
             )}
           </div>
           {views.length ? (
-            <CourseList courses={views} linked />
+            <>
+              {current.length > 0 && <CourseList courses={current} linked />}
+              {past.length > 0 && (
+                <details className="grid gap-3">
+                  <summary className="flex min-h-11 cursor-pointer items-center font-semibold">
+                    Past courses
+                  </summary>
+                  <CourseList courses={past} linked />
+                </details>
+              )}
+            </>
           ) : (
             <>
               <p className="m-0 text-sm text-muted">
@@ -91,6 +119,7 @@ export default async function AppHome() {
           )}
         </section>
         <RecentSkips skips={skips ?? []} />
+        <CalendarHome />
       </div>
     </main>
   );
