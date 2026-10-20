@@ -117,7 +117,8 @@ test("layout: field and button don't move when typing or saving", async ({
   await input.fill(LONG);
   await expect(page.getByText(/This uses 1 life\. 4 left/)).toBeVisible();
   expect(await boxes()).toEqual(start);
-  await input.fill("A very long course name that wraps the preview lin");
+  // A typo that isn't part of the name gets "Did you mean".
+  await input.fill("A very long course nme that wraps the preview line");
   const near = page.getByRole("button", { name: `Did you mean ${LONG}?` });
   await expect(near).toBeVisible();
   expect(await boxes()).toEqual(start);
