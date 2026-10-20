@@ -34,6 +34,7 @@ export async function CalendarHome() {
         sessions={week.sessions}
         courses={week.courses}
         skips={week.skips}
+        assessments={week.assessments}
         checkedThisWeek={(checks.data ?? []).length > 0}
       />
       <SyncStatus feeds={feeds} now={now} />

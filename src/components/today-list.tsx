@@ -1,6 +1,12 @@
-import { toggleSkipped, weeklyAllGood } from "@/app/app/calendar/actions";
+import {
+  markTest,
+  toggleSkipped,
+  weeklyAllGood,
+} from "@/app/app/calendar/actions";
 import {
   dedupeClasses,
+  isTestDay,
+  type WeekAssessment,
   madridDate,
   skippable,
   weekRange,
@@ -43,7 +49,9 @@ function ClassRow({
   on,
   when,
   testId,
+  testDay,
 }: {
+  testDay?: boolean;
   c: WeekClass;
   name: string;
   on: boolean;
@@ -57,9 +65,22 @@ function ClassRow({
         <span className="font-semibold">{name}</span>
         <span className="text-sm text-muted">
           {sessionLine(c)}
+          {testDay ? " · Test day" : ""}
           {on ? " · missed" : ""}
         </span>
       </span>
+      {testDay === false && skippable(c) && (
+        <form action={markTest}>
+          <input type="hidden" name="course" value={c.course_id} />
+          <input type="hidden" name="class" value={c.id} />
+          <button
+            aria-label={`Mark a test in ${name} ${when}`}
+            className="min-h-11 min-w-11 px-2 text-sm text-muted underline"
+          >
+            Test
+          </button>
+        </form>
+      )}
       {skippable(c) && (
         <form action={toggleSkipped}>
           <input type="hidden" name="class" value={c.id} />
@@ -89,6 +110,7 @@ type Props = {
   sessions: WeekClass[];
   courses: WeekCourse[];
   skips: WeekSkip[];
+  assessments: WeekAssessment[];
   checkedThisWeek: boolean;
 };
 
@@ -99,6 +121,7 @@ export function TodayList({
   sessions,
   courses,
   skips,
+  assessments,
   checkedThisWeek,
 }: Props) {
   const names = new Map(courses.map((c) => [c.id, c.name]));
@@ -164,6 +187,7 @@ export function TodayList({
                 on={linked.has(c.id)}
                 when={time(c.starts_at)}
                 testId="today-class"
+                testDay={isTestDay(c, assessments)}
               />
             ))}
           </ul>
