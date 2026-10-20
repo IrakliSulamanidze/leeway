@@ -66,7 +66,7 @@ export default async function AppHome() {
           ) : (
             <>
               <p className="m-0 text-sm text-muted">
-                No skips yet. Your courses will show up here like this:
+                No skips yet. Type a class to see what skipping it would cost.
               </p>
               <div aria-hidden="true">
                 <CourseList

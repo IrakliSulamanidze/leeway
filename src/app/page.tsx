@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CourseList, type CourseView } from "@/components/course-list";
-import { APP_AUDIENCE, APP_NAME, APP_TAGLINE } from "@/lib/config";
+import { APP_AUDIENCE, APP_TAGLINE } from "@/lib/config";
 import { getSignedInEmail } from "@/lib/supabase/session";
 
 // A live course row shows what the app does instead of feature captions.
@@ -44,7 +44,7 @@ export default async function Home() {
         <div className="grid gap-1 lg:max-w-[300px]">
           {signedIn ? (
             <Link href="/app" className={button}>
-              Open {APP_NAME}
+              Open app
             </Link>
           ) : (
             <>

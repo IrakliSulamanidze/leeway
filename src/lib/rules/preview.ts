@@ -42,9 +42,9 @@ export type PreviewInput = {
 function rhythm(left: number, weeksToGo: number): string {
   const every = Math.floor(weeksToGo / left);
   if (every < 1) return "";
-  return every === 1
-    ? ": about one skip a week"
-    : `: about one skip every ${word(every)} weeks`;
+  if (every === 1) return ": about one skip a week";
+  if (every === 4) return ": about one skip a month";
+  return `: about one skip every ${word(every)} weeks`;
 }
 
 // state is null only for the prompt, which shows no state colour.
