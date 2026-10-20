@@ -17,8 +17,25 @@ const TESTIDS = [
 ];
 // Only the nightly cron route may read the secret key (docs/process.md 5.5).
 const SECRET_ALLOWED_DIR = join("src", "app", "api", "cron");
-// pdfjs-dist is heavy and needs its worker set up once; it lives in one module.
-const PDFJS_ALLOWED_DIR = join("src", "lib", "pdf");
+// pdfjs-dist is heavy: it loads only on the syllabus import screen (tech-plan 5).
+const PDFJS_ALLOWED_DIR = join(
+  "src",
+  "app",
+  "app",
+  "courses",
+  "[id]",
+  "syllabus",
+);
+// The Gemini key is read in one server-only module, imported by one route.
+const GEMINI_FILE = join("src", "lib", "server", "gemini.ts");
+const GEMINI_IMPORTER = join(
+  "src",
+  "app",
+  "api",
+  "syllabus",
+  "read",
+  "route.ts",
+);
 
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -96,6 +113,31 @@ const RULES = [
         ? [`${file}: import pdfjs-dist only from ${PDFJS_ALLOWED_DIR}`]
         : [],
     ),
+  },
+  {
+    name: "gemini key confinement",
+    check: () => [
+      ...sources
+        .filter(
+          ({ file, text }) =>
+            /GEMINI_API_KEY/.test(text) && file !== GEMINI_FILE,
+        )
+        .map(
+          ({ file }) =>
+            `${file}: GEMINI_API_KEY is read only in ${GEMINI_FILE}`,
+        ),
+      ...sources
+        .filter(
+          ({ file, text }) =>
+            /["']@\/lib\/server\/gemini["']/.test(text) &&
+            file !== GEMINI_IMPORTER,
+        )
+        .map(({ file }) => `${file}: only ${GEMINI_IMPORTER} imports gemini`),
+      ...(existsSync(GEMINI_FILE) &&
+      !/^import ["']server-only["'];/m.test(readFileSync(GEMINI_FILE, "utf8"))
+        ? [`${GEMINI_FILE} must import "server-only"`]
+        : []),
+    ],
   },
   {
     name: "src never imports e2e helpers",
