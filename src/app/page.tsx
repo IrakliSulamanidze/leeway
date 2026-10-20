@@ -14,6 +14,8 @@ const EXAMPLES: CourseView[] = [
     pace: "burning",
     weeksToGo: 8,
     estimated: false,
+    sessions: 30,
+    missedBefore: 0,
   },
   {
     id: "accounting",
@@ -24,6 +26,8 @@ const EXAMPLES: CourseView[] = [
     pace: "safe",
     weeksToGo: 8,
     estimated: false,
+    sessions: 30,
+    missedBefore: 0,
   },
 ];
 

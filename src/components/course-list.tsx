@@ -9,6 +9,8 @@ import {
   paceLabel,
   sessionsFor,
 } from "@/lib/rules/lives";
+import Link from "next/link";
+import { CourseNumbers } from "./course-numbers";
 import { HeartLegend, Hearts } from "./hearts";
 
 export type CourseView = {
@@ -20,6 +22,8 @@ export type CourseView = {
   pace: Pace;
   weeksToGo: number;
   estimated: boolean;
+  sessions: number;
+  missedBefore: number;
 };
 
 export const PACE_WORDS: Record<Pace, string> = {
@@ -75,6 +79,8 @@ export function courseViews(
         pace,
         weeksToGo: toGo,
         estimated,
+        sessions,
+        missedBefore: c.missed_before,
       };
     })
     .sort((a, b) => a.left - b.left || a.name.localeCompare(b.name));
@@ -84,7 +90,29 @@ function weeksText(n: number) {
   return `${n} ${n === 1 ? "week" : "weeks"} to go`;
 }
 
-export function CourseList({ courses }: { courses: CourseView[] }) {
+// "Estimated · 8 weeks to go" etc. Shared with the course page header.
+export function courseMeta(c: CourseView) {
+  return (
+    <>
+      <span className={`font-semibold ${PACE_COLOR[c.pace]}`}>
+        {PACE_WORDS[c.pace]}
+      </span>{" "}
+      · {weeksText(c.weeksToGo)}
+      {c.planned > 0 && ` · ${c.planned} planned`}
+      {c.estimated && " · estimated"}
+    </>
+  );
+}
+
+// `linked` (on /app): names open the course page, and a new course's card
+// shows the inline sessions row until its number is set.
+export function CourseList({
+  courses,
+  linked = false,
+}: {
+  courses: CourseView[];
+  linked?: boolean;
+}) {
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-surface">
       <ul>
@@ -96,17 +124,19 @@ export function CourseList({ courses }: { courses: CourseView[] }) {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="grid min-w-0 gap-[3px]">
-                <span className="text-[17px] font-semibold [overflow-wrap:anywhere]">
-                  {c.name}
-                </span>
-                <span className="text-sm text-muted">
-                  <span className={`font-semibold ${PACE_COLOR[c.pace]}`}>
-                    {PACE_WORDS[c.pace]}
-                  </span>{" "}
-                  · {weeksText(c.weeksToGo)}
-                  {c.planned > 0 && ` · ${c.planned} planned`}
-                  {c.estimated && " · estimated"}
-                </span>
+                {linked ? (
+                  <Link
+                    href={`/app/courses/${c.id}`}
+                    className="-my-2.5 py-2.5 text-[17px] font-semibold [overflow-wrap:anywhere]"
+                  >
+                    {c.name}
+                  </Link>
+                ) : (
+                  <span className="text-[17px] font-semibold [overflow-wrap:anywhere]">
+                    {c.name}
+                  </span>
+                )}
+                <span className="text-sm text-muted">{courseMeta(c)}</span>
               </div>
               <div className="flex-none text-right leading-none tabular-nums">
                 <b
@@ -120,6 +150,14 @@ export function CourseList({ courses }: { courses: CourseView[] }) {
               </div>
             </div>
             <Hearts lives={c.lives} left={c.left} planned={c.planned} />
+            {linked && c.estimated && (
+              <CourseNumbers
+                id={c.id}
+                name={c.name}
+                sessions={c.sessions}
+                missedBefore={c.missedBefore}
+              />
+            )}
           </li>
         ))}
       </ul>
