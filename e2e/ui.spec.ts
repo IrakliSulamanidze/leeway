@@ -50,6 +50,11 @@ for (const path of ["/", "/signup", "/login", "/app", "/app/settings"]) {
     page,
   }) => {
     if (path.startsWith("/app")) {
+      // Logged-in pages need Supabase: they run in the db + bot-sim job.
+      test.skip(
+        !process.env.NEXT_PUBLIC_SUPABASE_URL,
+        "needs Supabase (runs in the db + bot-sim job)",
+      );
       await signUp(page);
       await page.getByTestId("core-input").fill("Statistics II");
       await page.getByTestId("core-submit").click();
