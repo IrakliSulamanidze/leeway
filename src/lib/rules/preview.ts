@@ -6,12 +6,10 @@ export const PREVIEW_PROMPT =
   "Type a class to see what skipping it would cost.";
 export const PREVIEW_LAST_SPARE =
   "This uses your last spare. After it, the next skip takes you below 80%.";
-export const PREVIEW_OUT =
-  "You're out of lives. This skip takes you below 80%.";
+export const PREVIEW_OUT = "Out of lives. The next skip takes you below 80%.";
 export const PREVIEW_DOUBLE_OVER =
   "This uses 2 lives. You have 1, so it takes you below 80%.";
-export const PREVIEW_OVER =
-  "You're already below 80%. This adds another absence.";
+export const PREVIEW_OVER = "Over the limit. Talk to your professor.";
 
 const WORDS = [
   "zero",
@@ -75,7 +73,7 @@ export function previewLine(i: PreviewInput): {
   const uses = `This uses ${plural(cost, "life", "lives")}.`;
   if (!i.course) {
     return {
-      text: `New course: ${DEFAULT_SESSIONS} sessions assumed, so ${lives} lives. ${uses}`,
+      text: `New course. You'll have ${after} of ${lives} lives left.`,
       state,
     };
   }
