@@ -1,0 +1,372 @@
+<title>Leeway Screen Mockups</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a review sheet of real screens. Each frame renders at its true device width and is scaled to fit, so what you see is what ships. */
+:root{
+  --pg:#EDEDEA; --pg-fg:#1C1C20; --pg-muted:#5B5B63; --pg-line:#D6D6D1; --pg-card:#FFFFFF;
+  --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pg:#141416;--pg-fg:#ECECEE;--pg-muted:#A2A2AA;--pg-line:#2C2C31;--pg-card:#1C1C20;color-scheme:dark}}
+:root[data-theme="dark"]{--pg:#141416;--pg-fg:#ECECEE;--pg-muted:#A2A2AA;--pg-line:#2C2C31;--pg-card:#1C1C20;color-scheme:dark}
+body{background:var(--pg);color:var(--pg-fg);font-family:var(--f-sys);font-size:15px;line-height:1.5}
+.wrap{max-width:1320px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{display:grid;gap:8px;max-width:76ch;margin-bottom:8px}
+.top h1{font-size:26px;line-height:1.2;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.top p{margin:0;color:var(--pg-muted)}
+.eyebrow-pg{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-muted);font-weight:600}
+h2.group{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-muted);margin:30px 0 12px;font-weight:600}
+.phones{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px;align-items:start}
+.laptops{display:grid;gap:22px}
+figure{margin:0;display:grid;gap:8px;min-width:0}
+figcaption{font-size:13px;color:var(--pg-muted)}
+figcaption b{color:var(--pg-fg)}
+.fit{width:100%;overflow:hidden;border-radius:26px;border:6px solid #0B0B0D;background:#0B0B0D}
+.fit.lap{border-radius:12px;border-width:10px}
+.fit>.dev{transform-origin:0 0}
+
+/* ---------- Product tokens: "Quiet". Ink on warm paper; red is only for hearts and the danger state ---------- */
+.dev{
+  --bg:#F6F6F4; --surface:#FFFFFF; --line:#E4E4E0; --text:#16161A; --muted:#5E5E66; --primary:#16161A; --on-primary:#FFFFFF;
+  --heart:#E0243A; --used:#8C8C94; --safe:#1A7346; --warn:#A35400; --danger:#C21F3A;
+  --f:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --r:12px; --r-btn:12px;
+  background:var(--bg); color:var(--text); font-family:var(--f); font-size:16px; line-height:1.4;
+  display:flex; flex-direction:column; position:relative;
+  -webkit-font-smoothing:antialiased;
+}
+.dev .page{padding:0 20px 28px;display:flex;flex-direction:column;gap:18px;flex:1}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 20px;min-height:56px;border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.01em;display:flex;align-items:center;gap:7px;color:var(--text);text-decoration:none;min-height:44px}
+.brand svg{width:18px;height:18px}
+.hdr nav{display:flex;align-items:center;gap:2px}
+.link{color:var(--text);text-decoration:none;min-height:44px;display:inline-flex;align-items:center;padding:0 8px;background:none;border:0;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.link.quiet{color:var(--muted);font-weight:400}
+.link.u{text-decoration:underline;text-underline-offset:3px}
+.btn{display:flex;align-items:center;justify-content:center;min-height:52px;padding:0 20px;border:0;border-radius:var(--r-btn);background:var(--primary);color:var(--on-primary);font:inherit;font-weight:600;font-size:17px;cursor:pointer;width:100%}
+.btn.danger{background:var(--danger)}
+.btn:focus-visible,.link:focus-visible,.pill:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+h1.disp{font-weight:700;font-size:38px;line-height:1.06;letter-spacing:-.025em;margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:17px;margin:0;line-height:1.4}
+.title{font-weight:700;font-size:28px;letter-spacing:-.02em;margin:0}
+
+/* Course rows: one hairline list, Things-style. State colour lives on the number and one word. */
+.courses{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.course{padding:14px 16px;display:grid;gap:10px;border-top:1px solid var(--line)}
+.course:first-child{border-top:0}
+.s-safe{--sc:var(--safe)} .s-warn{--sc:var(--warn)} .s-danger{--sc:var(--danger)}
+.crow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.cname{font-weight:600;font-size:17px;min-width:0;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:14px}
+.state{color:var(--sc);font-weight:600}
+.big{text-align:right;line-height:1;font-variant-numeric:tabular-nums;flex:none}
+.big b{display:block;font-size:34px;font-weight:700;letter-spacing:-.02em;color:var(--sc)}
+.big small{font-size:12.5px;color:var(--muted)}
+.hearts{display:flex;gap:5px;align-items:center}
+.hearts svg{width:22px;height:22px;flex:none}
+.inline{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:2px}
+.inline label{font-size:13px;color:var(--muted);display:grid;gap:4px}
+.inline .input{min-height:44px;font-size:16px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);padding:10px 16px;border-top:1px solid var(--line)}
+.legend span{display:flex;gap:5px;align-items:center}
+.legend svg{width:15px;height:15px}
+
+.banner{color:var(--danger);font-weight:600;font-size:15px;display:flex;gap:8px;align-items:center;padding:12px 0 0;margin:0}
+.banner i{width:8px;height:8px;border-radius:50%;background:var(--danger);flex:none}
+.field{display:grid;gap:10px}
+.field label,.flabel{font-weight:600;font-size:16px}
+.input{min-height:52px;border:1px solid #CFCFCA;border-radius:var(--r-btn);background:var(--surface);color:var(--text);font:inherit;font-size:17px;padding:0 14px;width:100%;box-sizing:border-box}
+.input.focus{border:2px solid var(--text);padding:0 13px}
+.input::placeholder{color:var(--muted)}
+.pills{display:flex;gap:8px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;margin:0 -20px;padding:0 20px}
+.pill{min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:99px;border:1px solid #CFCFCA;background:var(--surface);color:var(--text);font:inherit;font-size:15px;cursor:pointer;white-space:nowrap;flex:none}
+.pill.on{border:2px solid var(--text);font-weight:600;padding:0 13px}
+.seg{display:inline-flex;background:#E9E9E5;border-radius:10px;padding:3px}
+.seg button{min-height:44px;padding:0 16px;border:0;border-radius:8px;background:none;font:inherit;font-size:15px;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.opts{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.toggle{display:inline-flex;align-items:center;gap:10px;min-height:44px;font-size:15px}
+.tg{width:42px;height:26px;border-radius:99px;background:#D9D9D4;position:relative;flex:none}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.preview{min-height:44px;font-size:15px;color:var(--muted);margin:0}
+.preview b{color:var(--text);font-weight:600}
+.preview .n{color:var(--sc);font-weight:700}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:6px}
+.sec-h h2{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;padding:6px 6px 6px 16px;border-top:1px solid var(--line);min-height:56px}
+.li:first-child{border-top:0}
+.li .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.li .t span{display:block;font-size:13.5px;color:var(--muted)}
+.li .x{min-width:44px;min-height:44px;border:0;background:none;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;padding:0 10px}
+.toast{position:absolute;left:16px;right:16px;bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--text);color:#FFFFFF;border-radius:var(--r-btn);padding:4px 6px 4px 16px;font-weight:600;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.toast .link{color:#FFFFFF}
+.scrim{position:absolute;inset:0;background:rgba(16,16,20,.4);display:flex;align-items:flex-end}
+.sheet{background:var(--surface);width:100%;border-radius:16px 16px 0 0;padding:22px 20px 24px;display:grid;gap:12px}
+.sheet h3{font-size:21px;margin:0;font-weight:700;letter-spacing:-.01em}
+.err{color:var(--danger);font-weight:600;font-size:15px;margin:0}
+.small{font-size:14px;color:var(--muted)}
+.ghost{opacity:.45}
+
+/* Full-release components */
+.tabs{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(3,1fr);background:rgba(246,246,244,.96);border-top:1px solid var(--line);padding:4px 8px 18px}
+.tabs button{min-height:48px;border:0;background:none;font:inherit;font-size:11.5px;color:var(--muted);display:grid;justify-items:center;gap:2px;cursor:pointer}
+.tabs button.on{color:var(--text);font-weight:600}
+.tabs svg{width:22px;height:22px}
+.page:has(+ .tabs){padding-bottom:110px}
+.kicker{font-size:13px;color:var(--muted);margin:0}
+.verdict{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0;line-height:1.2}
+.verdict .n{color:var(--sc)}
+.cls{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px;border-top:1px solid var(--line);min-height:60px}
+.cls:first-child{border-top:0}
+.cls .time{font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted);width:44px;flex:none}
+.cls .t{flex:1;min-width:0}
+.cls .t span{display:block;font-size:13.5px;color:var(--muted)}
+.cls .t .flag{color:var(--warn);font-weight:600}
+.cls .cost{font-size:14px;font-weight:600;color:var(--sc);white-space:nowrap}
+.sw{width:50px;height:30px;border-radius:99px;background:#D9D9D4;position:relative;flex:none;margin-right:8px}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.sw.on{background:var(--text)} .sw.on::after{left:23px}
+.swwrap{min-width:56px;min-height:44px;display:flex;align-items:center;justify-content:flex-end}
+.sync{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
+.steps{margin:0;padding-left:20px;display:grid;gap:6px;font-size:15px}
+.src{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 6px 6px 16px;border-top:1px solid var(--line);min-height:56px}
+.src:first-child{border-top:0}
+.src .t{flex:1;min-width:0} .src .t span{display:block;font-size:13.5px;color:var(--muted)}
+.chev{color:var(--muted);font-size:20px;padding-right:10px}
+.map{display:grid;gap:4px;padding:12px 8px 12px 16px;border-top:1px solid var(--line)}
+.map:first-child{border-top:0}
+.map .raw{font-size:12.5px;color:var(--muted);letter-spacing:.02em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}
+.map .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mini{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid #CFCFCA;background:var(--surface);font:inherit;font-size:14px;font-weight:600;color:var(--text);cursor:pointer}
+.mini.on{background:var(--text);color:#fff;border-color:var(--text)}
+.test{display:inline-block;font-size:12px;font-weight:700;color:var(--warn);letter-spacing:.02em}
+.ask{border-top:1px solid var(--line);padding:12px 16px;display:grid;gap:8px;background:color-mix(in srgb,var(--warn) 7%,var(--surface))}
+.ask .q{font-weight:600;font-size:15px}
+.ask .opts2{display:flex;gap:8px;flex-wrap:wrap}
+.lock{background:linear-gradient(#2B2D35,#17181D);color:#fff;flex:1;display:flex;flex-direction:column;align-items:center;padding:56px 14px 20px;gap:4px}
+.lock .clock{font-size:76px;font-weight:300;letter-spacing:-.03em;line-height:1}
+.lock .date{font-size:17px;opacity:.85;margin-bottom:28px}
+.notif{width:100%;box-sizing:border-box;background:rgba(245,245,247,.92);color:#16161A;border-radius:20px;padding:12px 14px;display:grid;grid-template-columns:38px 1fr;gap:10px;align-items:start;text-align:left}
+.notif .ic{width:38px;height:38px;border-radius:9px;background:#fff;display:grid;place-items:center}
+.notif .ic svg{width:22px;height:22px}
+.notif .h{display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.notif .h span{font-weight:400;color:#6B6B73;font-size:13px}
+.notif p{margin:2px 0 0;font-size:14.5px;line-height:1.3}
+.linked{font-size:14px;color:var(--muted);font-weight:600;padding-right:8px;white-space:nowrap}
+.count{font-size:13px;color:var(--muted)}
+
+/* Laptop layouts */
+.dev.wide .page{padding:0 48px 40px}
+.dev.wide .hdr{padding:6px 48px}
+.landing-wide{display:grid;grid-template-columns:1.1fr .9fr;gap:64px;align-items:center;padding-top:72px;max-width:1080px;margin:0 auto;width:100%}
+.landing-wide h1.disp{font-size:60px}
+.app-wide{display:grid;grid-template-columns:400px 1fr;gap:40px;align-items:start;padding-top:28px;max-width:1080px;margin:0 auto;width:100%}
+.app-wide .stack{display:grid;gap:18px;min-width:0;align-content:start}
+
+.why{display:grid;gap:12px;max-width:1080px}
+.tbl{overflow-x:auto;border:1px solid var(--pg-line);border-radius:10px;background:var(--pg-card)}
+.tbl table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:10px 12px;border-top:1px solid var(--pg-line)}
+.tbl th{border-top:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--pg-muted);font-weight:600}
+.small-pg{margin:0;color:var(--pg-muted);font-size:14px;max-width:80ch}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow-pg">Leeway · Design stage · Signed off 20 Oct 2026</span>
+    <h1>Every Leeway screen, in real copy, at real size</h1>
+    <p>Sample data is a first-year student in week 7 of the fall term (7 Sep to 18 Dec 2026). The caption under each phone shows its measured word count against its budget.</p>
+  </header>
+
+  <h2 class="group">Phone (375 px): sign-up and logging</h2>
+  <div class="phones" id="phones"></div>
+  <h2 class="group">Phone (375 px): calendar, planning, syllabus, alerts</h2>
+  <div class="phones" id="phones2"></div>
+  <h2 class="group">Laptop (1280 px)</h2>
+  <div class="laptops" id="laptops"></div>
+
+  <section class="why">
+    <h2 class="group">Why it looks like this</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Borrowed from</th><th>The pattern</th><th>Where it is in Leeway</th><th>Why it works</th></tr></thead>
+      <tbody>
+        <tr><td><b>Monzo</b> budgets</td><td>The amount <em>left</em> is the biggest thing on the row, not the amount spent</td><td>Big "2 left" number on every course</td><td>Remaining framing is what you act on. People protect a labelled pot (mental accounting).</td></tr>
+        <tr><td><b>Duolingo</b> hearts</td><td>Red hearts that go grey when lost</td><td>Six hearts per course: red (left), red outline (planned), grey (used)</td><td>A picture is read before a number, and a grey heart stings more than "81%" (loss aversion). Streaks, gems and the guilt owl are left out.</td></tr>
+        <tr><td><b>Flighty</b></td><td>One status word, always from the same short list</td><td>Safe, Burning fast, Last life, Out of lives, Over the limit, in its colour, no badge</td><td>A fixed vocabulary is learned once and then scanned, not read.</td></tr>
+        <tr><td><b>YNAB</b></td><td>Green, amber and red mean state and nothing else</td><td>Only the number and the status word carry state colour. Buttons and text are ink.</td><td>When colour only ever means risk, risk is seen at once (isolation effect).</td></tr>
+        <tr><td><b>Citymapper</b></td><td>The verdict first, the detail second</td><td>The line under the field: "This uses 1 life. 4 left, 8 weeks to go."</td><td>Feedback at the moment of choice changes the choice; after the save it is only a record.</td></tr>
+        <tr><td><b>Things 3</b> and Apple Reminders</td><td>One entry field, hairline lists, no shadows, system font</td><td>Field and "Log a skip" at the top, courses as one hairline list, the phone's own font (SF Pro on iPhone)</td><td>Fewer choices make faster decisions (Hick's law). The system font makes it feel native, not like a website.</td></tr>
+        <tr><td><b>Gmail</b> Undo send</td><td>Undo instead of "Are you sure?"</td><td>"Skip logged. Undo" pinned at the bottom for 5 seconds</td><td>A wrong tap costs nothing, so logging stays quick and honest.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small-pg">Left out on purpose: Apple Fitness rings (a ring is a goal you close, but lives only go down, and two shapes would compete with the hearts) and Strava or BeReal recaps (they suit the Release 2 weekly check).</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Element</th><th>Word budget</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Landing, above the button</td><td>30 words or fewer</td><td>A skimmer reads about 4 to 5 words a second, so 5 seconds covers the headline, one line and the button.</td></tr>
+        <tr><td>Course row</td><td>10 words or fewer</td><td>Name, number, one status word, weeks to go. More than that and rows stop being scannable.</td></tr>
+        <tr><td>Skip preview</td><td>15 words or fewer</td><td>It is read while the thumb is over the button.</td></tr>
+        <tr><td>Risk line</td><td>8 words or fewer</td><td>One course, one state.</td></tr>
+        <tr><td>Toast</td><td>3 words</td><td>It disappears in 5 seconds.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small-pg">Order on /app follows what you act on first: the risk line (only when a course is at risk), the field and its preview, courses sorted by fewest lives left, then every skip ever logged. Lines are 1 px; 2 px only marks focus and the selected course.</p>
+  </section>
+</div>
+
+<script>
+const APP="Leeway"; // product name: change here only
+const HP="M12 21s-7.6-4.7-9.7-9.3C.9 8.3 3.1 4.4 6.8 4.4c2.1 0 3.5 1.1 4.3 2.4h1.8c.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.9 3.9 4.4 7.3C19.6 16.3 12 21 12 21z";
+const LBL={full:"life left",planned:"planned skip",used:"life used"};
+function heart(kind){
+  const b=kind==="planned"?`<path d="${HP}" fill="none" stroke="var(--heart)" stroke-width="2"/>`:`<path d="${HP}" fill="${kind==="used"?"var(--used)":"var(--heart)"}"/>`;
+  return `<svg viewBox="0 0 24 24" role="img" aria-label="${LBL[kind]}">${b}</svg>`;
+}
+function hearts(total,used,planned){const left=total-used-planned;let s="";for(let i=0;i<total;i++)s+=heart(i<left?"full":i<left+planned?"planned":"used");return `<div class="hearts">${s}</div>`}
+const logo=`<a class="brand" href="#" onclick="return false">${heart("full")}${APP}</a>`;
+
+const COURSES=[
+  {n:"Statistics II",t:6,u:5,p:0,st:"Last life",s:"danger",m:"8 weeks to go"},
+  {n:"Microeconomics",t:6,u:3,p:1,st:"Burning fast",s:"warn",m:"8 weeks to go · 1 planned"},
+  {n:"Algorithms and Data Structures",t:6,u:1,p:0,st:"Safe",s:"safe",m:"8 weeks to go",est:true},
+  {n:"Financial Accounting",t:6,u:1,p:0,st:"Safe",s:"safe",m:"8 weeks to go"},
+];
+const SKIPS=[["Microeconomics","Tomorrow, Wed 21 Oct · planned",true],["Algorithms and Data Structures","Today, Tue 20 Oct"],["microeconomics","Mon 19 Oct"],["Statistics II","Tue 13 Oct · double class"],["Statistics II","Tue 13 Oct · double class"],["Financial Accounting","Fri 9 Oct"],["Statistics II","Tue 6 Oct"]];
+const course=(c,inline=false)=>{const left=c.t-c.u-c.p;
+  return `<div class="course s-${c.s}"><div class="crow"><div style="min-width:0;display:grid;gap:3px"><span class="cname">${c.n}</span><span class="meta"><span class="state">${c.st}</span> · ${c.m}${c.est?" · estimated":""}</span></div><div class="big" aria-label="${left} lives left"><b>${left}</b><small>left</small></div></div>${hearts(c.t,c.u,c.p)}${c.est&&inline?`<div class="inline"><label>Sessions in this course<input class="input" value="30" aria-label="Sessions in this course"></label><label>Missed before today<input class="input" value="0" aria-label="Missed before today"></label></div>`:""}</div>`};
+const legend=`<div class="legend"><span>${heart("full")}Left</span><span>${heart("planned")}Planned</span><span>${heart("used")}Used</span></div>`;
+const courseList=(list,inline)=>`<div class="courses">${list.map(c=>course(c,inline)).join("")}${legend}</div>`;
+const appHdr=`<div class="hdr">${logo}<nav><button class="link quiet" type="button">Settings</button><button class="link" type="button" data-testid="logout">Log out</button></nav></div>`;
+const form=state=>{
+  const typing=state==="typing";
+  const prev=typing?`<p class="preview s-safe"><b>This uses 1 life.</b> <span class="n">4 left</span>, 8 weeks to go: about one skip every two weeks.</p>`
+    :state==="spare"?`<p class="preview s-danger"><b>This uses your last spare.</b> After it, the next skip takes you below 80%.</p>`
+    :`<p class="preview">Type a class to see what skipping it would cost.</p>`;
+  const pills=state==="empty"?"":`<div class="pills">${["Statistics II","Microeconomics","Financial Accounting","Algorithms and Data Structures"].map(n=>`<button class="pill ${typing&&n==="Financial Accounting"?"on":""}${state==="spare"&&n==="Statistics II"?"on":""}" type="button">${n}</button>`).join("")}</div>`;
+  const val=typing?"Financial Accounting":state==="spare"?"Statistics II":"";
+  return `<div class="field"><label>Which class are you skipping?</label>${pills}<input class="input ${typing?"focus":""}" data-testid="core-input" placeholder="e.g. Microeconomics" value="${val}" aria-label="Which class are you skipping?">${prev}<div class="opts"><div class="seg"><button class="${state==="spare"?"":"on"}" type="button">Today</button><button class="${state==="spare"?"on":""}" type="button">Tomorrow</button></div><span class="toggle"><span class="tg" aria-hidden="true"></span>Double class</span></div><button class="btn" type="button" data-testid="core-submit">Log a skip</button></div>`;
+};
+const recent=n=>`<div class="sec-h"><h2>Recent skips</h2><span class="small">${SKIPS.length} logged</span></div><div class="list">${SKIPS.slice(0,n).map(([t,d,pl])=>`<div class="li" data-testid="core-item"><div class="t">${t}<span>${d}</span></div><button class="x" type="button">${pl?"Cancel":"Delete"}</button></div>`).join("")}</div>`;
+const SUB="For IE University students. Before you skip a class, see what it costs against the 80% rule.";
+const landingCourse={n:"Microeconomics",t:6,u:4,p:0,st:"Burning fast",s:"warn",m:"8 weeks to go"};
+
+const SCREENS={
+  landing:()=>`<div class="hdr">${logo}<nav><a class="link" href="#" onclick="return false">Log in</a></nav></div><div class="page" style="padding-top:36px;gap:20px">
+    <h1 class="disp">Never fail a class on attendance.</h1><p class="sub">${SUB}</p>
+    <button class="btn" type="button">Sign up free</button>
+    <div style="margin-top:14px">${courseList([landingCourse])}</div></div>`,
+  signup:()=>`<div class="hdr">${logo}<nav><a class="link" href="#" onclick="return false">Log in</a></nav></div><div class="page" style="padding-top:32px;gap:18px">
+    <h1 class="title">Create your account</h1><p class="small" style="margin:-8px 0 0">Only an email and a password. Nothing else is stored about you.</p>
+    <div class="field"><label>Email</label><input class="input" data-testid="signup-email" value="lucia.m@student.ie.edu" aria-label="Email"></div>
+    <div class="field"><label>Password</label><input class="input" data-testid="signup-password" type="password" value="••••••••" aria-label="Password"><span class="small">6 characters or more</span></div>
+    <button class="btn" type="button" data-testid="signup-submit">Sign up free</button>
+    <p class="small" style="margin:0;display:flex;align-items:center;gap:2px;flex-wrap:wrap">Already have an account?<a class="link u" href="#" onclick="return false">Log in</a></p></div>`,
+  login:()=>`<div class="hdr">${logo}<nav><a class="link" href="#" onclick="return false">Sign up</a></nav></div><div class="page" style="padding-top:32px;gap:18px">
+    <h1 class="title">Log in</h1>
+    <div class="field"><label>Email</label><input class="input" data-testid="login-email" value="lucia.m@student.ie.edu" aria-label="Email"></div>
+    <div class="field"><label>Password</label><input class="input focus" data-testid="login-password" type="password" value="•••••••" aria-label="Password"></div>
+    <p class="err" role="alert">That email and password don't match.</p>
+    <button class="btn" type="button" data-testid="login-submit">Log in</button>
+    <p class="small" style="margin:0;display:flex;align-items:center;gap:2px;flex-wrap:wrap">New here?<a class="link u" href="#" onclick="return false">Sign up free</a></p></div>`,
+  app:()=>`${appHdr}<div class="page" style="padding-top:0;padding-bottom:96px">
+    <p class="banner" role="status"><i></i>Statistics II is on its last life. Guard it.</p>
+    ${form("typing")}
+    <div class="sec-h"><h2>Your courses</h2><span class="small">Week 7 of 15</span></div>
+    ${courseList(COURSES,true)}${recent(4)}</div><div class="toast" role="status">Skip logged.<button class="link u" type="button">Undo</button></div>`,
+  empty:()=>`${appHdr}<div class="page" style="padding-top:18px">${form("empty")}
+    <div class="sec-h"><h2>Your courses</h2></div>
+    <p class="small" style="margin:-8px 0 0">No skips yet. Your courses will show up here like this:</p>
+    <div class="ghost" aria-hidden="true">${courseList([{n:"Example course",t:6,u:0,p:0,st:"Safe",s:"safe",m:"8 weeks to go"}])}</div></div>`,
+  spare:()=>`${appHdr}<div class="page" style="padding-top:18px">${form("spare")}</div>
+    <div class="scrim"><div class="sheet" role="dialog" aria-label="Plan your last spare">${hearts(6,5,0)}<h3>This is your last spare. Plan it anyway?</h3><p class="small" style="margin:0">Statistics II, tomorrow. After it, the next skip takes you below 80%.</p><button class="btn" type="button">Keep my spare</button><button class="link u" type="button" style="justify-content:center">Plan it anyway</button></div></div>`,
+  settings:()=>`${appHdr}<div class="page" style="padding-top:24px;gap:18px"><h1 class="title">Settings</h1>
+    <div class="list"><div class="li" style="padding-right:16px"><div class="t">Account<span>lucia.m@student.ie.edu</span></div></div></div>
+    <div class="list"><div class="li" style="display:grid;gap:10px;padding:14px 16px"><div class="t">Delete my account and data<span>Removes your account, every course and every skip. This can't be undone.</span></div><button class="btn danger" type="button">Delete my account</button></div></div></div>`,
+  landingWide:()=>`<div class="hdr">${logo}<nav><a class="link" href="#" onclick="return false">Log in</a></nav></div><div class="page"><div class="landing-wide">
+    <div style="display:grid;gap:24px"><h1 class="disp">Never fail a class on attendance.</h1><p class="sub" style="font-size:20px;max-width:32ch">${SUB}</p><div style="max-width:300px"><button class="btn" type="button">Sign up free</button></div></div>
+    <div>${courseList([landingCourse,{n:"Financial Accounting",t:6,u:1,p:0,st:"Safe",s:"safe",m:"8 weeks to go"}])}</div></div></div>`,
+  appWide:()=>`${appHdr}<div class="page"><div class="app-wide"><div class="stack" style="padding-top:12px">${form("typing")}</div>
+    <div class="stack"><p class="banner" role="status"><i></i>Statistics II is on its last life. Guard it.</p><div class="sec-h" style="margin-top:0"><h2>Your courses</h2><span class="small">Week 7 of 15</span></div>${courseList(COURSES,true)}${recent(5)}</div></div></div><div class="toast" style="left:auto;right:48px;width:340px">Skip logged.<button class="link u" type="button">Undo</button></div>`
+};
+const PHONES=[["landing","Landing /","one button, a live course row instead of feature captions",45],["signup","Sign up /signup","email and password only",35],["login","Log in /login","wrong password state",30],["app","App /app","risk line, live preview, courses, recent skips, undo",120],["empty","App, first visit","empty state with a faded example",45],["spare","Planning the last spare","the only dialog in the product",60],["settings","Settings","delete account",40]];
+const LAPS=[["landingWide","Landing / at 1280 px"],["appWide","App /app at 1280 px"]];
+
+const IC={"home": "<path d=\"M4 11 12 4l8 7v9h-5v-6H9v6H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/>", "plan": "<rect x=\"4\" y=\"5\" width=\"16\" height=\"15\" rx=\"2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/><path d=\"M4 10h16M9 3v4M15 3v4\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"/>", "set": "<circle cx=\"12\" cy=\"12\" r=\"3\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/><path d=\"M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"/>"};
+const tabs=on=>`<nav class="tabs" aria-label="Main">${[["home","Home"],["plan","Plan"],["set","Settings"]].map(([k,l])=>`<button type="button" class="${k===on?"on":""}"><svg viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg>${l}</button>`).join("")}</nav>`;
+const hdr2=t=>`<div class="hdr">${logo}<nav><button class="link" type="button" data-testid="logout">Log out</button></nav></div>`;
+const cls=(time,name,sub,right)=>`<div class="cls"><span class="time">${time}</span><div class="t">${name}<span>${sub}</span></div>${right}</div>`;
+const tog=on=>`<span class="swwrap"><span class="sw ${on?"on":""}" role="switch" aria-checked="${on}" aria-label="Skipped"></span></span>`;
+Object.assign(SCREENS,{
+  connect:()=>`${hdr2()}<div class="page" style="padding-top:24px"><h1 class="title">Connect your calendar</h1>
+    <p class="small" style="margin:-8px 0 0">${APP} counts your sessions and finds your exams. Your link stays private.</p>
+    <div class="list">
+      <div class="src"><div class="t"><b>Blackboard</b><span>Calendar, gear icon, Get external calendar link</span></div><span class="chev">›</span></div>
+      <div class="src"><div class="t">My IE Agenda<span>Copy the subscription link</span></div><span class="chev">›</span></div>
+      <div class="src"><div class="t">Google, iPhone or Outlook<span>Any calendar link that ends in .ics</span></div><span class="chev">›</span></div></div>
+    <div class="field"><label>Paste the link</label><input class="input focus" value="webcal://…/calendar.ics" aria-label="Calendar link"></div>
+    <button class="btn" type="button">Connect</button>
+    <p class="small" style="margin:0">You can skip this. Everything works without a calendar.</p></div>`,
+  mapping:()=>`${hdr2()}<div class="page" style="padding-top:24px"><h1 class="title">We found 4 courses</h1>
+    <p class="small" style="margin:-8px 0 0">Check each name once. Other events are never saved.</p>
+    <div class="list">
+      ${[["STATISTICS II BBA2 S1 SEC2","Statistics II","Matches your course",1],["MICROECONOMICS BBA1 S2 SEC3","Microeconomics","Matches your course",1],["ALGORITHMS AND DATA STRUCTURES","Algorithms and Data Structures","Matches your course",1],["FINANCIAL ACCOUNTING BBA1 S1","Financial Accounting","New course · 30 sessions",0]].map(([r,n,d,m])=>`<div class="map"><span class="raw">${r}</span><div class="row"><div class="t"><b>${n}</b><div class="count">${d}</div></div>${m?'<span class="linked">✓ Linked</span>':'<button class="mini" type="button">Add</button>'}</div></div>`).join("")}
+    </div><button class="btn" type="button">Confirm 4 courses</button></div>`,
+  today:()=>`${hdr2()}<div class="page" style="padding-top:0">
+    <p class="banner" role="status"><i></i>Statistics II is on its last life. Guard it.</p>
+    ${form("empty").replace('<label>Which class are you skipping?</label>','<label>Which class are you skipping?</label><div class="pills">'+["Statistics II","Microeconomics","Financial Accounting"].map(n=>`<button class="pill" type="button">${n}</button>`).join("")+'</div>')}
+    <div class="sec-h"><h2>Today</h2><span class="small">Missed?</span></div>
+    <div class="list">${cls("09:00","Financial Accounting","Ses. 14 · Room S-201",tog(false))}${cls("11:30","Statistics II","Ses. 13–14 · double class",tog(false))}${cls("15:00","Algorithms and Data Structures","Ses. 15 · missed",tog(true))}</div>
+    <div class="sync"><span>Last synced 10:42 · unmarked classes count as attended</span><button class="link u" type="button">Refresh</button></div></div>${tabs("home")}`,
+  examcourse:()=>`${hdr2()}<div class="page" style="padding-top:20px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px" class="s-warn"><div><h1 class="title">Microeconomics</h1><p class="small" style="margin:2px 0 0"><span class="state">Burning fast</span> · 8 weeks to go</p></div><div class="big"><b>2</b><small>left</small></div></div>
+    ${hearts(6,3,1)}
+    <div class="sec-h"><h2>Coming up</h2><span class="small">from your syllabus</span></div>
+    <div class="list">${cls("Wed 21","Session 15","Elasticity. Probably on the test.",`<span class="cost" style="color:var(--muted)">Planned</span>`)}${cls("Mon 26","Session 16","<b style='color:var(--text)'>Continuous Evaluation II · 7.5%</b>",`<span class="cost" style="color:var(--text)">Test day</span>`)}${cls("Wed 28","Session 17","Market structures",`<span class="cost" style="color:var(--muted)">1 life</span>`)}</div>
+    <p class="preview" style="margin-top:4px"><b>Your planned skip is the class before the test.</b> Skipping Monday costs a life and the test.</p>
+    <button class="btn" type="button" style="background:var(--surface);color:var(--text);border:1px solid #CFCFCA">Import a newer syllabus</button></div>${tabs("home")}`,
+  trip:()=>`${hdr2()}<div class="page" style="padding-top:20px"><h1 class="title">Trip check</h1>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="small" style="display:grid;gap:4px">From<input class="input" value="Thu 5 Nov" aria-label="From"></label><label class="small" style="display:grid;gap:4px">To<input class="input" value="Mon 9 Nov" aria-label="To"></label></div>
+    <div class="s-warn"><p class="verdict">You'd miss 3 classes. <span class="n">Microeconomics</span> would be on its last life.</p></div>
+    <div class="list">${cls("Thu 5","Algorithms and Data Structures","Ses. 20",`<span class="cost s-safe">4 left after</span>`)}${cls("Fri 6","Financial Accounting","Ses. 19",`<span class="cost s-safe">4 left after</span>`)}${cls("Mon 9","Microeconomics","Ses. 20",`<span class="cost s-warn">1 left after</span>`)}</div>
+    <button class="btn" type="button">Save as planned skips</button>
+    <p class="small" style="margin:-6px 0 0">Any last spare asks first.</p></div>${tabs("plan")}`,
+  missone:()=>`${hdr2()}<div class="page" style="padding-top:20px"><h1 class="title">If you have to miss one</h1>
+    <p class="small" style="margin:-8px 0 0">This week's classes, by what they cost. Test days and last lives are left out.</p>
+    <div class="list">${cls("Fri 23","Financial Accounting","Ses. 15 · nothing due",`<span class="cost s-safe">4 left after</span>`)}${cls("Wed 21","Microeconomics","Already planned",`<span class="cost" style="color:var(--muted)">Planned</span>`)}</div>
+    <p class="small" style="margin:0">Left out: Statistics II (last life) and Algorithms and Data Structures on Thu 22 (test day).</p>
+    <div class="sec-h"><h2>Plan ahead</h2></div>
+    <div class="list"><div class="src"><div class="t">Trip check<span>Pick dates, see what they cost</span></div><span class="chev">›</span></div><div class="src"><div class="t">Can I skip this week?<span>One line per course</span></div><span class="chev">›</span></div></div></div>${tabs("plan")}`,
+  syllabus:()=>`${hdr2()}<div class="page" style="padding-top:20px"><h1 class="title">Check your syllabus</h1>
+    <p class="small" style="margin:-8px 0 0">Algorithms and Data Structures · 30 sessions. Nothing is saved until you confirm.</p>
+    <div class="list">
+      ${[["Session 11","Continuous Evaluation I","Thu 8 Oct · 7.5% · assumed"],["Session 16","Continuous Evaluation II","Thu 22 Oct · 7.5% · assumed"],["Session 30","Final exam","Thu 10 Dec · 30%"]].map(([a,b,c])=>`<div class="map"><div class="row"><div class="t"><b>${a}</b> · ${b}<div class="count">${c}</div></div><span class="linked">✓</span></div></div>`).join("")}
+      <div class="ask"><span class="q">The text says 3 tests, the session list shows 4. Which is right?</span><div class="opts2"><button class="mini" type="button">3 tests</button><button class="mini on" type="button">4 tests</button></div></div>
+      <div class="ask"><span class="q">Which day does your group present?</span><div class="opts2"><button class="mini" type="button">Session 28</button><button class="mini" type="button">Session 29</button></div></div>
+    </div><button class="btn" type="button">Confirm and save</button></div>`,
+  alert:()=>`<div class="lock"><div class="clock">21:00</div><div class="date">Tuesday 20 October</div>
+    <div class="notif"><div class="ic">${heart("full")}</div><div><div class="h">${APP}<span>now</span></div><p><b>Microeconomics at 9:00 tomorrow.</b> You planned to skip it, and it's the class before the test.</p></div></div>
+    <div class="notif" style="opacity:.8"><div class="ic">${heart("full")}</div><div><div class="h">${APP}<span>Sun 21:00</span></div><p>Skipped anything else this week? 2 classes left to check.</p></div></div></div>`,
+  alertset:()=>`${hdr2()}<div class="page" style="padding-top:20px"><h1 class="title">Settings</h1>
+    <div class="list">
+      <div class="src"><div class="t">Night-before alert<span>21:00, only for a course at risk tomorrow</span></div>${tog(true)}</div>
+      <div class="src"><div class="t">Sunday check<span>21:00, if you have classes to mark</span></div>${tog(true)}</div></div>
+    <p class="small" style="margin:-6px 0 0">On iPhone, add ${APP} to your Home Screen first. Safari only sends alerts to apps there.</p>
+    <div class="list"><div class="src"><div class="t">IE calendar · connected<span>Last synced 10:42</span></div><button class="x link u" type="button" style="font-weight:400;color:var(--muted)">Disconnect</button></div><div class="src"><div class="t">Syllabi<span>2 of 4 courses imported</span></div><span class="chev">›</span></div></div>
+    <div class="list"><div class="src"><div class="t">lucia.m@student.ie.edu</div></div><div class="src"><button class="link" type="button" style="color:var(--danger);padding:0;font-weight:600">Delete my account and data</button></div></div></div>${tabs("set")}`,
+  syncfail:()=>`${hdr2()}<div class="page" style="padding-top:18px"><p style="margin:0;font-weight:600;font-size:16px">Your calendar looks incomplete. Try again.</p>
+    <p class="small" style="margin:-8px 0 0">Last good sync 10:42. Nothing was removed.</p>
+    <button class="btn" type="button">Try again</button>
+    <div class="sec-h"><h2>Today</h2><span class="small">from 10:42</span></div>
+    <div class="list" style="opacity:.6">${cls("09:00","Financial Accounting","Ses. 14",tog(false))}${cls("11:30","Statistics II","Ses. 13–14",tog(false))}</div></div>${tabs("home")}`,
+});
+PHONES.push(["connect","Connect a calendar","Blackboard first, optional",70],["mapping","Course mapping","one check per course",60],["today","Home with a calendar","log field, then today's classes",90],["examcourse","Course with exams","syllabus dates, test-day cost",80],["trip","Trip check","verdict first, then each class",75],["missone","If you have to miss one","cheapest first, tests left out",75],["syllabus","Syllabus review","confirm line by line, conflicts asked",90],["alert","Night-before alert","lock screen, 21:00",40],["alertset","Settings with alerts","alerts, calendar, syllabi",80],["syncfail","Sync failed","old data kept",50]);
+
+function render(){
+  const fig=([k,t,d,b])=>`<figure data-budget="${b}"><div class="fit" data-w="375"><div class="dev" style="width:375px;min-height:760px">${SCREENS[k]()}</div></div><figcaption><b>${t}</b> · ${d} · <span class="wc"></span></figcaption></figure>`;
+  document.getElementById("phones").innerHTML=PHONES.slice(0,7).map(fig).join("");document.getElementById("phones2").innerHTML=PHONES.slice(7).map(fig).join("");
+  document.getElementById("laptops").innerHTML=LAPS.map(([k,t])=>`<figure><div class="fit lap" data-w="1280"><div class="dev wide" style="width:1280px;min-height:${k==="landingWide"?620:1000}px">${SCREENS[k]()}</div></div><figcaption><b>${t}</b></figcaption></figure>`).join("");
+  document.querySelectorAll("#phones figure,#phones2 figure").forEach(f=>{const n=f.querySelector(".dev").textContent.trim().split(/\s+/).filter(w=>/[A-Za-z0-9]/.test(w)).length;f.querySelector(".wc").textContent=`${n} words (budget ${f.dataset.budget})`;f.dataset.words=n});
+  scale();
+}
+function scale(){document.querySelectorAll(".fit").forEach(f=>{const d=f.firstElementChild,w=+f.dataset.w,s=Math.min(1,f.clientWidth/w);d.style.transform=`scale(${s})`;f.style.height=d.offsetHeight*s+"px"})}
+render();addEventListener("resize",scale);
+</script>

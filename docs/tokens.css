@@ -1,0 +1,36 @@
+/* Leeway design tokens, design stage sign-off 2026-10-20 ("Quiet"). Contrast checked by edtech/design/contrast.py: all pairs WCAG AA. */
+:root {
+  /* Colour: ink on warm grey. Green/amber/red mean lives state only. Red also = hearts. */
+  --bg: #F6F6F4;
+  --surface: #FFFFFF;
+  --line: #E4E4E0;        /* 1px hairlines */
+  --line-input: #CFCFCA;  /* input and pill borders */
+  --text: #16161A;
+  --muted: #5E5E66;
+  --primary: #16161A;     /* buttons are ink, never a brand colour */
+  --on-primary: #FFFFFF;
+  --heart: #E0243A;       /* life left (filled), planned skip (2px outline) */
+  --used: #8C8C94;        /* life used (filled grey) */
+  --safe: #1A7346;
+  --warn: #A35400;        /* Burning fast */
+  --danger: #C21F3A;      /* Last life, Out of lives, Over the limit, delete */
+  --seg-bg: #E9E9E5;      /* Today/Tomorrow segmented control */
+  --switch-off: #D9D9D4;
+
+  /* Type: the phone's own font. No web fonts. */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fs-hero: 38px;  /* landing h1, 60px on laptop; weight 700, tracking -0.025em */
+  --fs-title: 28px; /* page titles; weight 700 */
+  --fs-big: 34px;   /* lives-left number; weight 700, tabular-nums */
+  --fs-h2: 20px;
+  --fs-body: 16px;
+  --fs-input: 17px; /* >= 16px so iOS never zooms */
+  --fs-meta: 14px;
+
+  /* Shape */
+  --radius: 12px;   /* lists, buttons, inputs */
+  --radius-pill: 999px;
+  --tap: 44px;      /* minimum tap target */
+  --btn-h: 52px;
+  --gutter: 20px;   /* phone side padding; 48px on laptop */
+}

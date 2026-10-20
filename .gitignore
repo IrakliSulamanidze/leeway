@@ -1,0 +1,16 @@
+# secrets: never commit
+.env*
+!.env.example
+
+# dependencies and build output
+node_modules/
+.next/
+out/
+.vercel/
+coverage/
+playwright-report/
+test-results/
+
+# OS / editor
+.DS_Store
+*.log
