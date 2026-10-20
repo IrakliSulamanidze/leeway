@@ -159,7 +159,7 @@ describe("runNightly", () => {
     expect(forUser(sent, a.userId)).toEqual([
       {
         userId: a.userId,
-        body: "Statistics II at 9:00 tomorrow. It's on its last life.",
+        body: "Tomorrow 9:00 Statistics II. Last life, don't skip.",
       },
     ]);
     expect(forUser(sent, calm.userId)).toEqual([]);
@@ -189,7 +189,7 @@ describe("runNightly", () => {
     };
     await runNightly({ db, now: NIGHT, send, syncFeed });
     expect(forUser(sent, a.userId)[0]?.body).toBe(
-      "Statistics II at 9:00 tomorrow. It's on its last life.\nCalendar as of Mon.",
+      "Tomorrow 9:00 Statistics II. Last life, don't skip.\nCalendar as of Mon.",
     );
   });
 

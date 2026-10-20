@@ -74,19 +74,33 @@ function lineFor(c: AlertCourse, i: AlertInput): string | null {
   // Without a class tomorrow (or a planned skip of one) lives are no news tonight.
   const attending = tomorrows.length > 0 || planned;
 
-  const reasons: string[] = [];
-  if (planned) reasons.push("you planned to skip it");
-  if (test) reasons.push("it's a test day");
-  else if (beforeTest) reasons.push("it's the class before the test");
-  if (attending && left < 0) reasons.push("you're over the limit");
-  else if (attending && left === 0) reasons.push("you're out of lives");
-  else if (attending && left === 1) reasons.push("it's on its last life");
-  if (!reasons.length) return null;
-
+  // Copy from the spec table: "Tomorrow 9:00 Stats. Last life, don't skip." and
+  // "You planned to skip Micro tomorrow. That leaves 1 life."
+  const testNote = test
+    ? "Test day, don't skip."
+    : beforeTest
+      ? "It's the class before the test."
+      : "";
+  if (planned) {
+    const lives = `That leaves ${left} ${Math.abs(left) === 1 ? "life" : "lives"}.`;
+    return [`You planned to skip ${c.name} tomorrow.`, lives, testNote]
+      .filter(Boolean)
+      .join(" ");
+  }
+  const lifeNote = !attending
+    ? ""
+    : left < 0
+      ? "Over the limit. Talk to your professor."
+      : left === 0
+        ? "Out of lives. The next skip takes you below 80%."
+        : left === 1
+          ? "Last life, don't skip."
+          : "";
+  const note = test ? testNote : lifeNote;
+  if (!note) return null;
   const first = tomorrows[0];
-  const when = first ? ` at ${madridTime(first.starts_at)}` : "";
-  const why = reasons.slice(0, 2).join(", and ");
-  return `${c.name}${when} tomorrow. ${why[0].toUpperCase()}${why.slice(1)}.`;
+  const when = first ? ` ${madridTime(first.starts_at)}` : "";
+  return `Tomorrow${when} ${c.name}. ${note}`;
 }
 
 export function nightAlert(i: AlertInput): string | null {

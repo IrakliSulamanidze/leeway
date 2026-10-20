@@ -34,7 +34,7 @@ describe("nightAlert", () => {
         classes: [cls("s", "2026-10-21T09:00:00Z")],
       }),
     );
-    expect(msg).toBe("Statistics II at 11:00 tomorrow. It's on its last life.");
+    expect(msg).toBe("Tomorrow 11:00 Statistics II. Last life, don't skip.");
   });
 
   it("warns when out of lives", () => {
@@ -44,7 +44,9 @@ describe("nightAlert", () => {
         classes: [cls("s", "2026-10-21T09:00:00Z")],
       }),
     );
-    expect(msg).toBe("Statistics II at 11:00 tomorrow. You're out of lives.");
+    expect(msg).toBe(
+      "Tomorrow 11:00 Statistics II. Out of lives. The next skip takes you below 80%.",
+    );
   });
 
   it("warns about a test tomorrow", () => {
@@ -55,7 +57,7 @@ describe("nightAlert", () => {
         tests: [{ course_id: "m", on_date: TOMORROW, class_starts_at: null }],
       }),
     );
-    expect(msg).toBe("Microeconomics at 9:00 tomorrow. It's a test day.");
+    expect(msg).toBe("Tomorrow 9:00 Microeconomics. Test day, don't skip.");
   });
 
   it("reminds a planned skip of the class before the test (mockup copy)", () => {
@@ -84,7 +86,7 @@ describe("nightAlert", () => {
       }),
     );
     expect(msg).toBe(
-      "Microeconomics at 9:00 tomorrow. You planned to skip it, and it's the class before the test.",
+      "You planned to skip Microeconomics tomorrow. That leaves 5 lives. It's the class before the test.",
     );
   });
 
@@ -119,7 +121,9 @@ describe("nightAlert", () => {
         ],
       }),
     );
-    expect(msg).toBe("Microeconomics tomorrow. You planned to skip it.");
+    expect(msg).toBe(
+      "You planned to skip Microeconomics tomorrow. That leaves 5 lives.",
+    );
   });
 
   it("combines several courses into one message, earliest class first", () => {
@@ -137,7 +141,7 @@ describe("nightAlert", () => {
       }),
     );
     expect(msg).toBe(
-      "Microeconomics at 9:00 tomorrow. It's a test day.\nStatistics II at 11:00 tomorrow. It's on its last life.",
+      "Tomorrow 9:00 Microeconomics. Test day, don't skip.\nTomorrow 11:00 Statistics II. Last life, don't skip.",
     );
   });
 
@@ -150,7 +154,7 @@ describe("nightAlert", () => {
       }),
     );
     expect(msg).toBe(
-      "Statistics II at 11:00 tomorrow. It's on its last life.\nCalendar as of Tue.",
+      "Tomorrow 11:00 Statistics II. Last life, don't skip.\nCalendar as of Tue.",
     );
   });
 });
