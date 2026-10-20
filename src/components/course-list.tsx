@@ -10,7 +10,6 @@ import {
   sessionsFor,
 } from "@/lib/rules/lives";
 import Link from "next/link";
-import { CourseNumbers } from "./course-numbers";
 import { HeartLegend, Hearts } from "./hearts";
 
 export type CourseView = {
@@ -106,8 +105,8 @@ export function courseMeta(c: CourseView) {
   );
 }
 
-// `linked` (on /app): names open the course page, and a new course's card
-// shows the inline sessions row until its number is set.
+// `linked` (on /app): names open the course page, and a course still on the
+// default session count links there to set the real one.
 export function CourseList({
   courses,
   linked = false,
@@ -153,12 +152,15 @@ export function CourseList({
             </div>
             <Hearts lives={c.lives} left={c.left} planned={c.planned} />
             {linked && c.estimated && (
-              <CourseNumbers
-                id={c.id}
-                name={c.name}
-                sessions={c.sessions}
-                missedBefore={c.missedBefore}
-              />
+              <p className="m-0 text-sm text-muted">
+                Guessing {c.sessions} sessions.{" "}
+                <Link
+                  href={`/app/courses/${c.id}`}
+                  className="-my-2 inline-flex min-h-11 items-center font-semibold text-ink underline"
+                >
+                  Set the real number
+                </Link>
+              </p>
             )}
           </li>
         ))}
