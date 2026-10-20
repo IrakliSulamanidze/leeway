@@ -172,11 +172,15 @@ export async function runNightly(deps: NightlyDeps): Promise<NightlyResult> {
   for (const r of rows ?? [])
     byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), r]);
   const night = madridToday(now);
+  // Stop before Vercel's 300 s limit; users run in random order, so a cut
+  // never starves the same people every night.
+  const stopAt = Date.now() + 270_000;
 
   for (const userId of shuffle(
     [...byUser.keys()],
     deps.random ?? Math.random,
   )) {
+    if (Date.now() > stopAt) break;
     result.users++;
     const message = await alertFor(db, userId, now, deps);
     if (!message) continue;
