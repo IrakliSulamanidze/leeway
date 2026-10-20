@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 22
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  static:
+    name: static (format, lint, types, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - run: npx prettier --check .
+      - run: npx next typegen
+      - run: npx tsc --noEmit
+      - run: npx eslint . --max-warnings 0
+      - run: npx next build
+
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - name: Commit subjects, PR title, no emoji, no leftovers in src/
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD~1' }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/hygiene-check.mjs
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - run: npx vitest run
+
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: node scripts/contract-check.mjs
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: gitleaks (full history, default rules + IE feed rule)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - run: npx next build
+      - name: No secret keys in the client bundle
+        run: |
+          if grep -rIlE 'sb_secret_|service_role|SUPABASE_SECRET_KEY|GEMINI_API_KEY|VAPID_PRIVATE_KEY|CRON_SECRET|AIza[0-9A-Za-z_-]{35}' .next/static; then
+            echo "secret-looking value found in .next/static"; exit 1
+          fi
+          echo "client bundle clean"
+
+  ui:
+    name: ui (375px, tap targets, axe)
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx next build
+      - run: npx playwright test e2e/ui.spec.ts
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: ui-report, path: playwright-report, retention-days: 7 }
+
+  db-bot-sim:
+    name: db + bot-sim
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - name: Start local Supabase and apply migrations from zero
+        run: |
+          supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector
+          supabase db reset
+      - name: pgTAP (RLS on every table, user B cannot see A, anon gets nothing)
+        run: supabase test db
+      - name: Read local keys at runtime (never written to the repo)
+        run: |
+          supabase status -o env \
+            --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
+            --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
+            | grep -E '^NEXT_PUBLIC_SUPABASE_(URL|PUBLISHABLE_KEY)=' | tr -d '"' >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx next build
+      - run: npx playwright test e2e/grading-bot.spec.ts
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          { name: bot-sim-report, path: playwright-report, retention-days: 7 }

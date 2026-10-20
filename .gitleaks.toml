@@ -1,0 +1,10 @@
+# Default gitleaks rules plus one for personal IE calendar feed links, which
+# carry a private token and must never be committed (docs/process.md 5.5).
+[extend]
+useDefault = true
+
+[[rules]]
+id = "ie-calendar-feed-url"
+description = "Personal IE calendar feed URL"
+regex = '''(?i)(?:https?|webcal)://ie-lti-icalfeedultra\.ie\.edu/[^\s"'<>]+'''
+keywords = ["ie-lti-icalfeedultra"]
