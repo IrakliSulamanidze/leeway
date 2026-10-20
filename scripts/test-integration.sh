@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
-# Runs tests/integration against the running LOCAL Supabase. Keys are read at
-# runtime from `supabase status` and live only in this process's environment.
+# Runs tests/integration against the running LOCAL Supabase. Keys (local demo keys)
+# are read at runtime from `supabase status` and exported only into this process.
 set -euo pipefail
-status=$(supabase status -o env 2>/dev/null | tr -d '"')
-pick() { printf '%s\n' "$status" | grep -E "^$1=" | head -1 | cut -d= -f2-; }
-NEXT_PUBLIC_SUPABASE_URL=$(pick API_URL)
-SUPABASE_SECRET_KEY=$(pick SECRET_KEY)
-[ -n "$SUPABASE_SECRET_KEY" ] || SUPABASE_SECRET_KEY=$(pick SERVICE_ROLE_KEY)
-if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$SUPABASE_SECRET_KEY" ]; then
+eval "$(supabase status -o env 2>/dev/null | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY|SECRET_KEY)=' | sed 's/^/export /')"
+if [ -z "${API_URL:-}" ] || [ -z "${SERVICE_ROLE_KEY:-}" ]; then
   echo "local Supabase is not running (supabase start)"; exit 1
 fi
-export NEXT_PUBLIC_SUPABASE_URL SUPABASE_SECRET_KEY
-INTEGRATION=1 npx vitest run --reporter=dot "$@"
+export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
+export SUPABASE_SECRET_KEY="${SECRET_KEY:-$SERVICE_ROLE_KEY}"
+npx vitest run --config vitest.integration.config.ts --reporter=dot "$@"
