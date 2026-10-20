@@ -121,7 +121,7 @@ export default async function CoursePage({
       </div>
       <HeartsRow lives={c.lives} left={c.left} planned={c.planned} />
 
-      {c.estimated && numbers}
+      {numbers}
       <section className="grid gap-3">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="m-0 text-xl font-bold tracking-tight">Skips</h2>
@@ -220,7 +220,6 @@ export default async function CoursePage({
         )}
       </section>
 
-      {!c.estimated && numbers}
       <RemoveCourse id={c.id} name={c.name} />
     </main>
   );
