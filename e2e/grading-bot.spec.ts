@@ -83,6 +83,11 @@ test("2-4. sign up, save an item, log out, log back in", async ({
     page.getByTestId("core-item").filter({ hasText: itemText }),
   ).toHaveCount(1);
   await expect(page.getByTestId("core-item")).toHaveCount(before + 1);
+  // A new course: 30 sessions assumed, 6 lives, this skip used one.
+  await expect(page.locator(`[data-course="${itemText}"]`)).toContainText(
+    "5 of 6",
+  );
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 
   // 4. Log out, then log in again from a clean browser.
   await page.getByTestId("logout").click();
@@ -95,7 +100,9 @@ test("2-4. sign up, save an item, log out, log back in", async ({
   await page2.getByTestId("login-email").fill(userA.email);
   await page2.getByTestId("login-password").fill(`${userA.password}-wrong`);
   await page2.getByTestId("login-submit").click();
-  await expect(page2.getByText("Wrong email or password.")).toBeVisible();
+  await expect(
+    page2.getByText("That email and password don't match."),
+  ).toBeVisible();
   await expect(page2).toHaveURL(/\/login$/);
   await page2.getByTestId("login-password").fill(userA.password);
   await page2.getByTestId("login-submit").click();

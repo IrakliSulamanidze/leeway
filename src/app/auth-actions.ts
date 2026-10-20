@@ -44,7 +44,7 @@ export async function logIn(
     return { message: "Enter your email and password." };
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { message: "Wrong email or password." };
+  if (error) return { message: "That email and password don't match." };
   redirect("/app");
 }
 
