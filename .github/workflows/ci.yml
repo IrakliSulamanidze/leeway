@@ -127,7 +127,7 @@ jobs:
         run: bash scripts/test-integration.sh
       - run: npx playwright install --with-deps chromium
       - run: npx next build
-      - run: npx playwright test e2e/grading-bot.spec.ts e2e/core.spec.ts e2e/ui.spec.ts
+      - run: npx playwright test e2e/grading-bot.spec.ts e2e/core.spec.ts e2e/ui.spec.ts e2e/calendar.spec.ts e2e/plan.spec.ts
       - if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

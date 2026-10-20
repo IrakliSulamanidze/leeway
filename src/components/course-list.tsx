@@ -50,6 +50,7 @@ export function courseViews(
   courses: (CourseRow & { name: string })[],
   skips: SkipRow[],
   today: string = madridToday(),
+  remaining?: Map<string, number>,
 ): CourseView[] {
   const toGo = weeksToGo(today, TERM.end);
   const week = weekOfTerm(today, TERM.start);
@@ -69,6 +70,7 @@ export function courseViews(
         skipsLast4Weeks: recent,
         weekOfTerm: week,
         weeksToGo: toGo,
+        remainingClasses: remaining?.get(c.id),
       });
       return {
         id: c.id,
