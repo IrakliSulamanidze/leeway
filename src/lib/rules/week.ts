@@ -31,6 +31,7 @@ export type WeekAssessment = {
   class_session_id: string | null;
   session_number: number | null;
   on_date: string | null;
+  title?: string;
 };
 
 export type Range = { from: string; to: string };
@@ -42,10 +43,25 @@ export type WeekRow = {
   cost: number;
   leftAfter: number;
   testDay: boolean;
+  // "Midterm", "Quiz"… when the test is marked with a name.
+  test: string | null;
   planned: boolean;
 };
 
-export type Verdict = "none" | "safe" | "last" | "out" | "test" | "mark";
+// One course on a trip: lives before and after, and the tests it would miss.
+export type TripCourse = {
+  id: string;
+  name: string;
+  before: number;
+  after: number;
+  missing: number;
+  planned: number;
+  tests: { day: string; title: string }[];
+  noTests: boolean;
+  rows: WeekRow[];
+};
+
+export type Verdict = "none" | "safe" | "last" | "out" | "test";
 
 export type LeftOut = {
   course: string;
@@ -108,8 +124,15 @@ export function isTestDay(
   c: WeekClass,
   assessments: WeekAssessment[],
 ): boolean {
+  return testOn(c, assessments) !== undefined;
+}
+
+export function testOn(
+  c: WeekClass,
+  assessments: WeekAssessment[],
+): WeekAssessment | undefined {
   const day = madridDate(c.starts_at);
-  return assessments.some(
+  return assessments.find(
     (a) =>
       a.class_session_id === c.id ||
       (a.course_id === c.course_id &&
@@ -156,13 +179,15 @@ function rowsFor(
       const cost = planned ? 0 : classCost(cls);
       const after = (left.get(cls.course_id) ?? 0) - cost;
       left.set(cls.course_id, after);
+      const test = testOn(cls, assessments);
       return {
         cls,
         course: byId.get(cls.course_id)!.name,
         day: dayLabel(cls.starts_at),
         cost,
         leftAfter: after,
-        testDay: isTestDay(cls, assessments),
+        testDay: test !== undefined,
+        test: test ? test.title || "Test" : null,
         planned,
       };
     });
@@ -172,61 +197,94 @@ function hasTestMarks(courseId: string, assessments: WeekAssessment[]) {
   return assessments.some((a) => a.course_id === courseId);
 }
 
-// Trip check and Can I skip this week?: verdict first, then each class.
+// Each course a trip touches, with what the trip costs it: tests first, then
+// the fewest lives left, so the course to worry about is on top.
+function byCourse(
+  rows: WeekRow[],
+  courses: WeekCourse[],
+  assessments: WeekAssessment[],
+): TripCourse[] {
+  return courses
+    .map((c) => {
+      const mine = rows.filter((r) => r.cls.course_id === c.id);
+      const cost = mine.reduce((n, r) => n + r.cost, 0);
+      return {
+        id: c.id,
+        name: c.name,
+        before: c.left,
+        after: c.left - cost,
+        missing: mine.filter((r) => !r.planned).length,
+        planned: mine.filter((r) => r.planned).length,
+        tests: mine
+          .filter((r) => r.test)
+          .map((r) => ({ day: r.day, title: r.test! })),
+        noTests: !hasTestMarks(c.id, assessments),
+        rows: mine,
+      };
+    })
+    .filter((c) => c.rows.length > 0)
+    .sort(
+      (a, b) =>
+        Number(b.tests.length > 0) - Number(a.tests.length > 0) ||
+        a.after - b.after ||
+        a.name.localeCompare(b.name),
+    );
+}
+
+// Trip check and Can I skip this week?: verdict first, then each course.
+// A course with no test days marked doesn't block the answer; its card says so.
 export function canISkip(
   range: Range,
   sessions: WeekClass[],
   courses: WeekCourse[],
   skips: WeekSkip[],
   assessments: WeekAssessment[],
-): { verdict: string; state: Verdict; classes: WeekRow[] } {
+): {
+  verdict: string;
+  lead: string;
+  detail: string;
+  state: Verdict;
+  classes: WeekRow[];
+  courses: TripCourse[];
+} {
   const classes = rowsFor(range, sessions, courses, skips, assessments);
-  const missed = classes.filter((r) => !r.planned).length;
-  if (classes.length === 0)
-    return { verdict: "No classes on these dates.", state: "none", classes };
-
-  const unmarked = classes.find(
-    (r) => !hasTestMarks(r.cls.course_id, assessments),
-  );
-  if (unmarked)
-    return {
-      verdict: `Mark ${unmarked.course}'s test days first`,
-      state: "mark",
-      classes,
-    };
-
-  const lead = `You'd miss ${missed} ${missed === 1 ? "class" : "classes"}.`;
-  const test = classes.find((r) => r.testDay && !r.planned);
-  if (test)
-    return {
-      verdict: `${lead} ${test.course} has a test on ${test.day}.`,
-      state: "test",
-      classes,
-    };
-  const worst = [...classes].sort((a, b) => a.leftAfter - b.leftAfter)[0];
-  if (worst.leftAfter < 0)
-    return {
-      verdict: `${lead} ${worst.course} would be over the limit.`,
-      state: "out",
-      classes,
-    };
-  if (worst.leftAfter === 0)
-    return {
-      verdict: `${lead} ${worst.course} would be out of lives.`,
-      state: "out",
-      classes,
-    };
-  if (worst.leftAfter === 1)
-    return {
-      verdict: `${lead} ${worst.course} would be on its last life.`,
-      state: "last",
-      classes,
-    };
-  return {
-    verdict: `${lead} Every course stays safe.`,
-    state: "safe",
+  const trip = byCourse(classes, courses, assessments);
+  const answer = (lead: string, detail: string, state: Verdict) => ({
+    verdict: detail ? `${lead} ${detail}` : lead,
+    lead,
+    detail,
+    state,
     classes,
-  };
+    courses: trip,
+  });
+  if (classes.length === 0)
+    return answer("No classes on these dates.", "", "none");
+
+  const missed = classes.filter((r) => !r.planned).length;
+  const lead =
+    missed === 0
+      ? "Already planned."
+      : `You'd miss ${missed} ${missed === 1 ? "class" : "classes"}.`;
+  const lowest = [...trip].sort((a, b) => a.after - b.after)[0];
+  const lives =
+    lowest.after < 0
+      ? `${lowest.name} would be over the limit.`
+      : lowest.after === 0
+        ? `${lowest.name} would be out of lives.`
+        : lowest.after === 1
+          ? `${lowest.name} would be on its last life.`
+          : "";
+  const tests = classes.filter((r) => r.testDay);
+  const test =
+    tests.length > 1
+      ? `${tests.length} of them are tests.`
+      : tests.length === 1
+        ? `${tests[0].course} has a test on ${tests[0].day}.`
+        : "";
+  // A test is the worst news, but a course running out still gets said.
+  if (test) return answer(lead, lives ? `${test} ${lives}` : test, "test");
+  if (lives) return answer(lead, lives, lowest.after <= 0 ? "out" : "last");
+  return answer(lead, "Every course stays safe.", "safe");
 }
 
 // This week's classes by what they cost, cheapest first. Never test days, never
