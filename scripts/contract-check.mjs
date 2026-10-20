@@ -106,6 +106,41 @@ const RULES = [
     ),
   },
   {
+    // The feed link is a secret: no client-side or route query may read it.
+    name: "calendar_feeds url never selected",
+    check: perFile((file, text) =>
+      /from\(\s*["']calendar_feeds["']\s*\)[\s\S]{0,200}?\.select\(\s*["'`][^"'`]*(\*|\burl\b)/.test(
+        text,
+      )
+        ? [`${file}: calendar_feeds select of * or url (use feed_url_for_sync)`]
+        : [],
+    ),
+  },
+  {
+    // Logs carry fixed text and error codes only, never an error object, URL or header.
+    name: "errors logged as codes only",
+    check: perFile((file, text) =>
+      [...text.matchAll(/console\.(error|warn|info)\(([^;]*)\)/g)]
+        .filter(
+          ([, , args]) =>
+            !/^`\[calendar\] \$\{where\}: \$\{code \?\? "unknown"\}`$/.test(
+              args.trim(),
+            ),
+        )
+        .map(() => `${file}: log through logCode(where, error.code) only`),
+    ),
+  },
+  {
+    // Tests inject their fetcher through syncFeed's parameter; nothing test-only ships.
+    name: "no test hooks in src",
+    check: perFile((file, text) =>
+      !/\.test\.tsx?$/.test(file) &&
+      /process\.env\.(NODE_ENV\s*===?\s*["']test|VITEST|TEST_|E2E_)/.test(text)
+        ? [`${file}: test-only env switch in src/`]
+        : [],
+    ),
+  },
+  {
     // Next 16 loads the proxy from src/proxy.ts; a middleware.ts would be ignored or conflict.
     name: "proxy location",
     check: () => {
