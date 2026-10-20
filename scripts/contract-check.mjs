@@ -59,6 +59,7 @@ const PDFJS_ALLOWED_DIR = join(
 const GEMINI_FILE = join("src", "lib", "server", "gemini.ts");
 const GEMINI_PAGES = [
   join("src", "app", "app", "page.tsx"),
+  join("src", "app", "app", "courses", "page.tsx"),
   join("src", "app", "app", "courses", "[id]", "page.tsx"),
   join(PDFJS_ALLOWED_DIR, "page.tsx"),
 ];

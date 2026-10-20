@@ -10,7 +10,8 @@ import {
   sessionsFor,
 } from "@/lib/rules/lives";
 import Link from "next/link";
-import { HeartLegend, HeartsRow } from "./hearts";
+import { ink } from "@/lib/course-color";
+import { HeartsRow } from "./hearts";
 
 export type CourseView = {
   id: string;
@@ -87,31 +88,30 @@ export function courseViews(
     .sort((a, b) => a.left - b.left || a.name.localeCompare(b.name));
 }
 
-function weeksText(n: number) {
-  return `${n} ${n === 1 ? "week" : "weeks"} to go`;
-}
-
-// "Estimated · 8 weeks to go" etc. Shared with the course page header.
+// "Safe" or "Burning fast · estimated". Shared with the course page header.
 export function courseMeta(c: CourseView) {
+  // 80% of a very short course leaves no spare: a fact, not a warning.
+  if (c.lives === 0) return <>No skips allowed</>;
   return (
     <>
       <span className={`font-semibold ${PACE_COLOR[c.pace]}`}>
         {PACE_WORDS[c.pace]}
-      </span>{" "}
-      · {weeksText(c.weeksToGo)}
+      </span>
       {c.estimated && " · estimated"}
     </>
   );
 }
 
-// `linked` (on /app): names open the course page, and a course still on the
+// `linked` (on Courses): names open the course page, and a course still on the
 // default session count links there to set the real one.
 export function CourseList({
   courses,
   linked = false,
+  colors,
 }: {
   courses: CourseView[];
   linked?: boolean;
+  colors?: Map<string, number>;
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-surface">
@@ -123,24 +123,33 @@ export function CourseList({
             className="grid gap-2.5 border-t border-line px-4 py-3.5 first:border-t-0"
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="grid min-w-0 gap-[3px]">
-                {linked ? (
-                  <Link
-                    href={`/app/courses/${c.id}`}
-                    className="-my-2.5 line-clamp-2 min-w-11 py-2.5 text-[17px] font-semibold [overflow-wrap:anywhere]"
-                  >
-                    {c.name}
-                  </Link>
-                ) : (
-                  <span className="line-clamp-2 text-[17px] font-semibold [overflow-wrap:anywhere]">
-                    {c.name}
-                  </span>
+              <div className="flex min-w-0 gap-2.5">
+                {colors?.has(c.id) && (
+                  <i
+                    aria-hidden="true"
+                    className="mt-[7px] h-2.5 w-2.5 flex-none rounded-full"
+                    style={{ background: ink(colors.get(c.id)!) }}
+                  />
                 )}
-                <span className="text-sm text-muted">{courseMeta(c)}</span>
+                <div className="grid min-w-0 gap-[3px]">
+                  {linked ? (
+                    <Link
+                      href={`/app/courses/${c.id}`}
+                      className="-my-2.5 line-clamp-2 min-w-11 py-2.5 text-[17px] font-semibold [overflow-wrap:anywhere]"
+                    >
+                      {c.name}
+                    </Link>
+                  ) : (
+                    <span className="line-clamp-2 text-[17px] font-semibold [overflow-wrap:anywhere]">
+                      {c.name}
+                    </span>
+                  )}
+                  <span className="text-sm text-muted">{courseMeta(c)}</span>
+                </div>
               </div>
               <div className="flex-none text-right leading-none tabular-nums">
                 <b
-                  className={`block text-[34px] font-bold tracking-tight ${PACE_COLOR[c.pace]}`}
+                  className={`block text-[34px] font-bold tracking-tight ${c.lives === 0 ? "text-ink" : PACE_COLOR[c.pace]}`}
                 >
                   {c.left}
                 </b>{" "}
@@ -164,7 +173,6 @@ export function CourseList({
           </li>
         ))}
       </ul>
-      <HeartLegend />
     </div>
   );
 }

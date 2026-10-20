@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TABS } from "./bottom-tabs";
+import { TABS, isCurrent } from "./bottom-tabs";
 
 // The same four tabs in the header, for laptop widths only.
 export function TopNav() {
@@ -10,7 +10,7 @@ export function TopNav() {
   return (
     <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
       {TABS.map((t) => {
-        const on = path === t.href;
+        const on = isCurrent(t, path);
         return (
           <Link
             key={t.href}

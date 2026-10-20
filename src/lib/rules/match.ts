@@ -45,3 +45,24 @@ export function nearMatch(typed: string, names: string[]): string | null {
   }
   return best?.name ?? null;
 }
+
+// Courses that start with or contain what was typed, best first: "algo" finds
+// "Algorithms & Data Structures", "fin rep" finds "Financial Reporting".
+// Empty for an exact match or fewer than 2 letters.
+export function partialMatches(typed: string, names: string[]): string[] {
+  const t = normName(typed);
+  if (t.length < 2 || names.some((n) => normName(n) === t)) return [];
+  const parts = t.split(" ");
+  const score = (name: string) => {
+    const n = normName(name);
+    if (n.startsWith(t)) return 3;
+    const words = n.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    if (parts.every((p) => words.some((w) => w.startsWith(p)))) return 2;
+    return n.includes(t) ? 1 : 0;
+  };
+  return names
+    .map((name) => ({ name, s: score(name) }))
+    .filter((m) => m.s > 0)
+    .sort((a, b) => b.s - a.s || a.name.localeCompare(b.name))
+    .map((m) => m.name);
+}

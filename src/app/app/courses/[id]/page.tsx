@@ -98,7 +98,7 @@ export default async function CoursePage({
   return (
     <main className="mx-auto grid w-full max-w-2xl content-start gap-5 px-5 py-5">
       <Link
-        href="/app"
+        href="/app/courses"
         className="-my-2 justify-self-start py-3 text-[15px] font-semibold text-ink underline"
       >
         Back to your courses
@@ -112,7 +112,7 @@ export default async function CoursePage({
         </div>
         <div className="flex-none text-right leading-none tabular-nums">
           <b
-            className={`block text-[34px] font-bold tracking-tight ${PACE_COLOR[c.pace]}`}
+            className={`block text-[34px] font-bold tracking-tight ${c.lives === 0 ? "text-ink" : PACE_COLOR[c.pace]}`}
           >
             {c.left}
           </b>{" "}

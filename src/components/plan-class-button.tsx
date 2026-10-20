@@ -1,44 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { saveTrip, toggleSkipped } from "@/app/app/calendar/actions";
+import { saveTrip } from "@/app/app/calendar/actions";
 
-// "Skip it" on a class ahead. When the skip would spend the last spare or go
-// past the limit it asks first, with the same words as the skip box.
+// "Skip this class" in the class sheet. When the skip would spend the last
+// spare or go past the limit it asks first, with the same words as the skip box.
 export function PlanClassButton({
   classId,
   label,
-  taken,
   risk,
 }: {
   classId: string;
   label: string;
-  taken: boolean;
   risk: "last" | "over" | null;
 }) {
   const [asking, setAsking] = useState(false);
-  if (taken)
-    return (
-      <form action={toggleSkipped}>
-        <input type="hidden" name="class" value={classId} />
-        <button
-          aria-label={`Cancel the skip of ${label}`}
-          className="min-h-11 rounded-xl px-3 text-[15px] font-semibold text-ink underline"
-        >
-          Cancel
-        </button>
-      </form>
-    );
+  const big =
+    "flex min-h-[52px] w-full items-center justify-center rounded-xl px-5 text-[17px] font-semibold";
   if (asking)
     return (
       <form
         action={saveTrip}
         role="group"
         aria-label={`Confirm skipping ${label}`}
-        className="flex basis-full flex-wrap items-center justify-end gap-x-3 gap-y-1"
+        className="grid gap-2"
       >
         <input type="hidden" name="class" value={classId} />
-        <p className="m-0 w-full text-right text-sm text-danger">
+        <p className="m-0 font-semibold text-danger">
           {risk === "over"
             ? "This takes you below 80%."
             : "This uses your last spare."}
@@ -46,11 +34,11 @@ export function PlanClassButton({
         <button
           type="button"
           onClick={() => setAsking(false)}
-          className="min-h-11 rounded-xl bg-primary px-4 text-[15px] font-semibold text-on-primary"
+          className={`${big} bg-primary text-on-primary`}
         >
           {risk === "over" ? "Don't skip" : "Keep my spare"}
         </button>
-        <button className="min-h-11 px-1 text-[15px] font-semibold text-ink underline">
+        <button className={`${big} border border-line-input bg-surface`}>
           Plan it anyway
         </button>
       </form>
@@ -66,11 +54,8 @@ export function PlanClassButton({
       }}
     >
       <input type="hidden" name="class" value={classId} />
-      <button
-        aria-label={`Plan to skip ${label}`}
-        className="min-h-11 rounded-xl border border-line-input bg-surface px-3 text-[15px] font-semibold"
-      >
-        Skip it
+      <button className={`${big} bg-primary text-on-primary`}>
+        Skip this class
       </button>
     </form>
   );
