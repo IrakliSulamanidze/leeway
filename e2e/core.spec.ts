@@ -63,7 +63,9 @@ test("undo: the toast removes the skip and the course it created", async ({
 }) => {
   await signUp(page);
   await page.getByTestId("core-input").fill("Microeconomics");
-  await expect(page.getByText(/New course: 30 sessions assumed/)).toBeVisible();
+  await expect(
+    page.getByText("New course. You'll have 5 of 6 lives left."),
+  ).toBeVisible();
   await page.getByTestId("core-submit").click();
   await expect(page.getByTestId("core-item")).toHaveCount(1);
   await expect(page.getByText("Skip logged.")).toBeVisible();
