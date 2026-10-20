@@ -10,7 +10,7 @@ import {
   sessionsFor,
 } from "@/lib/rules/lives";
 import Link from "next/link";
-import { HeartLegend, Hearts } from "./hearts";
+import { HeartLegend, HeartsRow } from "./hearts";
 
 export type CourseView = {
   id: string;
@@ -99,7 +99,6 @@ export function courseMeta(c: CourseView) {
         {PACE_WORDS[c.pace]}
       </span>{" "}
       · {weeksText(c.weeksToGo)}
-      {c.planned > 0 && ` · ${c.planned} planned`}
       {c.estimated && " · estimated"}
     </>
   );
@@ -150,7 +149,7 @@ export function CourseList({
                 </small>
               </div>
             </div>
-            <Hearts lives={c.lives} left={c.left} planned={c.planned} />
+            <HeartsRow lives={c.lives} left={c.left} planned={c.planned} />
             {linked && c.estimated && (
               <p className="m-0 text-sm text-muted">
                 Guessing {c.sessions} sessions.{" "}

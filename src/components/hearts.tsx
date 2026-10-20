@@ -53,6 +53,34 @@ export function Hearts({
   );
 }
 
+// The hearts with what the hollow and grey ones mean, in words beside them:
+// "1 planned · 2 used". Lives left are the big number, so they aren't repeated.
+export function HeartsRow({
+  lives,
+  left,
+  planned,
+}: {
+  lives: number;
+  left: number;
+  planned: number;
+}) {
+  const nLeft = Math.max(0, Math.min(lives, left));
+  const nPlanned = Math.max(0, Math.min(lives - nLeft, planned));
+  const nUsed = lives - nLeft - nPlanned;
+  const words = [
+    nPlanned > 0 && `${nPlanned} planned`,
+    nUsed > 0 && `${nUsed} used`,
+  ].filter(Boolean);
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <Hearts lives={lives} left={left} planned={planned} />
+      {words.length > 0 && (
+        <span className="text-[13.5px] text-muted">{words.join(" · ")}</span>
+      )}
+    </div>
+  );
+}
+
 export function HeartLegend() {
   return (
     <div className="flex flex-wrap gap-[14px] border-t border-line px-4 py-2.5 text-[13px] text-muted">

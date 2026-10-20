@@ -47,7 +47,9 @@ export async function CalendarRow() {
             href="/app/calendar"
             className="flex min-h-11 items-center px-4 py-2"
           >
-            {feeds.length ? "Connect another calendar" : "Connect a calendar"}
+            {feeds.length
+              ? "Connect another calendar"
+              : "Connect your IE calendar"}
           </Link>
         </li>
       )}
