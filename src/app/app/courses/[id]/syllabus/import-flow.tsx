@@ -108,8 +108,7 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
 
   const tests: Confirmed["tests"] = review.tests.flatMap((l) => {
     const s = session[l.key];
-    // A test with no session in the syllabus saves without a date.
-    if (!keep[l.key] || (s == null && l.options.length > 0)) return [];
+    if (!keep[l.key] || s == null) return [];
     const w = weight[l.key].trim();
     const n = w === "" ? null : Number(w);
     return [
@@ -130,7 +129,7 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
       }))
     : [];
   const unanswered = review.tests.some(
-    (l) => keep[l.key] && session[l.key] == null && l.options.length > 0,
+    (l) => keep[l.key] && session[l.key] == null,
   );
   const reimport = saved.tests.length > 0 || saved.topics.length > 0;
   const changes = reimport ? diffSaved(saved, { tests, topics }) : [];
@@ -166,6 +165,12 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
         </p>
       ))}
 
+      {review.tests.length === 0 && (
+        <p className="m-0">
+          This syllabus doesn&apos;t say which session any test is in. Mark them
+          on the calendar once you know.
+        </p>
+      )}
       <ul className="grid gap-2">
         {review.tests.map((l) => (
           <li
@@ -183,11 +188,9 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
               />
               <span>
                 <b>
-                  {session[l.key] != null
-                    ? `Session ${session[l.key]}`
-                    : l.options.length > 0
-                      ? "Session ?"
-                      : "Date not in the syllabus"}
+                  {session[l.key] == null
+                    ? "Session ?"
+                    : `Session ${session[l.key]}`}
                 </b>{" "}
                 · {l.title}
                 {when(session[l.key])}
@@ -195,11 +198,7 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
             </label>
             {l.options.length > 1 && (
               <div className="flex flex-wrap items-center gap-2">
-                <span>
-                  {l.key.endsWith("|none")
-                    ? "Which session is it?"
-                    : "Which day does your group present?"}
-                </span>
+                <span>Which day does your group present?</span>
                 {l.options.map((o) => (
                   <button
                     key={o}
@@ -232,12 +231,6 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
       </ul>
 
       <dl className="m-0 grid gap-1 text-sm">
-        <dt className="font-semibold">Class participation</dt>
-        <dd className="m-0">
-          {review.participation == null
-            ? NOT_STATED
-            : `${review.participation}%`}
-        </dd>
         <dt className="font-semibold">Below 80%</dt>
         <dd className="m-0">{review.penalty ?? NOT_STATED}</dd>
         <dt className="font-semibold">Retake students</dt>

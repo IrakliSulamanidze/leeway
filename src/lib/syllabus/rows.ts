@@ -2,7 +2,7 @@
 // action writes, and diffs them against the rows already saved (re-import).
 // Pure: no I/O.
 import { z } from "zod";
-import type { SyllabusRead } from "./schema";
+import { MAX_SESSIONS, type SyllabusRead } from "./schema";
 
 export type TestLine = {
   key: string;
@@ -34,21 +34,49 @@ export type Review = {
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-const TEST_SESSION = new Set(["test", "exam", "presentation"]);
+// Only tests matter here: quizzes, intermediate tests, midterms and finals,
+// plus presentations the syllabus puts in a named session. Coursework
+// (individual or group work) is a weight, never a dated row.
+const TEST_NAME = /quiz|test|exam|midterm|final/i;
+const isTest = (a: SyllabusRead["assessments"][number]) =>
+  !a.continuous &&
+  (a.kind === "test" ||
+    a.kind === "exam" ||
+    a.kind === "presentation" ||
+    TEST_NAME.test(a.name));
+
+const STOP = new Set(["session", "class", "group", "individual", "work"]);
 const words = (s: string) =>
   s
     .toLowerCase()
     .split(/[^a-z0-9]+/)
-    .filter((w) => w.length >= 4);
+    .map((w) => w.replace(/s$/, ""))
+    .filter((w) => w.length >= 4 && !STOP.has(w));
 
-// Test, exam or presentation sessions whose title shares a word with the
-// assessment's name ("Final exam" -> "Session 30: FINAL EXAM").
-function scheduledFor(name: string, sessions: SyllabusRead["sessions"]) {
+// "in session 30", "sessions 10 and 20": numbers the quote states outright.
+function sessionsInQuote(quote: string, max: number): number[] {
+  const out = new Set<number>();
+  for (const m of quote.matchAll(
+    /\bses(?:sion|ión|ion)?e?s?\.?\s*((?:\d{1,3}\s*(?:,|and|y|&|or|o|-|–)?\s*)+)/gi,
+  ))
+    for (const n of m[1].match(/\d{1,3}/g) ?? []) {
+      const v = Number(n);
+      if (v >= 1 && v <= max) out.add(v);
+    }
+  return [...out].sort((x, y) => x - y);
+}
+
+// Plan sessions whose title names this test ("Session 30: FINAL EXAM").
+function plannedFor(name: string, sessions: SyllabusRead["sessions"]) {
   const want = new Set(words(name));
   return sessions
     .filter(
       (s) =>
-        TEST_SESSION.has(s.kind) && words(s.title).some((w) => want.has(w)),
+        (s.kind === "test" ||
+          s.kind === "exam" ||
+          s.kind === "presentation" ||
+          TEST_NAME.test(s.title)) &&
+        words(s.title).some((w) => want.has(w)),
     )
     .map((s) => s.number);
 }
@@ -56,27 +84,20 @@ function scheduledFor(name: string, sessions: SyllabusRead["sessions"]) {
 export function reviewFromRead(read: SyllabusRead): Review {
   const tests: TestLine[] = [];
   let participation: number | null = null;
-  for (const a of read.assessments) {
-    if (a.kind === "participation") {
-      participation = a.weight_percent;
+  const max = read.sessions_total ?? MAX_SESSIONS;
+  for (const raw of read.assessments) {
+    if (raw.kind === "participation") {
+      participation = raw.weight_percent;
       continue;
     }
-    // Many syllabi weigh the tests in one table and date them elsewhere, so
-    // the read can come back with no session. Find it in the schedule by
-    // name; failing that, keep the test without a date rather than drop it.
-    if (a.sessions.length === 0) {
-      const found = scheduledFor(a.name, read.sessions);
-      tests.push({
-        key: `${a.name}|none`,
-        title: a.name.slice(0, 200),
-        session: found.length === 1 ? found[0] : null,
-        options: found.length > 1 ? found : [],
-        weight: a.weight_percent,
-        assumed: false,
-        quote: a.quote,
-      });
-      continue;
-    }
+    if (!isTest(raw)) continue;
+    // The session can sit in the grading table, the quote or the session
+    // plan. When none of them names it, the item is left out, never guessed.
+    let sessions = raw.sessions;
+    if (sessions.length === 0) sessions = sessionsInQuote(raw.quote, max);
+    if (sessions.length === 0) sessions = plannedFor(raw.name, read.sessions);
+    if (sessions.length === 0) continue;
+    const a = { ...raw, sessions };
     if (a.depends_on_group) {
       tests.push({
         key: `${a.name}|group`,

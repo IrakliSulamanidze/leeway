@@ -26,52 +26,51 @@ describe("reviewFromRead", () => {
     );
   });
 
-  it("keeps a test whose session the read left out", () => {
-    const read = {
+  it("dates only tests the syllabus puts in a session", () => {
+    const item = (
+      name: string,
+      kind: "test" | "exam" | "other" | "presentation",
+      quote: string,
+      extra: { sessions?: number[]; continuous?: boolean } = {},
+    ) => ({
+      name,
+      kind,
+      sessions: extra.sessions ?? [],
+      weight_percent: 10,
+      weight_is_assumed_split: false,
+      depends_on_group: false,
+      continuous: extra.continuous ?? false,
+      quote,
+    });
+    const r = reviewFromRead({
       ...SYLLABUS_READ,
       assessments: [
-        {
-          name: "Final exam",
-          kind: "exam" as const,
-          sessions: [],
-          weight_percent: 40,
-          weight_is_assumed_split: false,
-          depends_on_group: false,
-          quote: "Final exam 40%",
-        },
-        {
-          name: "Case write-up",
-          kind: "other" as const,
-          sessions: [],
-          weight_percent: 15,
-          weight_is_assumed_split: false,
-          depends_on_group: false,
-          quote: "Case write-up 15%",
-        },
+        // Grading table only: the session comes from the session plan.
+        item("Final exam", "exam", "Final exam 30%"),
+        // The quote names the sessions.
+        item("Intermediate tests", "test", "Two tests, in sessions 4 and 9"),
+        // Coursework: a weight, never a row.
+        item("Group work", "other", "Group work 15%", { continuous: true }),
+        item("Individual work", "other", "Individual work 20%"),
+        // A presentation with no session anywhere: left out, not guessed.
+        item("Individual presentation", "presentation", "Presentation 5%"),
       ],
       sessions: [
         ...SYLLABUS_READ.sessions.filter((s) => s.number !== 12),
         {
           number: 12,
           title: "FINAL EXAM",
-          kind: "exam" as const,
+          kind: "class",
           pre_reading: null,
           inferred: false,
         },
       ],
-    };
-    const r = reviewFromRead(read);
-    // Matched by name to the session the schedule marks as the exam.
-    expect(r.tests.find((t) => t.title === "Final exam")).toMatchObject({
-      session: 12,
-      weight: 40,
     });
-    // No session anywhere: still listed, saved without a date.
-    expect(r.tests.find((t) => t.title === "Case write-up")).toMatchObject({
-      session: null,
-      options: [],
-      weight: 15,
-    });
+    expect(r.tests.map((t) => [t.title, t.session])).toEqual([
+      ["Final exam", 12],
+      ["Intermediate tests I", 4],
+      ["Intermediate tests II", 9],
+    ]);
   });
 
   it("keeps the retake rule as not stated", () => {

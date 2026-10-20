@@ -25,6 +25,7 @@ export const SYLLABUS_READ: SyllabusRead = {
       weight_percent: 30,
       weight_is_assumed_split: true,
       depends_on_group: false,
+      continuous: false,
       quote:
         "Continuous evaluation 30% (three short tests, sessions 5, 8 and 10).",
     },
@@ -35,6 +36,7 @@ export const SYLLABUS_READ: SyllabusRead = {
       weight_percent: 20,
       weight_is_assumed_split: false,
       depends_on_group: true,
+      continuous: false,
       quote:
         "Group presentations 20% in session 11 or 12 depending on your group.",
     },
@@ -45,6 +47,7 @@ export const SYLLABUS_READ: SyllabusRead = {
       weight_percent: 40,
       weight_is_assumed_split: false,
       depends_on_group: false,
+      continuous: false,
       quote: "Final exam 40% in session 12.",
     },
     {
@@ -54,6 +57,7 @@ export const SYLLABUS_READ: SyllabusRead = {
       weight_percent: 10,
       weight_is_assumed_split: false,
       depends_on_group: false,
+      continuous: false,
       quote: "Class participation 10%.",
     },
   ],
