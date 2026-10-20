@@ -1,3 +1,4 @@
+import { CalendarRow } from "@/components/calendar-row";
 import { DeleteAccount } from "@/components/delete-account";
 import { getSignedInEmail } from "@/lib/supabase/session";
 
@@ -17,6 +18,7 @@ export default async function SettingsPage() {
           </span>
         </li>
       </ul>
+      <CalendarRow />
       <ul className="overflow-hidden rounded-xl border border-line bg-surface">
         <li className="px-4 py-3.5">
           <DeleteAccount />
