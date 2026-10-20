@@ -105,7 +105,9 @@ export default async function PlanPage({
   const sp = await searchParams;
   const from = typeof sp.from === "string" && DATE.test(sp.from) ? sp.from : "";
   const to = typeof sp.to === "string" && DATE.test(sp.to) ? sp.to : "";
-  const trip = from && to && from <= to ? { from, to } : null;
+  // Dates picked the wrong way round still check the same days.
+  const trip =
+    from && to ? (from <= to ? { from, to } : { from: to, to: from }) : null;
 
   const [data, feeds] = await Promise.all([
     loadWeekData(trip ?? week),
