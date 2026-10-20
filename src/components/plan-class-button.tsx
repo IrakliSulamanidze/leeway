@@ -48,7 +48,7 @@ export function PlanClassButton({
           onClick={() => setAsking(false)}
           className="min-h-11 rounded-xl bg-primary px-4 text-[15px] font-semibold text-on-primary"
         >
-          Keep my spare
+          {risk === "over" ? "Don't skip" : "Keep my spare"}
         </button>
         <button className="min-h-11 px-1 text-[15px] font-semibold text-ink underline">
           Plan it anyway
