@@ -114,7 +114,7 @@ describe("ifYouHaveToMissOne", () => {
 });
 
 describe("canISkip", () => {
-  it("asks to mark a course's test days first", () => {
+  it("answers without test marks and flags the course instead", () => {
     const r = canISkip(
       WEEK,
       [cls("f1", "fin", "2026-11-06T08:00:00Z")],
@@ -122,8 +122,11 @@ describe("canISkip", () => {
       [],
       [],
     );
-    expect(r.state).toBe("mark");
-    expect(r.verdict).toBe("Mark Financial Accounting's test days first");
+    expect(r.state).not.toBe("test");
+    expect(r.lead).toBe("You'd miss 1 class.");
+    expect(r.courses.map((c) => [c.name, c.noTests])).toEqual([
+      ["Financial Accounting", true],
+    ]);
   });
 
   it("says when a course would be on its last life", () => {
@@ -142,6 +145,13 @@ describe("canISkip", () => {
       "You'd miss 3 classes. Microeconomics would be on its last life.",
     );
     expect(r.classes.map((c) => c.leftAfter)).toEqual([4, 3, 1]);
+    // Per course: lives before and after, fewest left first.
+    expect(
+      r.courses.map((c) => [c.name, c.before, c.after, c.missing]),
+    ).toEqual([
+      ["Microeconomics", 2, 1, 1],
+      ["Financial Accounting", 5, 3, 2],
+    ]);
   });
 
   it("counts a double class twice and a planned class not at all", () => {
@@ -160,6 +170,18 @@ describe("canISkip", () => {
       [0, true],
     ]);
     expect(r.verdict).toBe("You'd miss 1 class. Every course stays safe.");
+    expect(r.courses[0]).toMatchObject({ missing: 1, planned: 1 });
+  });
+
+  it("says when the whole trip is already planned", () => {
+    const r = canISkip(
+      WEEK,
+      [cls("p", "fin", "2026-11-04T08:00:00Z")],
+      courses,
+      [{ course_id: "fin", class_session_id: "p", skip_date: "2026-11-04" }],
+      marks,
+    );
+    expect(r.lead).toBe("Already planned.");
   });
 
   it("flags a test day before lives", () => {
@@ -171,6 +193,24 @@ describe("canISkip", () => {
       marks,
     );
     expect(r.state).toBe("test");
+    expect(r.courses[0].tests).toEqual([{ day: "Fri 6", title: "Test" }]);
+  });
+
+  it("names a course running out even when a test is the headline", () => {
+    const r = canISkip(
+      WEEK,
+      [
+        cls("f1", "fin", "2026-11-06T08:00:00Z", { session_numbers: [30] }),
+        cls("s1", "stats", "2026-11-03T08:00:00Z"),
+      ],
+      courses,
+      [],
+      marks,
+    );
+    expect(r.state).toBe("test");
+    expect(r.detail).toBe(
+      "Financial Accounting has a test on Fri 6. Statistics II would be out of lives.",
+    );
   });
 });
 

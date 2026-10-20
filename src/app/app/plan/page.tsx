@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/session";
 import { loadFeeds, loadWeekData, requestTime } from "@/lib/calendar/load";
 import { NoCalendar } from "@/components/no-calendar";
+import { TripResult } from "@/components/trip-result";
 import {
   canISkip,
   ifYouHaveToMissOne,
@@ -11,9 +12,9 @@ import {
   weekRange,
   type WeekRow,
 } from "@/lib/rules/week";
-import { markTest, saveTrip } from "../calendar/actions";
+import { markTest } from "../calendar/actions";
 
-export const metadata = { title: "Plan" };
+export const metadata = { title: "Plan a trip" };
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -34,7 +35,7 @@ function Rows({ rows }: { rows: WeekRow[] }) {
             <span className="font-semibold">{r.course}</span>
             <span className="text-sm text-muted">
               {r.testDay
-                ? "Test day"
+                ? (r.test ?? "Test day")
                 : r.planned
                   ? "Already planned"
                   : r.cls.session_numbers.length
@@ -102,10 +103,9 @@ export default async function PlanPage({
 
   if ((await loadFeeds()).length === 0)
     return (
-      <NoCalendar title="Plan your skips">
+      <NoCalendar title="Plan a trip">
         <p className="m-0 text-muted">
-          See which class this week is the cheapest to miss, whether a trip away
-          is safe, and save the skips ahead of time.
+          Pick the days you&apos;ll be away and see what each course has left.
         </p>
       </NoCalendar>
     );
@@ -134,39 +134,13 @@ export default async function PlanPage({
     ? canISkip(trip, data.sessions, data.courses, data.skips, data.assessments)
     : null;
   const leftOut = leftOutLine(missOne.leftOut);
-  const needsMarks = skipWeek.state === "mark" || tripCheck?.state === "mark";
 
   return (
-    <main className="mx-auto grid w-full max-w-2xl flex-1 content-start gap-6 px-5 py-6">
-      <section aria-labelledby="miss-h" className="grid gap-3">
-        <h1 id="miss-h" className="text-[28px] font-bold">
-          If you have to miss one
-        </h1>
-        <p className="m-0 text-sm text-muted">
-          This week&apos;s classes, by what they cost. Test days and last lives
-          are left out.
-        </p>
-        {missOne.options.length > 0 ? (
-          <Rows rows={missOne.options} />
-        ) : (
-          <p className="m-0">No class to suggest this week.</p>
-        )}
-        {leftOut && <p className="m-0 text-sm text-muted">{leftOut}</p>}
-      </section>
-
-      <section aria-labelledby="week-h" className="grid gap-3">
-        <h2 id="week-h" className="text-xl font-bold">
-          Can I skip this week?
-        </h2>
-        <p data-testid="week-verdict" className="m-0 font-semibold">
-          {skipWeek.verdict}
-        </p>
-      </section>
-
+    <main className="mx-auto grid w-full max-w-2xl flex-1 content-start gap-8 px-5 py-6">
       <section aria-labelledby="trip-h" className="grid gap-3">
-        <h2 id="trip-h" className="text-xl font-bold">
-          Trip check
-        </h2>
+        <h1 id="trip-h" className="text-[28px] font-bold">
+          Plan a trip
+        </h1>
         <form method="get" className="grid grid-cols-2 gap-2">
           <label className="grid gap-1 text-sm">
             From
@@ -188,38 +162,37 @@ export default async function PlanPage({
               className="min-h-11 rounded-xl border border-line-input bg-surface px-2 text-[17px]"
             />
           </label>
-          <button className="col-span-2 min-h-11 rounded-xl border border-line-input px-4 font-semibold">
+          <button
+            className={`col-span-2 min-h-11 rounded-xl px-4 font-semibold ${tripCheck ? "border border-line-input" : "bg-primary text-on-primary"}`}
+          >
             Check these dates
           </button>
         </form>
-        {tripCheck && (
-          <>
-            <p data-testid="trip-verdict" className="m-0 font-semibold">
-              {tripCheck.verdict}
-            </p>
-            {tripCheck.classes.length > 0 && <Rows rows={tripCheck.classes} />}
-            {tripCheck.classes.some((r) => !r.planned) && (
-              <form action={saveTrip} className="grid gap-2">
-                {tripCheck.classes
-                  .filter((r) => !r.planned)
-                  .map((r) => (
-                    <input
-                      key={r.cls.id}
-                      type="hidden"
-                      name="class"
-                      value={r.cls.id}
-                    />
-                  ))}
-                <button className="min-h-[52px] rounded-xl bg-primary px-4 font-semibold text-on-primary">
-                  Save as planned skips
-                </button>
-              </form>
-            )}
-          </>
-        )}
+        {tripCheck && <TripResult {...tripCheck} allCourses={data.courses} />}
       </section>
 
-      {(needsMarks || thisWeek.courses.length > 0) && (
+      <section aria-labelledby="week-h" className="grid gap-3">
+        <h2 id="week-h" className="text-xl font-bold">
+          Can I skip this week?
+        </h2>
+        <p data-testid="week-verdict" className="m-0 font-semibold">
+          {skipWeek.verdict}
+        </p>
+      </section>
+
+      <section aria-labelledby="miss-h" className="grid gap-3">
+        <h2 id="miss-h" className="text-xl font-bold">
+          If you have to miss one
+        </h2>
+        {missOne.options.length > 0 ? (
+          <Rows rows={missOne.options} />
+        ) : (
+          <p className="m-0">No class to suggest this week.</p>
+        )}
+        {leftOut && <p className="m-0 text-sm text-muted">{leftOut}</p>}
+      </section>
+
+      {thisWeek.courses.length > 0 && (
         <section aria-labelledby="tests-h" className="grid gap-3">
           <h2 id="tests-h" className="text-xl font-bold">
             Test days

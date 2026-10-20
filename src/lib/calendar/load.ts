@@ -131,7 +131,7 @@ export async function loadWeekData(range: { from: string; to: string }) {
       .select("course_id, class_session_id, skip_date, sessions, planned"),
     supabase
       .from("assessments")
-      .select("course_id, class_session_id, session_number, on_date"),
+      .select("course_id, class_session_id, session_number, on_date, title"),
   ]);
   const skipRows = skips.data ?? [];
   return {
