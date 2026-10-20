@@ -194,13 +194,44 @@ export async function markTest(form: FormData) {
   const classId = field(form, "class");
   if (!courseId || (!onDate && !classId)) return;
   const supabase = await createClient();
+  // A mark on one class also stores that class's date, so the course page
+  // and the countdown can show it.
+  let date = /^\d{4}-\d{2}-\d{2}$/.test(onDate) ? onDate : null;
+  if (!date && classId) {
+    const { data: cls } = await supabase
+      .from("class_sessions")
+      .select("starts_at")
+      .eq("id", classId)
+      .maybeSingle();
+    if (cls) date = madridDate(cls.starts_at);
+  }
   await supabase.from("assessments").insert({
     course_id: courseId,
-    on_date: /^\d{4}-\d{2}-\d{2}$/.test(onDate) ? onDate : null,
+    on_date: date,
     class_session_id: classId || null,
     title: field(form, "title").slice(0, 200) || "Test",
     source: "manual",
   });
+  refresh();
+}
+
+// Undo a test marked by hand on one class or on its date (a mis-tap on
+// Quiz, Midterm or Final). Tests read from a syllabus stay.
+export async function unmarkTest(form: FormData) {
+  const courseId = field(form, "course");
+  const classId = field(form, "class");
+  const day = field(form, "date");
+  const uuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!courseId || !uuid.test(classId) || !/^\d{4}-\d{2}-\d{2}$/.test(day))
+    return;
+  const supabase = await createClient();
+  await supabase
+    .from("assessments")
+    .delete()
+    .eq("course_id", courseId)
+    .eq("source", "manual")
+    .or(`class_session_id.eq.${classId},on_date.eq.${day}`);
   refresh();
 }
 
