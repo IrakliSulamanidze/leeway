@@ -123,6 +123,8 @@ jobs:
       - name: Read local keys at runtime (never written to the repo)
         run: bash scripts/supabase-env.sh >> "$GITHUB_ENV"
       - run: npm ci
+      - name: Integration tests (calendar sync vs local Supabase)
+        run: bash scripts/test-integration.sh
       - run: npx playwright install --with-deps chromium
       - run: npx next build
       - run: npx playwright test e2e/grading-bot.spec.ts e2e/core.spec.ts e2e/ui.spec.ts

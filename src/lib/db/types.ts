@@ -513,12 +513,17 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      claim_feed_sync: { Args: { p_feed: string }; Returns: boolean };
       connect_feed: { Args: { p_url: string }; Returns: string };
       delete_my_account: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
       };
       feed_url_for_sync: { Args: { p_feed: string }; Returns: string };
+      finish_feed_sync: {
+        Args: { p_error: string; p_feed: string; p_status: string };
+        Returns: undefined;
+      };
       log_skip: {
         Args: { p_day?: string; p_sessions?: number; p_text: string };
         Returns: {
