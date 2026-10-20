@@ -1,11 +1,15 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { livesLeft } from "@/lib/rules/lives";
-import type {
-  WeekAssessment,
-  WeekClass,
-  WeekCourse,
-  WeekSkip,
+import {
+  classCost,
+  dedupeClasses,
+  madridDate,
+  skippable,
+  type WeekAssessment,
+  type WeekClass,
+  type WeekCourse,
+  type WeekSkip,
 } from "@/lib/rules/week";
 
 // The student's calendar state, read with their own session (RLS applies).
@@ -47,6 +51,37 @@ export async function loadNotices() {
     .order("created_at", { ascending: false })
     .limit(5);
   return data ?? [];
+}
+
+// Per course, from the calendar: sessions still ahead that a skip could take
+// (for "Attendance safe") and whether it has any class this term (else it goes
+// to "Past courses"). Courses without calendar classes are not in either map.
+export async function loadCourseCalendar(
+  now: string,
+  term: { start: string; end: string },
+) {
+  const supabase = await createClient();
+  const [{ data: rows }, { data: linked }] = await Promise.all([
+    supabase
+      .from("class_sessions")
+      .select("id, course_id, starts_at, kind, is_exam_slot, session_numbers"),
+    supabase
+      .from("skips")
+      .select("class_session_id")
+      .not("class_session_id", "is", null),
+  ]);
+  const taken = new Set((linked ?? []).map((s) => s.class_session_id));
+  const remaining = new Map<string, number>();
+  const thisTerm = new Map<string, boolean>();
+  for (const c of dedupeClasses((rows ?? []) as WeekClass[])) {
+    const day = madridDate(c.starts_at);
+    const inTerm = day >= term.start && day <= term.end;
+    thisTerm.set(c.course_id, (thisTerm.get(c.course_id) ?? false) || inTerm);
+    const ahead =
+      skippable(c) && c.starts_at > now && !taken.has(c.id) ? classCost(c) : 0;
+    remaining.set(c.course_id, (remaining.get(c.course_id) ?? 0) + ahead);
+  }
+  return { remaining, thisTerm };
 }
 
 // Everything the week tools need for a date range.
