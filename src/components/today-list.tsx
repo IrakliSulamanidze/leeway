@@ -185,7 +185,7 @@ export function TodayList({
                 c={c}
                 name={names.get(c.course_id)!}
                 on={isPlanned(c, skips)}
-                when={time(c.starts_at)}
+                when={c.kind === "async" ? "Online" : time(c.starts_at)}
                 testId="today-class"
                 testDay={isTestDay(c, assessments)}
               />

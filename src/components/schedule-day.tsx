@@ -38,7 +38,7 @@ function sessionText(c: WeekClass): string {
       : n.length === 1
         ? `Session ${n[0]}`
         : `Sessions ${n[0]}–${n[n.length - 1]}`;
-  if (c.kind === "async") return ses ? `${ses} · online` : "Online";
+  if (c.kind === "async") return ses;
   if (c.kind === "exam" || c.is_exam_slot) return "Exam";
   return ses;
 }
@@ -98,7 +98,9 @@ export function ScheduleDay({
               </b>
             </span>
           ) : null;
-          const label = `${info.name} ${time(c.starts_at)}`;
+          // Online classes have no start time; the feed puts them at midnight.
+          const when = c.kind === "async" ? "Online" : time(c.starts_at);
+          const label = `${info.name} ${when}`;
           const ses = sessionText(c);
           return (
             <li
@@ -107,7 +109,7 @@ export function ScheduleDay({
               className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line px-4 py-2.5 first:border-t-0"
             >
               <span className="w-11 flex-none text-sm text-muted tabular-nums">
-                {time(c.starts_at)}
+                {when}
               </span>
               <span className="grid min-w-0 flex-1">
                 <span className="truncate font-semibold">{info.name}</span>
