@@ -18,6 +18,11 @@ export async function loadFeeds() {
   return data ?? [];
 }
 
+// Request time, read once on the server and passed down as a prop.
+export function requestTime(): number {
+  return Date.now();
+}
+
 export type Feed = Awaited<ReturnType<typeof loadFeeds>>[number];
 
 export async function loadPendingMaps() {
