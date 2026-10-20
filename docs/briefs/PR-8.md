@@ -1,0 +1,9 @@
+PR 8: feat: syllabus import
+Lane: syllabus. Needs merged: 3, 5, 6 (stack on 6; rebase the course-page parts onto 5). Budget: 45 min. Review: code + security on the route.
+Goal: a student pastes a syllabus or picks its PDF, confirms what the AI read line by line, and then sees tests and topics in the preview and on the course page.
+Spec + design refs: spec "Syllabus import", syllabus edge-case rows, "Skip cost preview" and "What you'll miss" examples; tech-plan 5.3; mockups: syllabus review, course page.
+Files to touch: `src/lib/server/gemini.ts` (`server-only`, plain fetch, key in the `x-goog-api-key` header never `?key=`, `responseSchema`, `GEMINI_MODEL`, system prompt treats the syllabus as data), `src/lib/syllabus/schema.ts` (zod), `src/app/api/syllabus/read/route.ts` (404 without key, 401 without session, 200–60,000 chars, `reserve_ai_call` -> 429, one retry, 422), `src/app/app/courses/[id]/syllabus/page.tsx` (paste or PDF via pdfjs-dist loaded only here, review screen with conflicts/assumed weights/group question, re-import diff), confirm server action (writes assessments, syllabus_sessions, sessions_syllabus), preview and course-page additions (test names, participation line, exam prep, countdown, "probably"), tests, contract rules (GEMINI_API_KEY confinement, pdfjs location).
+New package: `pdfjs-dist` (G1). Key: G4.
+Out of scope: OCR, storing files.
+Done when: `tests/integration/syllabus.test.ts` (401, 404 without key, 429 on the 11th call, invalid model output retried once then 422, nothing written before confirm; Gemini mocked); `e2e/syllabus.spec.ts` (route intercepted: confirm writes rows, re-import shows only changes); `preview.test.ts` syllabus cases; bundle check: no pdfjs chunk loaded on `/app`; secrets job: no `GEMINI` value in `.next/static`; CI green.
+Risk: AI key, user-supplied text to a model, quota abuse -> security review yes.

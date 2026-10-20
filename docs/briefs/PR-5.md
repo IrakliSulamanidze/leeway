@@ -1,0 +1,8 @@
+PR 5: feat: planned skips, course page and account deletion
+Lane: core. Needs merged: 4 (stack on 4). Budget: 40 min. Review: CI only.
+Goal: the rest of the core: plan tomorrow, log a double, protect the last spare, fix a course's numbers, and delete the account.
+Spec + design refs: spec "Scope: Core", "Defaults and limits", "Edge cases in the core", copy table; design.md (only dialog = last-spare bottom sheet); mockups: last-spare sheet, course page, settings.
+Files to touch: `src/components/skip-form.tsx` (Today/Tomorrow segmented control, Double class toggle, course chips, "Did you mean X?"; every save resets to Today + single; all with space reserved from first paint), `src/components/last-spare-sheet.tsx` ("Keep my spare" / "Plan it anyway", planned saves only), `src/app/app/courses/[id]/page.tsx` (sessions 1–200, missed before, "Counting from today", remove course, delete skip, cancel planned), Settings row "Delete my account and data" -> `rpc('delete_my_account')` then sign out, `e2e/core.spec.ts`, `e2e/settings.spec.ts`.
+Out of scope: test marks and anything needing a calendar (PR 7), syllabus (PR 8).
+Done when: `e2e/core.spec.ts` "form" (planned = hollow hearts, double = x2 and costs 2, reset after each save), "last spare" (sheet on a planned last-spare save only, never on Today), "layout" (field and button don't move with chips and near match shown), "course row", "remove course"; `e2e/settings.spec.ts` (account deleted, signed out, can't log in again); bot sim still green; axe + 375px on new pages; CI green.
+Risk: account deletion calls a definer function reviewed in PR 2 -> no separate security review.
