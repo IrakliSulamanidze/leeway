@@ -95,7 +95,7 @@ test("2-4. sign up, save an item, log out, log back in", async ({
   await page2.getByTestId("login-email").fill(userA.email);
   await page2.getByTestId("login-password").fill(`${userA.password}-wrong`);
   await page2.getByTestId("login-submit").click();
-  await expect(page2.getByRole("alert")).toBeVisible();
+  await expect(page2.getByText("Wrong email or password.")).toBeVisible();
   await expect(page2).toHaveURL(/\/login$/);
   await page2.getByTestId("login-password").fill(userA.password);
   await page2.getByTestId("login-submit").click();
