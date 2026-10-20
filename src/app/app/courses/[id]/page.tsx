@@ -5,6 +5,7 @@ import { courseMeta, courseViews, PACE_COLOR } from "@/components/course-list";
 import { CourseNumbers } from "@/components/course-numbers";
 import { Hearts } from "@/components/hearts";
 import { skipMeta } from "@/components/recent-skips";
+import { TestMarks } from "@/components/test-marks";
 import { madridToday } from "@/lib/rules/dates";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/session";
@@ -81,6 +82,8 @@ export default async function CoursePage({
           missedBefore={c.missedBefore}
         />
       </section>
+
+      <TestMarks courseId={c.id} />
 
       <section className="grid gap-3">
         <div className="flex items-baseline justify-between gap-2">
