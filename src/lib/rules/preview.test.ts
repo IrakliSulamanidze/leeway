@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { previewLine } from "./preview";
+import { asksLastSpare, previewLine } from "./preview";
 
 // Mid-term: week 7, 8 weeks to go (the mockup's 20 Oct).
 const base = { weeksToGo: 8, weekOfTerm: 7, skipsLast4Weeks: 0 };
@@ -132,5 +132,22 @@ describe("previewLine: numbers and state", () => {
         skipsLast4Weeks: 1,
       }).state,
     ).toBe("burning");
+  });
+});
+
+describe("asksLastSpare: only a planned save that spends the last spare", () => {
+  const c = (left: number, lives = 6) => ({ lives, left });
+  it("asks on Tomorrow with 1 left, never on Today", () => {
+    expect(asksLastSpare(c(1), "tomorrow", 1)).toBe(true);
+    expect(asksLastSpare(c(1), "today", 1)).toBe(false);
+  });
+  it("asks when a planned double spends it", () => {
+    expect(asksLastSpare(c(2), "tomorrow", 2)).toBe(true);
+    expect(asksLastSpare(c(2), "tomorrow", 1)).toBe(false);
+  });
+  it("never for new courses, no lives left, or no reserve", () => {
+    expect(asksLastSpare(undefined, "tomorrow", 1)).toBe(false);
+    expect(asksLastSpare(c(0), "tomorrow", 1)).toBe(false);
+    expect(asksLastSpare(c(1, 1), "tomorrow", 1)).toBe(false);
   });
 });

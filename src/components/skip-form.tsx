@@ -3,12 +3,20 @@
 import { useCallback, useRef, useState, useTransition } from "react";
 import { deleteSkip, logSkip } from "@/app/app/actions";
 import { MAX_ITEM_LENGTH } from "@/lib/config";
-import { normName } from "@/lib/rules/match";
-import { previewLine } from "@/lib/rules/preview";
+import { nearMatch, normName } from "@/lib/rules/match";
+import { asksLastSpare, previewLine } from "@/lib/rules/preview";
 import type { Pace } from "@/lib/rules/lives";
+import { LastSpareSheet } from "./last-spare-sheet";
 import { Toast } from "./toast";
 
-export type FormCourse = { name: string; lives: number; left: number };
+export type FormCourse = {
+  name: string;
+  lives: number;
+  left: number;
+  planned: number;
+};
+type Day = "today" | "tomorrow";
+type Draft = { text: string; day: Day; sessions: 1 | 2 };
 
 const STATE_COLOR: Record<Pace, string> = {
   over: "text-danger",
@@ -21,8 +29,9 @@ const STATE_COLOR: Record<Pace, string> = {
 
 const OFFLINE = "Couldn't save. Check your connection and try again.";
 
-// The core loop: type a class, one tap on "Log a skip". The preview line and
-// the error share one slot with reserved height, so nothing below it moves.
+// The core loop: type a class, one tap on "Log a skip". Chips, the preview,
+// the near match and errors all sit in slots with reserved height, so the
+// field and the button never move. Every save resets to Today, single class.
 export function SkipForm({
   courses,
   weeksToGo,
@@ -33,39 +42,54 @@ export function SkipForm({
   weekOfTerm: number;
 }) {
   const [text, setText] = useState("");
+  const [day, setDay] = useState<Day>("today");
+  const [double, setDouble] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [undoId, setUndoId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ id: string; message: string } | null>(
+    null,
+  );
+  const [confirm, setConfirm] = useState<Draft | null>(null);
   const [pending, startTransition] = useTransition();
   const saving = useRef(false);
 
+  const sessions = double ? 2 : 1;
   const key = normName(text);
   const match = key ? courses.find((c) => normName(c.name) === key) : undefined;
+  const near = match
+    ? null
+    : nearMatch(
+        text,
+        courses.map((c) => c.name),
+      );
   const preview = previewLine({
     typed: text,
     course: match ? { lives: match.lives, left: match.left } : null,
+    sessions,
     weeksToGo,
     weekOfTerm,
   });
 
-  function onType(e: React.ChangeEvent<HTMLInputElement>) {
-    setText(e.target.value);
+  function choose(name: string) {
+    setText(name);
     setError(null);
   }
 
-  function onSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (saving.current) return;
-    if (!text.trim()) {
-      setError("Type the class you're skipping.");
-      return;
-    }
+  function save(draft: Draft) {
     saving.current = true;
     startTransition(async () => {
       try {
-        const res = await logSkip(text);
+        const res = await logSkip(draft.text, draft.day, draft.sessions);
         if (res.ok) {
           setText("");
-          setUndoId(res.id);
+          setDay("today");
+          setDouble(false);
+          setToast({
+            id: res.id,
+            message:
+              draft.day === "tomorrow"
+                ? "Planned for tomorrow."
+                : "Skip logged.",
+          });
         } else setError(res.message);
       } catch {
         setError(OFFLINE);
@@ -75,10 +99,29 @@ export function SkipForm({
     });
   }
 
-  const closeToast = useCallback(() => setUndoId(null), []);
+  function onSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (saving.current) return;
+    if (!text.trim()) {
+      setError("Type the class you're skipping.");
+      return;
+    }
+    const draft: Draft = { text, day, sessions };
+    if (asksLastSpare(match, day, sessions)) setConfirm(draft);
+    else save(draft);
+  }
+
+  const keepSpare = useCallback(() => setConfirm(null), []);
+  function planAnyway() {
+    const draft = confirm;
+    setConfirm(null);
+    if (draft && !saving.current) save(draft);
+  }
+
+  const closeToast = useCallback(() => setToast(null), []);
   function undo() {
-    const id = undoId;
-    setUndoId(null);
+    const id = toast?.id;
+    setToast(null);
     if (id) startTransition(async () => void (await deleteSkip(id)));
   }
 
@@ -87,6 +130,26 @@ export function SkipForm({
       <label htmlFor="core-input" className="text-base font-semibold">
         Which class are you skipping?
       </label>
+      <div
+        className="-mx-5 flex h-11 gap-2 overflow-x-auto px-5 [scrollbar-width:none]"
+        aria-label={courses.length ? "Your courses" : undefined}
+        role={courses.length ? "group" : undefined}
+      >
+        {courses.map((c) => {
+          const on = normName(c.name) === key;
+          return (
+            <button
+              key={c.name}
+              type="button"
+              aria-pressed={on}
+              onClick={() => choose(c.name)}
+              className={`h-11 max-w-[70vw] flex-none truncate rounded-full border px-4 text-[15px] ${on ? "border-ink bg-ink font-semibold text-on-primary" : "border-line-input bg-surface text-ink"}`}
+            >
+              {c.name}
+            </button>
+          );
+        })}
+      </div>
       <input
         id="core-input"
         type="text"
@@ -96,16 +159,70 @@ export function SkipForm({
         maxLength={MAX_ITEM_LENGTH}
         placeholder="e.g. Microeconomics"
         value={text}
-        onChange={onType}
+        onChange={(e) => choose(e.target.value)}
         className="min-h-[52px] w-full rounded-xl border border-line-input bg-surface px-3.5 text-[17px]"
       />
-      <p
-        role={error ? "alert" : undefined}
-        aria-live="polite"
-        className={`m-0 h-[63px] overflow-hidden text-[15px] leading-[21px] ${error ? "font-semibold text-danger" : "text-muted"}`}
-      >
-        {error ?? <PreviewText text={preview.text} state={preview.state} />}
-      </p>
+      <div className="h-[63px] overflow-hidden">
+        {error ? (
+          <p
+            role="alert"
+            className="m-0 text-[15px] leading-[21px] font-semibold text-danger"
+          >
+            {error}
+          </p>
+        ) : near ? (
+          <button
+            type="button"
+            onClick={() => choose(near)}
+            className="min-h-11 max-w-full truncate text-left text-[15px] font-semibold text-ink underline"
+          >
+            Did you mean {near}?
+          </button>
+        ) : (
+          <p
+            aria-live="polite"
+            className="m-0 text-[15px] leading-[21px] text-muted"
+          >
+            <PreviewText text={preview.text} state={preview.state} />
+          </p>
+        )}
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <div
+          role="group"
+          aria-label="Day"
+          className="grid grid-cols-2 rounded-xl border border-line-input bg-surface p-0.5"
+        >
+          {(["today", "tomorrow"] as const).map((d) => (
+            <button
+              key={d}
+              type="button"
+              aria-pressed={day === d}
+              onClick={() => setDay(d)}
+              className={`min-h-11 rounded-[10px] px-3.5 text-[15px] ${day === d ? "bg-ink font-semibold text-on-primary" : "text-ink"}`}
+            >
+              {d === "today" ? "Today" : "Tomorrow"}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={double}
+          onClick={() => setDouble((v) => !v)}
+          className="flex min-h-11 items-center gap-2 text-[15px] text-ink"
+        >
+          <span
+            aria-hidden="true"
+            className={`relative h-6 w-10 flex-none rounded-full transition-colors ${double ? "bg-ink" : "bg-used"}`}
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-surface transition-[left] ${double ? "left-[18px]" : "left-0.5"}`}
+            />
+          </span>
+          Double class
+        </button>
+      </div>
       <button
         type="submit"
         data-testid="core-submit"
@@ -114,12 +231,22 @@ export function SkipForm({
       >
         Log a skip
       </button>
-      {undoId && (
+      {toast && (
         <Toast
-          message="Skip logged."
+          message={toast.message}
           actionLabel="Undo"
           onAction={undo}
           onClose={closeToast}
+        />
+      )}
+      {confirm && match && (
+        <LastSpareSheet
+          course={match.name}
+          lives={match.lives}
+          left={match.left}
+          planned={match.planned}
+          onKeep={keepSpare}
+          onPlan={planAnyway}
         />
       )}
     </form>
