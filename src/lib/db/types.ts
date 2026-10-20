@@ -34,6 +34,203 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          count: number;
+          created_at: string;
+          day: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          count?: number;
+          created_at?: string;
+          day: string;
+          user_id?: string;
+        };
+        Update: {
+          count?: number;
+          created_at?: string;
+          day?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      alert_log: {
+        Row: {
+          created_at: string;
+          night: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          night: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          night?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      assessments: {
+        Row: {
+          class_session_id: string | null;
+          course_id: string;
+          created_at: string;
+          id: string;
+          on_date: string | null;
+          session_number: number | null;
+          source: string;
+          title: string;
+          user_id: string;
+          weight: number | null;
+          weight_assumed: boolean;
+        };
+        ComputedFields: never;
+        Insert: {
+          class_session_id?: string | null;
+          course_id: string;
+          created_at?: string;
+          id?: string;
+          on_date?: string | null;
+          session_number?: number | null;
+          source: string;
+          title: string;
+          user_id?: string;
+          weight?: number | null;
+          weight_assumed?: boolean;
+        };
+        Update: {
+          class_session_id?: string | null;
+          course_id?: string;
+          created_at?: string;
+          id?: string;
+          on_date?: string | null;
+          session_number?: number | null;
+          source?: string;
+          title?: string;
+          user_id?: string;
+          weight?: number | null;
+          weight_assumed?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessments_class_session_id_user_id_fkey";
+            columns: ["class_session_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "class_sessions";
+            referencedColumns: ["id", "user_id"];
+          },
+          {
+            foreignKeyName: "assessments_course_id_user_id_fkey";
+            columns: ["course_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id", "user_id"];
+          },
+        ];
+      };
+      calendar_feeds: {
+        Row: {
+          created_at: string;
+          id: string;
+          last_attempt_at: string | null;
+          last_error: string | null;
+          last_synced_at: string | null;
+          status: string;
+          url: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          last_attempt_at?: string | null;
+          last_error?: string | null;
+          last_synced_at?: string | null;
+          status?: string;
+          url: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          last_attempt_at?: string | null;
+          last_error?: string | null;
+          last_synced_at?: string | null;
+          status?: string;
+          url?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      class_sessions: {
+        Row: {
+          all_day: boolean;
+          course_id: string;
+          created_at: string;
+          ends_at: string;
+          feed_id: string;
+          id: string;
+          is_exam_slot: boolean;
+          kind: string;
+          original_start: string;
+          session_numbers: number[];
+          starts_at: string;
+          uid: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          all_day?: boolean;
+          course_id: string;
+          created_at?: string;
+          ends_at: string;
+          feed_id: string;
+          id?: string;
+          is_exam_slot?: boolean;
+          kind: string;
+          original_start: string;
+          session_numbers?: number[];
+          starts_at: string;
+          uid: string;
+          user_id?: string;
+        };
+        Update: {
+          all_day?: boolean;
+          course_id?: string;
+          created_at?: string;
+          ends_at?: string;
+          feed_id?: string;
+          id?: string;
+          is_exam_slot?: boolean;
+          kind?: string;
+          original_start?: string;
+          session_numbers?: number[];
+          starts_at?: string;
+          uid?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "class_sessions_course_id_user_id_fkey";
+            columns: ["course_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id", "user_id"];
+          },
+          {
+            foreignKeyName: "class_sessions_feed_id_user_id_fkey";
+            columns: ["feed_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "calendar_feeds";
+            referencedColumns: ["id", "user_id"];
+          },
+        ];
+      };
       courses: {
         Row: {
           created_at: string;
@@ -71,6 +268,55 @@ export type Database = {
         };
         Relationships: [];
       };
+      feed_course_map: {
+        Row: {
+          course_id: string | null;
+          created_at: string;
+          feed_id: string;
+          id: string;
+          source_hash: string;
+          source_key: string | null;
+          status: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          course_id?: string | null;
+          created_at?: string;
+          feed_id: string;
+          id?: string;
+          source_hash: string;
+          source_key?: string | null;
+          status?: string;
+          user_id?: string;
+        };
+        Update: {
+          course_id?: string | null;
+          created_at?: string;
+          feed_id?: string;
+          id?: string;
+          source_hash?: string;
+          source_key?: string | null;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feed_course_map_course_id_user_id_fkey";
+            columns: ["course_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id", "user_id"];
+          },
+          {
+            foreignKeyName: "feed_course_map_feed_id_user_id_fkey";
+            columns: ["feed_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "calendar_feeds";
+            referencedColumns: ["id", "user_id"];
+          },
+        ];
+      };
       items: {
         Row: {
           created_at: string;
@@ -89,6 +335,59 @@ export type Database = {
           created_at?: string;
           id?: never;
           title?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      notices: {
+        Row: {
+          body: string;
+          created_at: string;
+          dismissed_at: string | null;
+          id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          body: string;
+          created_at?: string;
+          dismissed_at?: string | null;
+          id?: string;
+          user_id?: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          dismissed_at?: string | null;
+          id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          created_at: string;
+          endpoint: string;
+          id: string;
+          p256dh: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          auth: string;
+          created_at?: string;
+          endpoint: string;
+          id?: string;
+          p256dh: string;
+          user_id?: string;
+        };
+        Update: {
+          auth?: string;
+          created_at?: string;
+          endpoint?: string;
+          id?: string;
+          p256dh?: string;
           user_id?: string;
         };
         Relationships: [];
@@ -130,6 +429,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "skips_class_session_id_user_id_fkey";
+            columns: ["class_session_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "class_sessions";
+            referencedColumns: ["id", "user_id"];
+          },
+          {
             foreignKeyName: "skips_course_id_user_id_fkey";
             columns: ["course_id", "user_id"];
             isOneToOne: false;
@@ -138,13 +444,81 @@ export type Database = {
           },
         ];
       };
+      syllabus_sessions: {
+        Row: {
+          course_id: string;
+          created_at: string;
+          id: string;
+          pre_reading: string | null;
+          probably: boolean;
+          session_number: number;
+          topic: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          course_id: string;
+          created_at?: string;
+          id?: string;
+          pre_reading?: string | null;
+          probably?: boolean;
+          session_number: number;
+          topic: string;
+          user_id?: string;
+        };
+        Update: {
+          course_id?: string;
+          created_at?: string;
+          id?: string;
+          pre_reading?: string | null;
+          probably?: boolean;
+          session_number?: number;
+          topic?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "syllabus_sessions_course_id_user_id_fkey";
+            columns: ["course_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id", "user_id"];
+          },
+        ];
+      };
+      weekly_checks: {
+        Row: {
+          created_at: string;
+          user_id: string;
+          week_start: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          user_id?: string;
+          week_start: string;
+        };
+        Update: {
+          created_at?: string;
+          user_id?: string;
+          week_start?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      connect_feed: { Args: { p_url: string }; Returns: string };
       delete_my_account: {
         Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
+      claim_feed_sync: { Args: { p_feed: string }; Returns: boolean };
+      feed_url_for_sync: { Args: { p_feed: string }; Returns: string };
+      finish_feed_sync: {
+        Args: { p_error: string | null; p_feed: string; p_status: string };
         Returns: undefined;
       };
       log_skip: {
@@ -169,6 +543,7 @@ export type Database = {
       };
       madrid_today: { Args: Record<PropertyKey, never>; Returns: string };
       norm_course_name: { Args: { p_name: string }; Returns: string };
+      reserve_ai_call: { Args: Record<PropertyKey, never>; Returns: boolean };
     };
     Enums: {
       [_ in never]: never;
