@@ -81,33 +81,21 @@ export async function syncFeed(
   getUrl: () => Promise<string | null>,
   fetcher: Fetcher = safeFetch,
   now: Date = new Date(),
+  { admin = false }: { admin?: boolean } = {},
 ): Promise<SyncResult> {
+  const state = admin
+    ? adminFeedState(db, feedId, userId, now)
+    : userFeedState(db, feedId);
   // 1. Two-tab guard: only one sync per feed every 30 seconds.
-  const claimed = must(
-    await db
-      .from("calendar_feeds")
-      .update({ last_attempt_at: now.toISOString() })
-      .eq("id", feedId)
-      .eq("user_id", userId)
-      .or(
-        `last_attempt_at.is.null,last_attempt_at.lt.${new Date(now.getTime() - GUARD_MS).toISOString()}`,
-      )
-      .select("id"),
-    "claim",
-  );
-  if (!claimed.length) return { status: "busy" };
+  if (!(await state.claim())) return { status: "busy" };
 
   const fail = async (code: FeedErrorCode): Promise<SyncResult> => {
-    await db
-      .from("calendar_feeds")
-      .update({ status: "failed", last_error: FEED_ERRORS[code] })
-      .eq("id", feedId)
-      .eq("user_id", userId);
+    await state.finish("failed", FEED_ERRORS[code]).catch(() => {});
     return { status: "failed", error: FEED_ERRORS[code] };
   };
 
   try {
-    return await run(db, feedId, userId, getUrl, fetcher, now, fail);
+    return await run(db, feedId, userId, getUrl, fetcher, now, fail, state);
   } catch (err) {
     if (err instanceof FeedError) return fail(err.code);
     if (!(err instanceof DbError)) logCode("sync", "unexpected");
@@ -123,6 +111,7 @@ async function run(
   fetcher: Fetcher,
   now: Date,
   fail: (code: FeedErrorCode) => Promise<SyncResult>,
+  state: FeedState,
 ): Promise<SyncResult> {
   // 2. Fetch and parse.
   const url = await getUrl();
@@ -269,19 +258,70 @@ async function run(
     await linkSkips(db, userId, mappedCourses);
   }
 
-  must(
-    await db
-      .from("calendar_feeds")
-      .update({
-        status: "ok",
-        last_error: null,
-        last_synced_at: now.toISOString(),
-      })
-      .eq("id", feedId)
-      .eq("user_id", userId),
-    "finish",
-  );
+  await state.finish("ok", null);
   return { status: "ok", sessions: rows.length, pending: fresh.length };
+}
+
+// Claim and finish of the feed row. Clients can't update calendar_feeds, so the
+// user path goes through the definer functions (scoped to auth.uid(), database
+// clock); the cron's admin client has no auth.uid() and writes directly.
+type FeedState = {
+  claim: () => Promise<boolean>;
+  finish: (status: "ok" | "failed", error: string | null) => Promise<void>;
+};
+
+function userFeedState(db: Db, feedId: string): FeedState {
+  return {
+    claim: async () =>
+      must(await db.rpc("claim_feed_sync", { p_feed: feedId }), "claim"),
+    finish: async (status, error) => {
+      must(
+        await db.rpc("finish_feed_sync", {
+          p_feed: feedId,
+          p_status: status,
+          p_error: error,
+        }),
+        "finish",
+      );
+    },
+  };
+}
+
+function adminFeedState(
+  db: Db,
+  feedId: string,
+  userId: string,
+  now: Date,
+): FeedState {
+  return {
+    claim: async () =>
+      must(
+        await db
+          .from("calendar_feeds")
+          .update({ last_attempt_at: now.toISOString() })
+          .eq("id", feedId)
+          .eq("user_id", userId)
+          .or(
+            `last_attempt_at.is.null,last_attempt_at.lt.${new Date(now.getTime() - GUARD_MS).toISOString()}`,
+          )
+          .select("id"),
+        "claim",
+      ).length > 0,
+    finish: async (status, error) => {
+      must(
+        await db
+          .from("calendar_feeds")
+          .update(
+            status === "ok"
+              ? { status, last_error: null, last_synced_at: now.toISOString() }
+              : { status, last_error: error },
+          )
+          .eq("id", feedId)
+          .eq("user_id", userId),
+        "finish",
+      );
+    },
+  };
 }
 
 async function removeVanished(

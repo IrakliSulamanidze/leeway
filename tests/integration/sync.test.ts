@@ -57,8 +57,19 @@ describe.skipIf(!URL || !SERVICE)("syncFeed", () => {
     const { data } = await a.db.rpc("feed_url_for_sync", { p_feed: feed });
     return data as string | null;
   };
-  const sync = (body: string, now = tick()) =>
+  // The guard uses the database clock, so a test clears it before each user sync.
+  const release = async () => {
+    await admin
+      .from("calendar_feeds")
+      .update({ last_attempt_at: null })
+      .eq("id", feed);
+  };
+  const run = (body: string, now = tick()) =>
     syncFeed(a.db, feed, a.id, getUrl(), fetcherFor(body), now);
+  const sync = async (body: string, now = tick()) => {
+    await release();
+    return run(body, now);
+  };
 
   beforeAll(async () => {
     admin = createClient<Database>(URL, SERVICE, {
@@ -140,8 +151,13 @@ describe.skipIf(!URL || !SERVICE)("syncFeed", () => {
 
   it("two syncs at once: the second is busy", async () => {
     const now = tick();
-    const [x, y] = await Promise.all([sync(FIXTURE, now), sync(FIXTURE, now)]);
+    await release();
+    const [x, y] = await Promise.all([run(FIXTURE, now), run(FIXTURE, now)]);
     expect([x.status, y.status].sort()).toEqual(["busy", "ok"]);
+    // A later client clock does not open the guard: the database clock decides.
+    expect(await run(FIXTURE, new Date(now.getTime() + 3_600_000))).toEqual({
+      status: "busy",
+    });
   });
 
   it("a cancelled class releases a planned skip with a notice and keeps a logged one", async () => {
@@ -219,6 +235,7 @@ describe.skipIf(!URL || !SERVICE)("syncFeed", () => {
     const failing = async () => {
       throw new FeedError("timeout");
     };
+    await release();
     expect(await syncFeed(a.db, feed, a.id, getUrl(), failing, tick())).toEqual(
       {
         status: "failed",
@@ -228,6 +245,7 @@ describe.skipIf(!URL || !SERVICE)("syncFeed", () => {
     const crash = async () => {
       throw new Error(`boom ${FEED_URL}`);
     };
+    await release();
     await syncFeed(a.db, feed, a.id, getUrl(), crash, tick());
     const { data } = await a.db
       .from("calendar_feeds")
@@ -263,6 +281,7 @@ describe.skipIf(!URL || !SERVICE)("syncFeed", () => {
         ),
       );
     const before = await snapshot();
+    await release();
     const cronGetUrl = async () =>
       (
         await admin
@@ -280,6 +299,7 @@ describe.skipIf(!URL || !SERVICE)("syncFeed", () => {
         cronGetUrl,
         fetcherFor(FIXTURE),
         tick(),
+        { admin: true },
       ),
     ).toMatchObject({
       status: "ok",

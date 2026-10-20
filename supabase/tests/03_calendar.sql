@@ -1,9 +1,10 @@
 -- Calendar feeds: the url is never readable by a client, feed_url_for_sync hands it
 -- only to its owner, connect_feed dedupes, caps at 3 and answers with fixed messages.
+-- No client can update a feed row; claim/finish_feed_sync move sync state, owner only.
 -- Plus: B can't read, change or attach to A's rows in any of the new tables.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(37);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -46,8 +47,14 @@ select throws_ok($$ update public.calendar_feeds set url = 'https://evil.example
   'the url cannot be changed');
 select throws_ok($$ insert into public.calendar_feeds (url) values ('https://direct.example.com/') $$, '42501', null,
   'feeds can only be added through connect_feed');
-select throws_ok($$ update public.calendar_feeds set last_error = 'free text from the feed' $$, '23514', null,
-  'last_error takes fixed messages only');
+select throws_ok($$ update public.calendar_feeds set status = 'ok', last_attempt_at = null $$, '42501', null,
+  'a client cannot update the feed row');
+select ok(public.claim_feed_sync(current_setting('t.feed_a')::uuid), 'the owner claims a sync');
+select ok(not public.claim_feed_sync(current_setting('t.feed_a')::uuid), 'a second claim within 30 s is refused');
+select throws_ok($$ select public.finish_feed_sync(current_setting('t.feed_a')::uuid, 'failed', 'free text from the feed') $$,
+  '23514', null, 'last_error takes fixed messages only');
+select throws_ok($$ select public.finish_feed_sync(current_setting('t.feed_a')::uuid, 'new', null) $$,
+  '22023', 'Status must be ok or failed.', 'finish takes ok or failed only');
 
 -- A's rows in the other tables, for B to try.
 insert into public.courses (name) values ('Micro');
@@ -88,7 +95,10 @@ select throws_ok($$ insert into public.assessments (course_id, on_date, title, s
 update public.class_sessions set starts_at = now();
 delete from public.feed_course_map;
 delete from public.notices;
-update public.calendar_feeds set status = 'failed';
+select throws_ok($$ update public.calendar_feeds set status = 'failed' $$, '42501', null,
+  'B cannot update feed rows');
+select ok(not public.claim_feed_sync(current_setting('t.feed_2')::uuid), 'B cannot claim A''s feed');
+select public.finish_feed_sync(current_setting('t.feed_a')::uuid, 'failed', 'The calendar could not be read.');
 
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
 select is(
@@ -96,6 +106,7 @@ select is(
   + (select count(*)::int from public.feed_course_map) + (select count(*)::int from public.notices)
   + (select count(*)::int from public.calendar_feeds where status = 'new'),
   6, 'B changed and deleted nothing of A''s');
+select ok(public.claim_feed_sync(current_setting('t.feed_2')::uuid), 'B''s claim left A''s feed unclaimed');
 
 -- No login, anon and service_role
 set local request.jwt.claims = '{"role":"authenticated"}';

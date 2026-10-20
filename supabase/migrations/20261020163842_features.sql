@@ -170,11 +170,11 @@ begin
 end;
 $$;
 
--- calendar_feeds: no client can read url; rows are only added through connect_feed.
+-- calendar_feeds: no client can read url or change a row. Rows are only added
+-- through connect_feed; sync state only moves through claim/finish_feed_sync.
 revoke select, insert, update on public.calendar_feeds from authenticated;
 grant select (id, user_id, status, last_synced_at, last_attempt_at, last_error, created_at)
   on public.calendar_feeds to authenticated;
-grant update (status, last_synced_at, last_attempt_at, last_error) on public.calendar_feeds to authenticated;
 
 -- notices: only dismissing is an update. weekly_checks: insert or delete, no update.
 revoke update on public.notices from authenticated;
@@ -236,6 +236,42 @@ set search_path = ''
 as $$
   select f.url from public.calendar_feeds f
   where f.id = p_feed and f.user_id = (select auth.uid())
+$$;
+
+-- Two-tab guard: claims the caller's own feed for one sync, at most once every
+-- 30 seconds by the database clock. False when busy, not theirs or not logged in.
+create function public.claim_feed_sync(p_feed uuid) returns boolean
+language plpgsql security definer
+set search_path = ''
+as $$
+declare
+  v_ok boolean;
+begin
+  update public.calendar_feeds f set last_attempt_at = now()
+  where f.id = p_feed and f.user_id = (select auth.uid())
+    and (f.last_attempt_at is null or f.last_attempt_at < now() - interval '30 seconds')
+  returning true into v_ok;
+  return coalesce(v_ok, false);
+end;
+$$;
+
+-- Ends a sync of the caller's own feed: 'ok' clears the error and stamps the time;
+-- 'failed' keeps the last good data and stores one of the fixed messages.
+create function public.finish_feed_sync(p_feed uuid, p_status text, p_error text)
+returns void
+language plpgsql security definer
+set search_path = ''
+as $$
+begin
+  if p_status is null or p_status not in ('ok', 'failed') then
+    raise exception 'Status must be ok or failed.' using errcode = '22023';
+  end if;
+  update public.calendar_feeds f set
+    status = p_status,
+    last_error = case when p_status = 'ok' then null else p_error end,
+    last_synced_at = case when p_status = 'ok' then now() else f.last_synced_at end
+  where f.id = p_feed and f.user_id = (select auth.uid());
+end;
 $$;
 
 -- One syllabus read: 10 per student per Madrid day, 300 across everyone.
@@ -323,6 +359,10 @@ $$;
 revoke execute on function public.connect_feed(text) from public, anon;
 revoke execute on function public.feed_url_for_sync(uuid) from public, anon, service_role;
 revoke execute on function public.reserve_ai_call() from public, anon;
+revoke execute on function public.claim_feed_sync(uuid) from public, anon;
+revoke execute on function public.finish_feed_sync(uuid, text, text) from public, anon;
 grant execute on function public.connect_feed(text) to authenticated;
+grant execute on function public.claim_feed_sync(uuid) to authenticated;
+grant execute on function public.finish_feed_sync(uuid, text, text) to authenticated;
 grant execute on function public.feed_url_for_sync(uuid) to authenticated;
 grant execute on function public.reserve_ai_call() to authenticated;

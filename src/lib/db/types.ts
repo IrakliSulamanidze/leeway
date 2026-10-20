@@ -515,7 +515,12 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
       };
+      claim_feed_sync: { Args: { p_feed: string }; Returns: boolean };
       feed_url_for_sync: { Args: { p_feed: string }; Returns: string };
+      finish_feed_sync: {
+        Args: { p_error: string | null; p_feed: string; p_status: string };
+        Returns: undefined;
+      };
       log_skip: {
         Args: { p_day?: string; p_sessions?: number; p_text: string };
         Returns: {
