@@ -108,7 +108,8 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
 
   const tests: Confirmed["tests"] = review.tests.flatMap((l) => {
     const s = session[l.key];
-    if (!keep[l.key] || s == null) return [];
+    // A test with no session in the syllabus saves without a date.
+    if (!keep[l.key] || (s == null && l.options.length > 0)) return [];
     const w = weight[l.key].trim();
     const n = w === "" ? null : Number(w);
     return [
@@ -129,7 +130,7 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
       }))
     : [];
   const unanswered = review.tests.some(
-    (l) => keep[l.key] && session[l.key] == null,
+    (l) => keep[l.key] && session[l.key] == null && l.options.length > 0,
   );
   const reimport = saved.tests.length > 0 || saved.topics.length > 0;
   const changes = reimport ? diffSaved(saved, { tests, topics }) : [];
@@ -182,9 +183,11 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
               />
               <span>
                 <b>
-                  {session[l.key] == null
-                    ? "Session ?"
-                    : `Session ${session[l.key]}`}
+                  {session[l.key] != null
+                    ? `Session ${session[l.key]}`
+                    : l.options.length > 0
+                      ? "Session ?"
+                      : "Date not in the syllabus"}
                 </b>{" "}
                 · {l.title}
                 {when(session[l.key])}
@@ -192,7 +195,11 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
             </label>
             {l.options.length > 1 && (
               <div className="flex flex-wrap items-center gap-2">
-                <span>Which day does your group present?</span>
+                <span>
+                  {l.key.endsWith("|none")
+                    ? "Which session is it?"
+                    : "Which day does your group present?"}
+                </span>
                 {l.options.map((o) => (
                   <button
                     key={o}
@@ -268,7 +275,8 @@ export function ImportFlow({ courseId, courseName, dates, saved }: Props) {
                   data-testid="syllabus-change"
                   className="list-none text-sm"
                 >
-                  Session {c.session}: {c.kind} · {c.text}
+                  {c.session ? `Session ${c.session}` : "No date"}: {c.kind} ·{" "}
+                  {c.text}
                 </li>
               ))}
             </ul>
