@@ -81,7 +81,7 @@ jobs:
       - run: npx next build
       - name: No secret keys in the client bundle
         run: |
-          if grep -rIlE 'sb_secret_|service_role|SUPABASE_SECRET_KEY|GEMINI_API_KEY|VAPID_PRIVATE_KEY|CRON_SECRET|AIza[0-9A-Za-z_-]{35}' .next/static; then
+          if grep -rIlE 'sb_secret_|service_role|SUPABASE_SECRET_KEY|GEMINI_|generativelanguage|VAPID_PRIVATE_KEY|CRON_SECRET|AIza[0-9A-Za-z_-]{35}' .next/static; then
             echo "secret-looking value found in .next/static"; exit 1
           fi
           echo "client bundle clean"
