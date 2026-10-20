@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/session";
-import { loadWeekData, requestTime } from "@/lib/calendar/load";
+import { loadFeeds, loadWeekData, requestTime } from "@/lib/calendar/load";
+import Link from "next/link";
 import {
   canISkip,
   ifYouHaveToMissOne,
@@ -91,6 +92,28 @@ function MarkTests({ courses }: { courses: { id: string; name: string }[] }) {
   );
 }
 
+// Plan works from the timetable, so without a calendar it only explains that.
+function NoCalendar() {
+  return (
+    <main className="mx-auto grid w-full max-w-2xl flex-1 content-start gap-4 px-5 py-6">
+      <h1 className="m-0 text-[28px] font-bold">Plan your skips</h1>
+      <p className="m-0 text-muted">
+        See which class this week is the cheapest to miss, whether a trip away
+        is safe, and save the skips ahead of time.
+      </p>
+      <p className="m-0 text-muted">
+        It needs your timetable, so connect your IE calendar first.
+      </p>
+      <Link
+        href="/app/calendar"
+        className="flex min-h-[52px] items-center justify-center rounded-xl bg-primary px-5 font-semibold text-on-primary sm:max-w-xs"
+      >
+        Connect your IE calendar
+      </Link>
+    </main>
+  );
+}
+
 export default async function PlanPage({
   searchParams,
 }: PageProps<"/app/plan">) {
@@ -98,6 +121,8 @@ export default async function PlanPage({
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims?.claims) redirect("/login");
+
+  if ((await loadFeeds()).length === 0) return <NoCalendar />;
 
   const today = madridDate(new Date(requestTime()).toISOString());
   const week = weekRange(today);

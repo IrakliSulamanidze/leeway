@@ -149,6 +149,11 @@ export function SkipForm({
             </button>
           );
         })}
+        {courses.length === 0 && (
+          <span className="flex items-center text-sm text-muted">
+            Your courses show up here for one-tap picks.
+          </span>
+        )}
       </div>
       <input
         id="core-input"

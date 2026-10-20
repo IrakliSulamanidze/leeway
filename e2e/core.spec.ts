@@ -216,24 +216,31 @@ test("last spare: the sheet asks on a planned save only, never on Today", async 
   await expect(course(page, "Statistics II")).toContainText("0 of 6");
 });
 
-test("course row: a new course's card sets its sessions inline", async ({
+test("course row: a guessed course links to setting its real sessions", async ({
   page,
 }) => {
   await signUp(page);
   await logSkip(page, "Algorithms");
   const card = course(page, "Algorithms");
   await expect(card).toContainText("estimated");
-  const sessions = card.getByLabel("Sessions in this course:");
-  const missed = card.getByLabel("Missed before today:");
+  await expect(card).toContainText("Guessing 30 sessions.");
+  await card.getByRole("link", { name: "Set the real number" }).click();
+  await expect(page).toHaveURL(/\/app\/courses\/[0-9a-f-]+$/);
+  const sessions = page.getByLabel("Sessions in this course:");
+  const missed = page.getByLabel("Missed before today:");
   await expect(sessions).toHaveValue("30");
   await expect(missed).toHaveValue("0");
   await sessions.fill("15");
   await missed.fill("1");
-  await card.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Saved.")).toBeVisible();
+  await page.goto("/app");
   // 15 sessions = 3 lives, minus 1 missed and 1 skip.
   await expect(card).toContainText("1 of 3");
   await expect(card).not.toContainText("estimated");
-  await expect(card.getByLabel("Sessions in this course:")).toHaveCount(0);
+  await expect(
+    card.getByRole("link", { name: "Set the real number" }),
+  ).toHaveCount(0);
   // Missed-before sessions aren't listed in Recent skips.
   await expect(page.getByTestId("core-item")).toHaveCount(1);
 });
