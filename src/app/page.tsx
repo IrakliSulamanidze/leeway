@@ -30,7 +30,7 @@ export default async function Home() {
             Already have an account?{" "}
             <Link
               href="/login"
-              className="inline-block min-h-11 py-3 font-semibold text-ink underline"
+              className="inline-block min-h-11 min-w-11 px-1 py-3 text-center font-semibold text-ink underline"
             >
               Log in
             </Link>

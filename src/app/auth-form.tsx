@@ -91,7 +91,7 @@ export function AuthForm({ kind, action }: Props) {
         {c.other.text}{" "}
         <Link
           href={c.other.href}
-          className="inline-block min-h-11 py-3 font-semibold text-ink underline"
+          className="inline-block min-h-11 min-w-11 px-1 py-3 text-center font-semibold text-ink underline"
         >
           {c.other.label}
         </Link>
