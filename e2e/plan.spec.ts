@@ -25,7 +25,7 @@ test("tests", async ({ page }) => {
     "Mark Microeconomics's test days first",
   );
 
-  await page.getByLabel("Test day").fill(today);
+  await page.getByLabel("Test day", { exact: true }).fill(today);
   await page.getByRole("button", { name: "Mark test day" }).click();
   await expect(page.getByTestId("week-verdict")).toContainText(
     "Microeconomics has a test on",
@@ -64,8 +64,8 @@ test("trip check saves planned skips", async ({ page }) => {
   });
   await logIn(page, user);
   await page.goto("/app/plan");
-  await page.getByLabel("From").fill(today);
-  await page.getByLabel("To").fill(today);
+  await page.getByLabel("From", { exact: true }).fill(today);
+  await page.getByLabel("To", { exact: true }).fill(today);
   await page.getByRole("button", { name: "Check these dates" }).click();
   await expect(page.getByTestId("trip-verdict")).toHaveText(
     "You'd miss 1 class. Every course stays safe.",
