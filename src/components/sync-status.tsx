@@ -13,6 +13,7 @@ export type SyncFeed = {
 
 const FRESH_MS = 15 * 60 * 1000;
 const STALE_MS = 24 * 60 * 60 * 1000;
+const BUSY_RETRY_MS = 31 * 1000;
 
 const clock = (iso: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -30,7 +31,15 @@ const weekday = (iso: string) =>
 // Syncs after first paint when the last sync is older than 15 minutes. It only
 // calls router.refresh(), which keeps whatever the student is typing.
 // With no calendar it renders nothing and sends nothing.
-export function SyncStatus({ feeds, now }: { feeds: SyncFeed[]; now: number }) {
+export function SyncStatus({
+  feeds,
+  now,
+  mapped = 0,
+}: {
+  feeds: SyncFeed[];
+  now: number;
+  mapped?: number;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const started = useRef(false);
@@ -40,14 +49,19 @@ export function SyncStatus({ feeds, now }: { feeds: SyncFeed[]; now: number }) {
       if (ids.length === 0) return;
       setBusy(true);
       try {
+        const post = (feedId: string) =>
+          fetch("/api/calendar/sync", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ feedId }),
+          });
         await Promise.all(
-          ids.map((feedId) =>
-            fetch("/api/calendar/sync", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ feedId }),
-            }),
-          ),
+          ids.map(async (feedId) => {
+            // 409: another sync of this feed ran in the last 30 seconds.
+            if ((await post(feedId)).status !== 409) return;
+            await new Promise((r) => setTimeout(r, BUSY_RETRY_MS));
+            await post(feedId);
+          }),
         );
       } catch {
         // The banner shows the stored status after the refresh.
@@ -72,6 +86,15 @@ export function SyncStatus({ feeds, now }: { feeds: SyncFeed[]; now: number }) {
     const t = setTimeout(() => void sync(due), 0);
     return () => clearTimeout(t);
   }, [feeds, now, sync]);
+
+  // A newly mapped course needs its classes: sync again when the count changes.
+  const mappedSeen = useRef(mapped);
+  useEffect(() => {
+    if (mapped === mappedSeen.current) return;
+    mappedSeen.current = mapped;
+    const t = setTimeout(() => void sync(feeds.map((f) => f.id)), 0);
+    return () => clearTimeout(t);
+  }, [mapped, feeds, sync]);
 
   if (feeds.length === 0) return null;
 

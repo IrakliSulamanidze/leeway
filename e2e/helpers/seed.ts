@@ -47,6 +47,7 @@ export async function seedCalendarUser(opts: {
   courses: string[];
   classes: ClassSeed[];
   tests?: { course: string; day: string }[];
+  pending?: string[];
   lastSyncedAt?: string;
 }): Promise<Seeded> {
   const db = localAdmin();
@@ -105,6 +106,15 @@ export async function seedCalendarUser(opts: {
       .single();
     classes[c.key] = data!.id;
   }
+
+  for (const [i, key] of (opts.pending ?? []).entries())
+    await db.from("feed_course_map").insert({
+      user_id,
+      feed_id: feed.id,
+      source_key: key,
+      source_hash: `seed-${run}-${i}`,
+      status: "pending",
+    });
 
   for (const t of opts.tests ?? [])
     await db.from("assessments").insert({

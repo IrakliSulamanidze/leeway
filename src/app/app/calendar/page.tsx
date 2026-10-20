@@ -44,10 +44,14 @@ export default async function CalendarPage() {
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims?.claims) redirect("/login");
 
-  const [feeds, pending, courses] = await Promise.all([
+  const [feeds, pending, courses, mapped] = await Promise.all([
     loadFeeds(),
     loadPendingMaps(),
     supabase.from("courses").select("id, name").order("name"),
+    supabase
+      .from("feed_course_map")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "mapped"),
   ]);
   const existing = courses.data ?? [];
 
@@ -170,7 +174,11 @@ export default async function CalendarPage() {
               </li>
             ))}
           </ul>
-          <SyncStatus feeds={feeds} now={requestTime()} />
+          <SyncStatus
+            feeds={feeds}
+            now={requestTime()}
+            mapped={mapped.count ?? 0}
+          />
         </section>
       )}
 

@@ -138,6 +138,27 @@ test("typing in core-input during a sync keeps the text", async ({ page }) => {
   );
 });
 
+test("confirming a course triggers a sync", async ({ page }) => {
+  const user = await seedCalendarUser({
+    courses: [],
+    classes: [],
+    pending: ["FINANCIAL ACCOUNTING BBA1 S1"],
+  });
+  let fired = 0;
+  await page.route("**/api/calendar/sync", (r) => {
+    fired += 1;
+    return r.fulfill({ json: {} });
+  });
+  await logIn(page, user);
+  await page.goto("/app/calendar");
+  await expect(page.getByText("We found 1 course")).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  const before = fired;
+  await page.getByRole("button", { name: "Add" }).click();
+  await expect(page.getByText("We found 1 course")).toHaveCount(0);
+  await expect.poll(() => fired).toBeGreaterThan(before);
+});
+
 test.describe("phone and accessibility", () => {
   test.use({
     viewport: { width: 375, height: 812 },
