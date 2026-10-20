@@ -37,7 +37,7 @@ const button =
 export default async function Home() {
   const signedIn = (await getSignedInEmail()) !== null;
   return (
-    <main className="mx-auto grid w-full max-w-5xl flex-1 content-start gap-9 px-5 pt-9 pb-12 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-12">
+    <main className="mx-auto grid w-full max-w-5xl flex-1 content-start gap-9 px-5 pt-9 pb-12 lg:grid-cols-2 lg:content-center lg:items-center lg:gap-16 lg:px-12 lg:py-16">
       <div className="grid gap-5 lg:gap-6">
         <h1 className="m-0 text-[38px] leading-[1.06] font-bold tracking-[-0.025em] text-balance lg:text-[60px]">
           {APP_TAGLINE}
