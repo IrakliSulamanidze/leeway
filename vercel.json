@@ -5,5 +5,9 @@
       "**": false,
       "main": true
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/cron/nightly", "schedule": "0 19 * * *" },
+    { "path": "/api/cron/nightly", "schedule": "0 20 * * *" }
+  ]
 }

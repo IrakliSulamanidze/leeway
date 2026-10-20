@@ -108,6 +108,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: true
+      # Not a key (0x04 then zeros): alerts.spec.ts stubs the push service but needs valid base64url.
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -123,11 +125,11 @@ jobs:
       - name: Read local keys at runtime (never written to the repo)
         run: bash scripts/supabase-env.sh >> "$GITHUB_ENV"
       - run: npm ci
-      - name: Integration tests (calendar sync vs local Supabase)
+      - name: Integration tests (calendar sync, cron; push mocked)
         run: bash scripts/test-integration.sh
       - run: npx playwright install --with-deps chromium
       - run: npx next build
-      - run: npx playwright test e2e/grading-bot.spec.ts e2e/core.spec.ts e2e/ui.spec.ts e2e/calendar.spec.ts e2e/plan.spec.ts
+      - run: npx playwright test e2e/grading-bot.spec.ts e2e/core.spec.ts e2e/ui.spec.ts e2e/calendar.spec.ts e2e/plan.spec.ts e2e/alerts.spec.ts
       - if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
