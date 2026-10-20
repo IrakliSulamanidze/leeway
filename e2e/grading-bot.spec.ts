@@ -83,6 +83,11 @@ test("2-4. sign up, save an item, log out, log back in", async ({
     page.getByTestId("core-item").filter({ hasText: itemText }),
   ).toHaveCount(1);
   await expect(page.getByTestId("core-item")).toHaveCount(before + 1);
+  // A new course: 30 sessions assumed, 6 lives, this skip used one.
+  await expect(page.locator(`[data-course="${itemText}"]`)).toContainText(
+    "5 of 6",
+  );
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 
   // 4. Log out, then log in again from a clean browser.
   await page.getByTestId("logout").click();
