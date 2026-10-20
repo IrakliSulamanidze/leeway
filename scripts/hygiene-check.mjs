@@ -5,17 +5,18 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const SUBJECT =
-  /^(feat|fix|chore|docs|test|ci|refactor|perf|build|style|revert)(\([a-z0-9-]+\))?!?: \S.{0,70}$/;
+  /^(feat|fix|chore|docs|test|ci|refactor|perf|build|style|revert)(\([a-z0-9-]+\))?!?: \S.*$/;
+// The PR title becomes the squash-merge subject on main, so it gets the strict
+// 72; branch commit subjects may run to 80.
+const MAX = { "PR title": 72, commit: 80 };
 const EMOJI = /\p{Extended_Pictographic}/u;
 const failures = [];
 
 function checkTitle(kind, text) {
   if (!SUBJECT.test(text))
-    failures.push(
-      `${kind} not Conventional (type(scope): subject, max 72): "${text}"`,
-    );
-  else if (text.length > 72)
-    failures.push(`${kind} longer than 72 chars: "${text}"`);
+    failures.push(`${kind} not Conventional (type(scope): subject): "${text}"`);
+  else if (text.length > MAX[kind])
+    failures.push(`${kind} longer than ${MAX[kind]} chars: "${text}"`);
   if (EMOJI.test(text)) failures.push(`${kind} has an emoji: "${text}"`);
   if (/\.$/.test(text)) failures.push(`${kind} ends with a period: "${text}"`);
 }
