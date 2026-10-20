@@ -34,7 +34,7 @@ describe("previewLine: copy from the signed-off mockups, verbatim", () => {
   });
 });
 
-describe("previewLine: drafted copy (not in the mockups)", () => {
+describe("previewLine: spec copy table, plus the drafted double-over line", () => {
   it("new course assumes 30 sessions", () => {
     expect(
       previewLine({
@@ -43,7 +43,7 @@ describe("previewLine: drafted copy (not in the mockups)", () => {
         course: null,
       }),
     ).toEqual({
-      text: "New course: 30 sessions assumed, so 6 lives. This uses 1 life.",
+      text: "New course. You'll have 5 of 6 lives left.",
       state: "safe",
     });
   });
@@ -51,7 +51,7 @@ describe("previewLine: drafted copy (not in the mockups)", () => {
     expect(
       previewLine({ ...base, typed: "Statistics II", course: existing(0) }),
     ).toEqual({
-      text: "You're out of lives. This skip takes you below 80%.",
+      text: "Out of lives. The next skip takes you below 80%.",
       state: "over",
     });
   });
@@ -59,7 +59,7 @@ describe("previewLine: drafted copy (not in the mockups)", () => {
     expect(
       previewLine({ ...base, typed: "Statistics II", course: existing(-1) }),
     ).toEqual({
-      text: "You're already below 80%. This adds another absence.",
+      text: "Over the limit. Talk to your professor.",
       state: "over",
     });
   });
