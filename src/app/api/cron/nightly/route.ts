@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { syncFeed } from "@/lib/calendar/sync";
 import { createAdminClient } from "@/lib/server/admin";
 import { runNightly } from "@/lib/server/nightly";
 
@@ -19,7 +20,12 @@ export async function GET(request: Request) {
     return Response.json({ error: "not configured" }, { status: 500 });
   if (!authorized(request.headers.get("authorization"), secret))
     return Response.json({ error: "unauthorized" }, { status: 401 });
-  // PR 6's syncFeed is passed here as syncFeed once src/lib/calendar/sync.ts lands.
-  const result = await runNightly({ db: createAdminClient() });
+  const result = await runNightly({
+    db: createAdminClient(),
+    syncFeed: (db, feedId, userId, getUrl) =>
+      syncFeed(db, feedId, userId, getUrl, undefined, undefined, {
+        admin: true,
+      }),
+  });
   return Response.json(result);
 }

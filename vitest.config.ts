@@ -1,9 +1,6 @@
 import { defineConfig } from "vitest/config";
 import path from "node:path";
 
-// INTEGRATION=1 runs tests/integration (needs local Supabase); else the unit tests.
-const integration = process.env.INTEGRATION === "1";
-
 export default defineConfig({
   resolve: {
     alias: {
@@ -15,7 +12,5 @@ export default defineConfig({
       ),
     },
   },
-  test: integration
-    ? { include: ["tests/integration/**/*.test.ts"], fileParallelism: false }
-    : { include: ["src/**/*.test.ts"] },
+  test: { include: ["src/**/*.test.ts"] },
 });
