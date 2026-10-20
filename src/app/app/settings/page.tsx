@@ -1,8 +1,9 @@
+import { DeleteAccount } from "@/components/delete-account";
 import { getSignedInEmail } from "@/lib/supabase/session";
 
 export const metadata = { title: "Settings" };
 
-// Shell: each lane adds its own row (alerts, calendar, syllabi, delete account).
+// Each lane adds its own row (alerts, calendar, syllabi).
 export default async function SettingsPage() {
   const email = await getSignedInEmail();
   return (
@@ -14,6 +15,11 @@ export default async function SettingsPage() {
           <span className="block text-[13.5px] text-muted [overflow-wrap:anywhere]">
             {email}
           </span>
+        </li>
+      </ul>
+      <ul className="overflow-hidden rounded-xl border border-line bg-surface">
+        <li className="px-4 py-3.5">
+          <DeleteAccount />
         </li>
       </ul>
     </main>

@@ -40,10 +40,11 @@ export default async function AppHome() {
       <div className="grid content-start gap-5">
         <RiskLine courses={views} />
         <SkipForm
-          courses={views.map(({ name, lives, left }) => ({
+          courses={views.map(({ name, lives, left, planned }) => ({
             name,
             lives,
             left,
+            planned,
           }))}
           weeksToGo={weeksToGo(today, TERM.end)}
           weekOfTerm={week}
@@ -62,7 +63,7 @@ export default async function AppHome() {
             )}
           </div>
           {views.length ? (
-            <CourseList courses={views} />
+            <CourseList courses={views} linked />
           ) : (
             <>
               <p className="m-0 text-sm text-muted">
@@ -80,6 +81,8 @@ export default async function AppHome() {
                       pace: "safe",
                       weeksToGo: weeksToGo(today, TERM.end),
                       estimated: false,
+                      sessions: 30,
+                      missedBefore: 0,
                     },
                   ]}
                 />
