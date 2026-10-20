@@ -22,7 +22,10 @@ export async function logSkip(text: unknown): Promise<SaveResult> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("log_skip", { p_text: text });
   if (error || !data)
-    return { ok: false, message: "Couldn't save. Try again." };
+    return {
+      ok: false,
+      message: "Couldn't save. Check your connection and try again.",
+    };
   revalidatePath("/app");
   return { ok: true, id: data.id };
 }

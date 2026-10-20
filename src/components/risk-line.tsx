@@ -4,8 +4,10 @@ import type { CourseView } from "./course-list";
 export function riskText(courses: CourseView[]): string | null {
   const worst = courses.find((c) => ["over", "out", "last"].includes(c.pace));
   if (!worst) return null;
-  if (worst.pace === "over") return `${worst.name} is over the limit.`;
-  if (worst.pace === "out") return `${worst.name} is out of lives.`;
+  if (worst.pace === "over")
+    return `${worst.name}: Over the limit. Talk to your professor.`;
+  if (worst.pace === "out")
+    return `${worst.name}: Out of lives. The next skip takes you below 80%.`;
   return `${worst.name} is on its last life. Guard it.`;
 }
 

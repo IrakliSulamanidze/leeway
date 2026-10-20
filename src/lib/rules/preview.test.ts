@@ -24,6 +24,14 @@ describe("previewLine: copy from the signed-off mockups, verbatim", () => {
       state: "safe",
     });
   });
+  it("spec example: one skip a month", () => {
+    expect(
+      previewLine({ ...base, typed: "Micro", course: existing(3) }),
+    ).toEqual({
+      text: "This uses 1 life. 2 left, 8 weeks to go: about one skip a month.",
+      state: "burning",
+    });
+  });
   it("last spare", () => {
     expect(
       previewLine({ ...base, typed: "Statistics II", course: existing(1) }),
