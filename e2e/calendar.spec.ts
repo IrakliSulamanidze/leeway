@@ -190,6 +190,34 @@ test("confirming a course triggers a sync", async ({ page }) => {
   await expect.poll(() => fired).toBeGreaterThan(before);
 });
 
+test("add all: one tap adds every course, sections share one", async ({
+  page,
+}) => {
+  const user = await seedCalendarUser({
+    courses: [],
+    classes: [],
+    pending: [
+      "FINANCIAL ACCOUNTING BBA1 S1",
+      "STATISTICS II BBA2 S1 SEC1",
+      "STATISTICS II BBA2 S1 SEC2",
+    ],
+  });
+  await page.route("**/api/calendar/sync", (r) => r.fulfill({ json: {} }));
+  await logIn(page, user);
+  await page.goto("/app/calendar");
+  await page.getByRole("button", { name: "Add all 3" }).click();
+  await expect(page.getByText(/We found/)).toHaveCount(0);
+  await page.getByRole("link", { name: "See your week" }).click();
+  await expect(page).toHaveURL(/\/app\/schedule$/);
+  await page.goto("/app");
+  await expect(page.getByRole("link", { name: /Statistics II/ })).toHaveCount(
+    1,
+  );
+  await expect(
+    page.getByRole("link", { name: /Financial Accounting/ }),
+  ).toHaveCount(1);
+});
+
 test.describe("phone and accessibility", () => {
   test.use({
     viewport: { width: 375, height: 812 },

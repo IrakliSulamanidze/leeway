@@ -5,7 +5,8 @@ import { hasSupabaseEnv } from "@/lib/supabase/session";
 import { loadFeeds, loadPendingMaps, requestTime } from "@/lib/calendar/load";
 import { SyncStatus } from "@/components/sync-status";
 import { APP_NAME } from "@/lib/config";
-import { disconnectFeed, mapCourse } from "./actions";
+import { normName, suggestName } from "@/lib/calendar/names";
+import { addAllCourses, disconnectFeed, mapCourse } from "./actions";
 import { ConnectForm } from "./connect-form";
 
 export const metadata = { title: "Calendar" };
@@ -15,27 +16,6 @@ const STEPS = [
   "Tap the gear icon, then Get external calendar link.",
   "Copy the link and paste it below.",
 ];
-
-const norm = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-
-// "STATISTICS II BBA2 S1 SEC2" -> "Statistics II": drop programme and section
-// codes, then title case words that are not roman numerals.
-function suggestName(key: string): string {
-  return key
-    .split(/\s+/)
-    .filter((w) => !/^(BBA|BIR|BCSAI|BDBA|S\d|SEC\d|GR\d|[A-Z]+\d+)$/i.test(w))
-    .map((w) =>
-      /^[IVX]+$/.test(w) ? w : w.charAt(0) + w.slice(1).toLowerCase(),
-    )
-    .join(" ")
-    .slice(0, 200);
-}
 
 const ROW = "min-h-11 rounded-xl px-3 font-semibold";
 
@@ -73,10 +53,19 @@ export default async function CalendarPage() {
           <p className="m-0 text-sm text-muted">
             Check each name once. Other events are never saved.
           </p>
+          {pending.length > 1 && (
+            <form action={addAllCourses}>
+              <button className={`${ROW} w-full bg-primary text-on-primary`}>
+                Add all {pending.length}
+              </button>
+            </form>
+          )}
           <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
             {pending.map((m) => {
               const name = suggestName(m.source_key);
-              const match = existing.find((c) => norm(c.name) === norm(name));
+              const match = existing.find(
+                (c) => normName(c.name) === normName(name),
+              );
               return (
                 <li key={m.id} className="grid gap-2 px-4 py-3">
                   <span className="text-sm break-words text-muted">
@@ -186,6 +175,14 @@ export default async function CalendarPage() {
             now={requestTime()}
             mapped={mapped.count ?? 0}
           />
+          {pending.length === 0 && (mapped.count ?? 0) > 0 && (
+            <Link
+              href="/app/schedule"
+              className={`${ROW} flex items-center justify-center bg-primary text-on-primary`}
+            >
+              See your week
+            </Link>
+          )}
         </section>
       )}
 

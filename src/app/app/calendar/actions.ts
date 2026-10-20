@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { normName, suggestName } from "@/lib/calendar/names";
 import { madridDate } from "@/lib/rules/week";
 
 export type ConnectState = { ok: boolean; error: string | null };
@@ -75,6 +76,44 @@ export async function mapCourse(form: FormData) {
       .from("feed_course_map")
       .update({ status: "mapped", course_id: courseId })
       .eq("id", id);
+  }
+  refresh();
+}
+
+// "Add all": every pending course under its suggested name. A name that is
+// already a course, or that two sections share, links to that one course.
+export async function addAllCourses() {
+  const supabase = await createClient();
+  const [{ data: pending }, { data: courses }] = await Promise.all([
+    supabase
+      .from("feed_course_map")
+      .select("id, source_key")
+      .eq("status", "pending")
+      .limit(60),
+    supabase.from("courses").select("id, name"),
+  ]);
+  const byName = new Map(
+    (courses ?? []).map((c) => [normName(c.name), c.id as string]),
+  );
+  for (const m of pending ?? []) {
+    if (!m.source_key) continue;
+    const name = suggestName(m.source_key);
+    if (!name) continue;
+    let courseId = byName.get(normName(name));
+    if (!courseId) {
+      const { data } = await supabase
+        .from("courses")
+        .insert({ name })
+        .select("id")
+        .single();
+      if (!data) continue;
+      courseId = data.id as string;
+      byName.set(normName(name), courseId);
+    }
+    await supabase
+      .from("feed_course_map")
+      .update({ status: "mapped", course_id: courseId })
+      .eq("id", m.id);
   }
   refresh();
 }
