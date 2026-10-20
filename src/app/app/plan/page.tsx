@@ -127,9 +127,9 @@ export default async function PlanPage({
     thisWeek.skips,
     thisWeek.assessments,
   ] as const;
-  // Days already gone can't be skipped any more.
+  // Days already gone can't be skipped any more, so both start at today.
   const missOne = ifYouHaveToMissOne({ from: today, to: week.to }, ...args);
-  const skipWeek = canISkip(week, ...args);
+  const skipWeek = canISkip({ from: today, to: week.to }, ...args);
   const tripCheck = trip
     ? canISkip(trip, data.sessions, data.courses, data.skips, data.assessments)
     : null;
