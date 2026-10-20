@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// The core loop on /app: course cards, undo, a failed save, and a layout that
-// doesn't move. Each test signs up its own fresh user.
+// The core loop on /app with the course cards on /app/courses: undo, a failed
+// save, finding a course from part of its name, and a layout that doesn't move. Each test signs up its own fresh user.
 test.use({ viewport: { width: 375, height: 812 }, isMobile: true });
 
 const domain = process.env.BOT_EMAIL_DOMAIN ?? "example.com";
@@ -26,6 +26,9 @@ async function logSkip(page: Page, text: string) {
 const course = (page: Page, name: string) =>
   page.locator(`[data-course="${name}"]`);
 
+const toCourses = (page: Page) => page.goto("/app/courses");
+const toSkip = (page: Page) => page.goto("/app");
+
 test("cards: empty state, then rows sorted by fewest lives left", async ({
   page,
 }) => {
@@ -34,11 +37,12 @@ test("cards: empty state, then rows sorted by fewest lives left", async ({
   await expect(page.getByText(/on its last life/)).toHaveCount(0);
 
   await logSkip(page, "Financial Accounting");
-  await expect(course(page, "Financial Accounting")).toContainText("5 of 6");
-  await expect(course(page, "Financial Accounting")).toContainText("Safe");
   for (let i = 0; i < 4; i++) await logSkip(page, "Statistics II");
   // Different case and spacing still count against the same course.
   await logSkip(page, "statistics  ii");
+  await toCourses(page);
+  await expect(course(page, "Financial Accounting")).toContainText("5 of 6");
+  await expect(course(page, "Financial Accounting")).toContainText("Safe");
   await expect(course(page, "Statistics II")).toContainText("1 of 6");
   await expect(page.locator("[data-course]").first()).toHaveAttribute(
     "data-course",
@@ -47,7 +51,7 @@ test("cards: empty state, then rows sorted by fewest lives left", async ({
   await expect(
     page.getByText("Statistics II is on its last life."),
   ).toBeVisible();
-  await expect(page.getByText("Left", { exact: true })).toBeVisible();
+  await toSkip(page);
   await expect(page.getByText("6 logged")).toBeVisible();
   // Newest first, text exactly as typed.
   await expect(page.getByTestId("core-item").first()).toContainText(
@@ -71,9 +75,10 @@ test("undo: the toast removes the skip and the course it created", async ({
   await expect(page.getByText("Skip logged.")).toBeVisible();
   await page.getByRole("button", { name: "Undo" }).click();
   await expect(page.getByTestId("core-item")).toHaveCount(0);
-  await expect(course(page, "Microeconomics")).toHaveCount(0);
   await page.reload();
   await expect(page.getByTestId("core-item")).toHaveCount(0);
+  await toCourses(page);
+  await expect(course(page, "Microeconomics")).toHaveCount(0);
 });
 
 test("offline save keeps text and saves once back online", async ({
@@ -109,27 +114,25 @@ test("layout: field and button don't move when typing or saving", async ({
   await submit.click();
   await expect(page.getByTestId("core-item")).toHaveCount(1);
   expect(await boxes()).toEqual(start);
-  // The course chip now shows above the field, in space kept from first paint.
-  await expect(chip(page, LONG)).toBeVisible();
   await input.fill(LONG);
   await expect(page.getByText(/This uses 1 life\. 4 left/)).toBeVisible();
   expect(await boxes()).toEqual(start);
-  await input.fill("A very long course name that wraps the preview lin");
+  // A typo that isn't part of the name gets "Did you mean".
+  await input.fill("A very long course nme that wraps the preview line");
   const near = page.getByRole("button", { name: `Did you mean ${LONG}?` });
   await expect(near).toBeVisible();
   expect(await boxes()).toEqual(start);
   await near.click();
   await expect(input).toHaveValue(LONG);
-  await expect(chip(page, LONG)).toHaveAttribute("aria-pressed", "true");
+  expect(await boxes()).toEqual(start);
+  // Part of the name finds the course and names it above the cost.
+  await input.fill("very long");
+  await expect(page.getByText(`${LONG}.`)).toBeVisible();
+  await expect(page.getByText(/This uses 1 life\. 4 left/)).toBeVisible();
   expect(await boxes()).toEqual(start);
 });
 
 const LONG = "A very long course name that wraps the preview line";
-const chip = (page: Page, name: string) =>
-  page.getByRole("group", { name: "Your courses" }).getByRole("button", {
-    name,
-    exact: true,
-  });
 const dayButton = (page: Page, name: "Today" | "Tomorrow") =>
   page.getByRole("group", { name: "Day" }).getByRole("button", { name });
 const doubleSwitch = (page: Page) =>
@@ -160,20 +163,26 @@ test("form: planned shows hollow hearts, double costs 2, every save resets", asy
   await expect(item).toContainText("x2");
   await expect(item).toContainText("planned");
   const card = course(page, "Microeconomics");
+  await toCourses(page);
   await expect(card).toContainText("4 of 6");
   await expect(card).toContainText("2 planned");
   await expect(card.locator('path[fill="none"]')).toHaveCount(2);
 
   // Back on Today, single: one tap logs exactly one session for today.
+  await toSkip(page);
   await logSkip(page, "Microeconomics");
-  await expect(card).toContainText("3 of 6");
   await expect(page.getByTestId("core-item").first()).not.toContainText("x2");
   await expect(page.getByTestId("core-item").first()).toContainText("Today");
   await expectReset(page);
 
-  // A chip fills the field.
-  await chip(page, "Microeconomics").click();
-  await expect(page.getByTestId("core-input")).toHaveValue("Microeconomics");
+  // Part of a name saves against the full course, not a new one.
+  await logSkip(page, "micro");
+  await expect(page.getByTestId("core-item").first()).toContainText(
+    "Microeconomics",
+  );
+  await toCourses(page);
+  await expect(page.locator("[data-course]")).toHaveCount(1);
+  await expect(card).toContainText("2 of 6");
 });
 
 test("last spare: the sheet asks on a planned save only, never on Today", async ({
@@ -188,7 +197,6 @@ test("last spare: the sheet asks on a planned save only, never on Today", async 
     await expect(page.getByTestId("core-item")).toHaveCount(i + 1);
   }
   await logSkip(page, "Statistics II");
-  await expect(course(page, "Statistics II")).toContainText("1 of 6");
   const sheet = page.getByRole("dialog");
 
   // Planned: asks. Keep my spare saves nothing.
@@ -205,7 +213,6 @@ test("last spare: the sheet asks on a planned save only, never on Today", async 
   await page.getByTestId("core-submit").click();
   await sheet.getByRole("button", { name: "Plan it anyway" }).click();
   await expect(page.getByTestId("core-item")).toHaveCount(4);
-  await expect(course(page, "Statistics II")).toContainText("0 of 6");
   await page.getByRole("button", { name: "Undo" }).click();
   await expect(page.getByTestId("core-item")).toHaveCount(3);
 
@@ -213,6 +220,7 @@ test("last spare: the sheet asks on a planned save only, never on Today", async 
   await expectReset(page);
   await logSkip(page, "Statistics II");
   await expect(sheet).toHaveCount(0);
+  await toCourses(page);
   await expect(course(page, "Statistics II")).toContainText("0 of 6");
 });
 
@@ -221,6 +229,7 @@ test("course row: a guessed course links to setting its real sessions", async ({
 }) => {
   await signUp(page);
   await logSkip(page, "Algorithms");
+  await toCourses(page);
   const card = course(page, "Algorithms");
   await expect(card).toContainText("estimated");
   await expect(card).toContainText("Guessing 30 sessions.");
@@ -234,14 +243,15 @@ test("course row: a guessed course links to setting its real sessions", async ({
   await missed.fill("1");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
-  await page.goto("/app");
+  await toCourses(page);
   // 15 sessions = 3 lives, minus 1 missed and 1 skip.
   await expect(card).toContainText("1 of 3");
   await expect(card).not.toContainText("estimated");
   await expect(
     card.getByRole("link", { name: "Set the real number" }),
   ).toHaveCount(0);
-  // Missed-before sessions aren't listed in Recent skips.
+  // Missed-before sessions aren't listed in Your skips.
+  await toSkip(page);
   await expect(page.getByTestId("core-item")).toHaveCount(1);
 });
 
@@ -255,6 +265,7 @@ test("remove course: course page deletes skips, keeps the course, then removes i
   await page.getByTestId("core-submit").click();
   await expect(page.getByTestId("core-item")).toHaveCount(2);
 
+  await toCourses(page);
   await course(page, "Marketing")
     .getByRole("link", { name: "Marketing" })
     .click();
@@ -279,7 +290,8 @@ test("remove course: course page deletes skips, keeps the course, then removes i
 
   await page.getByRole("button", { name: "Remove course" }).click();
   await page.getByRole("button", { name: "Yes, remove it" }).click();
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/app\/courses$/);
   await expect(course(page, "Marketing")).toHaveCount(0);
+  await toSkip(page);
   await expect(page.getByTestId("core-item")).toHaveCount(0);
 });

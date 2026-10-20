@@ -12,6 +12,9 @@ export type WeekClass = {
   kind: ClassKind;
   is_exam_slot: boolean;
   session_numbers: number[];
+  // Loaded for the calendar grid only.
+  ends_at?: string;
+  all_day?: boolean;
 };
 
 // `left` is lives left after logged and planned skips (lives.ts livesLeft).

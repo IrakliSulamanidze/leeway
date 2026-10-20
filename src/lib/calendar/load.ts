@@ -120,7 +120,9 @@ export async function loadWeekData(range: { from: string; to: string }) {
       .order("name"),
     supabase
       .from("class_sessions")
-      .select("id, course_id, starts_at, kind, is_exam_slot, session_numbers")
+      .select(
+        "id, course_id, starts_at, ends_at, all_day, kind, is_exam_slot, session_numbers",
+      )
       .gte("starts_at", from.toISOString())
       .lt("starts_at", to.toISOString())
       .order("starts_at"),

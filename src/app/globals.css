@@ -15,6 +15,23 @@
   --used: #8c8c94;
   --safe: #1a7346;
   --warn: #a35400;
+  /* Course colours on the calendar: a tint to fill a block, ink to write on it. */
+  --c1: #dbe7f7;
+  --k1: #1d4a85;
+  --c2: #e1f0e3;
+  --k2: #24613a;
+  --c3: #f6e6d3;
+  --k3: #7a4512;
+  --c4: #ece2f5;
+  --k4: #5a2f80;
+  --c5: #f8dfe3;
+  --k5: #8a2235;
+  --c6: #dcefef;
+  --k6: #1f5f60;
+  --c7: #efeed3;
+  --k7: #5d5a12;
+  --c8: #e6e6ea;
+  --k8: #3e3e48;
   --font:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;

@@ -8,7 +8,7 @@ export function Notices({
 }) {
   if (notices.length === 0) return null;
   return (
-    <ul className="mt-4 grid gap-2" aria-label="Notices">
+    <ul className="m-0 grid gap-2 p-0" aria-label="Notices">
       {notices.map((n) => (
         <li
           key={n.id}

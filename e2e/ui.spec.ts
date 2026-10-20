@@ -51,6 +51,7 @@ for (const path of [
   "/login",
   "/app",
   "/app/settings",
+  "/app/courses",
   "/app/courses/[id]",
 ]) {
   test(`${path} passes the phone and accessibility checks`, async ({
@@ -69,6 +70,7 @@ for (const path of [
       await page.getByTestId("core-input").fill("Statistics II");
     }
     if (path === "/app/courses/[id]") {
+      await page.goto("/app/courses");
       await page.getByRole("link", { name: "Statistics II" }).click();
       await expect(page).toHaveURL(/\/app\/courses\//);
     } else if (path !== "/app") await page.goto(path);

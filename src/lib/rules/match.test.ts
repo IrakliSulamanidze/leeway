@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nearMatch, normName } from "./match";
+import { nearMatch, normName, partialMatches } from "./match";
 
 const NAMES = [
   "Microeconomics",
@@ -37,5 +37,36 @@ describe("nearMatch", () => {
     expect(
       nearMatch("Statistics I", ["Statistics II", "Statistics I"]),
     ).toBeNull();
+  });
+});
+
+describe("partialMatches", () => {
+  const COURSES = [
+    "Algorithms & Data Structures",
+    "Financial Reporting & Analysis",
+    "Computer Programming 2",
+    "Computer Architecture",
+  ];
+  it("finds a course from the start of its name or its words", () => {
+    expect(partialMatches("algo", COURSES)).toEqual([
+      "Algorithms & Data Structures",
+    ]);
+    expect(partialMatches("fin rep", COURSES)).toEqual([
+      "Financial Reporting & Analysis",
+    ]);
+    expect(partialMatches("data", COURSES)).toEqual([
+      "Algorithms & Data Structures",
+    ]);
+  });
+  it("lists every course that fits, best first", () => {
+    expect(partialMatches("comp", COURSES)).toEqual([
+      "Computer Architecture",
+      "Computer Programming 2",
+    ]);
+  });
+  it("is empty for an exact name, one letter or no fit", () => {
+    expect(partialMatches("computer architecture", COURSES)).toEqual([]);
+    expect(partialMatches("a", COURSES)).toEqual([]);
+    expect(partialMatches("biology", COURSES)).toEqual([]);
   });
 });

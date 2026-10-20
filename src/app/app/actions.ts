@@ -114,7 +114,7 @@ export async function removeCourse(id: unknown) {
   const { error } = await supabase.from("courses").delete().eq("id", id);
   if (error) return;
   revalidatePath("/app", "layout");
-  redirect("/app");
+  redirect("/app/courses");
 }
 
 // The definer function deletes the auth user; every table cascades from it.

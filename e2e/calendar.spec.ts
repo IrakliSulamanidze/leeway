@@ -2,8 +2,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { madridToday, seedCalendarUser } from "./helpers/seed";
 
-// Calendar screens: the secret link never leaves the POST body, Today's
-// Skipped switches, no sync without a calendar, and sync never eats typing.
+// Calendar screens: the secret link never leaves the POST body, the class
+// sheet, no sync without a calendar, and sync never eats typing.
 
 const run = Math.random().toString(36).slice(2, 8);
 
@@ -80,44 +80,66 @@ test("no sync request for a user without a calendar", async ({ page }) => {
   expect(syncs).toEqual([]);
 });
 
-test("today", async ({ page }) => {
-  const today = madridToday();
+const shiftDay = (day: string, n: number) => {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+test("calendar: mark a past class missed, exam slots stay unskippable", async ({
+  page,
+}) => {
+  const yesterday = shiftDay(madridToday(), -1);
   const user = await seedCalendarUser({
     courses: ["Financial Accounting", "Statistics II"],
     classes: [
-      { key: "fin", course: "Financial Accounting", day: today, hourUtc: 8 },
+      {
+        key: "fin",
+        course: "Financial Accounting",
+        day: yesterday,
+        hourUtc: 8,
+      },
       {
         key: "slot",
         course: "Statistics II",
-        day: today,
-        hourUtc: 10,
+        day: yesterday,
+        hourUtc: 11,
         examSlot: true,
       },
     ],
   });
   await logIn(page, user);
-  const rows = page.getByTestId("today-class");
-  await expect(rows).toHaveCount(2);
+  await page.goto(`/app/schedule?day=${yesterday}&view=day`);
+  await expect(page.getByTestId("schedule-class")).toHaveCount(2);
 
-  const fin = page.getByRole("switch", {
-    name: "Skipped Financial Accounting",
-  });
-  await expect(fin).toHaveAttribute("aria-checked", "false");
-  await fin.click();
-  await expect(fin).toHaveAttribute("aria-checked", "true");
-  await fin.click();
-  await expect(fin).toHaveAttribute("aria-checked", "false");
+  const sheet = page.getByRole("dialog");
+  await page
+    .getByTestId("schedule-class")
+    .filter({ hasText: "Financial Accounting" })
+    .click();
+  await expect(sheet.getByTestId("sheet-cost")).toContainText(
+    "lives left if you missed it",
+  );
+  await sheet.getByRole("button", { name: "I missed it" }).click();
+  await expect(sheet).toContainText("Marked as missed. 5 left");
+  await sheet.getByRole("button", { name: "I was there" }).click();
+  await expect(sheet.getByTestId("sheet-cost")).toBeVisible();
+  await sheet.getByRole("link", { name: "Close" }).click();
+  await expect(sheet).toHaveCount(0);
 
-  // Exam slots are never toggleable.
-  await expect(page.getByRole("switch", { name: /Statistics II/ })).toHaveCount(
+  // Exam slots are never skippable.
+  await page
+    .getByTestId("schedule-class")
+    .filter({ hasText: "Statistics II" })
+    .click();
+  await expect(sheet).toContainText("Exams aren't skippable classes.");
+  await expect(sheet.getByRole("button", { name: "I missed it" })).toHaveCount(
     0,
   );
 });
 
-test("schedule: tomorrow on home, plan a skip in one tap", async ({ page }) => {
-  const d = new Date(`${madridToday()}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + 1);
-  const tomorrow = d.toISOString().slice(0, 10);
+test("calendar: tap a class tomorrow, skip it, then undo", async ({ page }) => {
+  const tomorrow = shiftDay(madridToday(), 1);
   const user = await seedCalendarUser({
     courses: ["Microeconomics"],
     classes: [
@@ -125,24 +147,35 @@ test("schedule: tomorrow on home, plan a skip in one tap", async ({ page }) => {
     ],
   });
   await logIn(page, user);
-  const row = page
-    .getByRole("region", { name: "Tomorrow" })
-    .getByTestId("schedule-class");
-  await expect(row).toHaveCount(1);
-  await expect(row).toContainText("If skipped: 5 left");
-  await row
-    .getByRole("button", { name: /Plan to skip Microeconomics/ })
-    .click();
-  await expect(row).toContainText("Planned skip");
+  const url = `/app/schedule?day=${tomorrow}&view=day`;
+  await page.goto(url);
+  const block = page.getByTestId("schedule-class");
+  await expect(block).toHaveCount(1);
+  await block.click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet.getByTestId("sheet-cost")).toContainText(
+    "lives left if you skip",
+  );
+  await sheet.getByRole("button", { name: "Skip this class" }).click();
+  await expect(sheet).toContainText("You're skipping this one. 5 left");
+  await expect(block).toContainText("Skipping");
+
+  await page.goto("/app");
   await expect(page.getByTestId("core-item")).toHaveCount(1);
 
-  await page.getByRole("link", { name: "Whole week" }).click();
-  await expect(page).toHaveURL(/\/app\/schedule$/);
-  await expect(page.getByTestId("schedule-class").first()).toBeVisible();
-  await page
-    .getByRole("button", { name: /Cancel the skip of Microeconomics/ })
-    .click();
-  await expect(page.getByText("If skipped: 5 left")).toBeVisible();
+  await page.goto(url);
+  await block.click();
+  await sheet.getByRole("button", { name: "Undo skip" }).click();
+  await expect(sheet.getByTestId("sheet-cost")).toBeVisible();
+  await expect(block).not.toContainText("Skipping");
+
+  // Marking a midterm makes it a test day: no skip offered.
+  await sheet.getByRole("button", { name: "Midterm" }).click();
+  await expect(sheet).toContainText("Test day.");
+  await expect(
+    sheet.getByRole("button", { name: "Skip this class" }),
+  ).toHaveCount(0);
+  await expect(block).toContainText("Test");
 });
 
 test("typing in core-input during a sync keeps the text", async ({ page }) => {
@@ -212,7 +245,7 @@ test("add all: one tap adds every course, sections share one", async ({
   await page.getByRole("link", { name: "See your week" }).click();
   await expect(page).toHaveURL(/\/app\/schedule$/);
   await synced;
-  await page.goto("/app");
+  await page.goto("/app/courses");
   await expect(page.getByRole("link", { name: /Statistics II/ })).toHaveCount(
     1,
   );

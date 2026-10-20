@@ -41,7 +41,7 @@ export function RecentSkips({ skips }: { skips: SkipItem[] }) {
   return (
     <section className="grid gap-3">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="m-0 text-xl font-bold tracking-tight">Recent skips</h2>
+        <h2 className="m-0 text-xl font-bold tracking-tight">Your skips</h2>
         <span className="text-sm text-muted">{skips.length} logged</span>
       </div>
       <ul className="overflow-hidden rounded-xl border border-line bg-surface">

@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState, useTransition } from "react";
 import { deleteSkip, logSkip } from "@/app/app/actions";
 import { MAX_ITEM_LENGTH } from "@/lib/config";
-import { nearMatch, normName } from "@/lib/rules/match";
+import { nearMatch, normName, partialMatches } from "@/lib/rules/match";
 import { asksLastSpare, previewLine } from "@/lib/rules/preview";
 import type { Pace } from "@/lib/rules/lives";
 import { LastSpareSheet } from "./last-spare-sheet";
@@ -29,7 +29,7 @@ const STATE_COLOR: Record<Pace, string> = {
 
 const OFFLINE = "Couldn't save. Check your connection and try again.";
 
-// The core loop: type a class, one tap on "Log a skip". Chips, the preview,
+// The core loop: type a class, one tap on "Log a skip". Matches, the preview,
 // the near match and errors all sit in slots with reserved height, so the
 // field and the button never move. Every save resets to Today, single class.
 export function SkipForm({
@@ -54,13 +54,17 @@ export function SkipForm({
 
   const sessions = double ? 2 : 1;
   const key = normName(text);
-  const match = key ? courses.find((c) => normName(c.name) === key) : undefined;
-  const near = match
-    ? null
-    : nearMatch(
-        text,
-        courses.map((c) => c.name),
-      );
+  const names = courses.map((c) => c.name);
+  const exact = key ? courses.find((c) => normName(c.name) === key) : undefined;
+  // Part of a name finds the course: "algo" is Algorithms & Data Structures.
+  const partial = exact ? [] : partialMatches(text, names);
+  const match =
+    exact ??
+    (partial.length === 1
+      ? courses.find((c) => c.name === partial[0])
+      : undefined);
+  const choices = partial.length > 1 ? partial.slice(0, 3) : [];
+  const near = match || choices.length ? null : nearMatch(text, names);
   // Past the 80% line the button says so too, not only the preview.
   const overLimit = match !== undefined && match.left - sessions < 0;
   const preview = previewLine({
@@ -108,7 +112,11 @@ export function SkipForm({
       setError("Type the class you're skipping.");
       return;
     }
-    const draft: Draft = { text, day, sessions };
+    const draft: Draft = {
+      text: exact || !match ? text : match.name,
+      day,
+      sessions,
+    };
     if (asksLastSpare(match, day, sessions)) setConfirm(draft);
     else save(draft);
   }
@@ -130,33 +138,8 @@ export function SkipForm({
   return (
     <form method="post" onSubmit={onSubmit} className="grid gap-2.5" noValidate>
       <label htmlFor="core-input" className="text-base font-semibold">
-        Which class are you skipping?
+        Which class?
       </label>
-      <div
-        className="-mx-5 flex h-11 gap-2 overflow-x-auto px-5 [scrollbar-width:none] lg:mx-0 lg:h-auto lg:min-h-11 lg:flex-wrap lg:overflow-visible lg:px-0"
-        aria-label={courses.length ? "Your courses" : undefined}
-        role={courses.length ? "group" : undefined}
-      >
-        {courses.map((c) => {
-          const on = normName(c.name) === key;
-          return (
-            <button
-              key={c.name}
-              type="button"
-              aria-pressed={on}
-              onClick={() => choose(c.name)}
-              className={`h-11 max-w-[70vw] flex-none truncate rounded-full border px-4 text-[15px] ${on ? "border-ink bg-ink font-semibold text-on-primary" : "border-line-input bg-surface text-ink"}`}
-            >
-              {c.name}
-            </button>
-          );
-        })}
-        {courses.length === 0 && (
-          <span className="flex items-center text-sm text-muted">
-            Your courses show up here for one-tap picks.
-          </span>
-        )}
-      </div>
       <input
         id="core-input"
         type="text"
@@ -164,7 +147,7 @@ export function SkipForm({
         name="text"
         autoComplete="off"
         maxLength={MAX_ITEM_LENGTH}
-        placeholder="e.g. Microeconomics"
+        placeholder="Start typing, like micro"
         value={text}
         onChange={(e) => choose(e.target.value)}
         className="min-h-[52px] w-full rounded-xl border border-line-input bg-surface px-3.5 text-[17px]"
@@ -177,6 +160,23 @@ export function SkipForm({
           >
             {error}
           </p>
+        ) : choices.length ? (
+          <div
+            role="group"
+            aria-label="Courses that fit"
+            className="flex gap-2"
+          >
+            {choices.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => choose(name)}
+                className="h-11 min-w-0 truncate rounded-full border border-line-input bg-surface px-4 text-[15px] text-ink"
+              >
+                {name}
+              </button>
+            ))}
+          </div>
         ) : near ? (
           <button
             type="button"
@@ -190,6 +190,9 @@ export function SkipForm({
             aria-live="polite"
             className="m-0 text-[15px] leading-[21px] text-muted"
           >
+            {match && !exact && (
+              <b className="font-semibold text-ink">{match.name}. </b>
+            )}
             <PreviewText text={preview.text} state={preview.state} />
           </p>
         )}

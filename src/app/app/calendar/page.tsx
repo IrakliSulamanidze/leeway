@@ -39,10 +39,10 @@ export default async function CalendarPage() {
   return (
     <main className="mx-auto grid w-full max-w-2xl flex-1 content-start gap-5 px-5 py-5">
       <Link
-        href="/app"
+        href="/app/schedule"
         className="-my-2 justify-self-start py-3 text-[15px] font-semibold text-ink underline"
       >
-        Back to your courses
+        Back to your calendar
       </Link>
       {pending.length > 0 && (
         <section aria-labelledby="mapping-h" className="grid gap-3">

@@ -2,7 +2,11 @@ import type { CourseView } from "./course-list";
 
 // One red dot and one line about the course closest to failing, or nothing.
 export function riskText(courses: CourseView[]): string | null {
-  const worst = courses.find((c) => ["over", "out", "last"].includes(c.pace));
+  const worst = courses.find(
+    (c) =>
+      ["over", "out", "last"].includes(c.pace) &&
+      !(c.lives === 0 && c.left === 0),
+  );
   if (!worst) return null;
   if (worst.pace === "over")
     return `${worst.name}: Over the limit. Talk to your professor.`;
