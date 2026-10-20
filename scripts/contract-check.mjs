@@ -15,8 +15,36 @@ const TESTIDS = [
   "core-submit",
   "core-item",
 ];
-// Only the nightly cron route may read the secret key (docs/process.md 5.5).
-const SECRET_ALLOWED_DIR = join("src", "app", "api", "cron");
+// Secret confinement (tech-plan 5): each secret is read in one server-only file,
+// and that file is imported only along the nightly cron route's chain.
+const CRON_ROUTE = join("src", "app", "api", "cron", "nightly", "route.ts");
+const NIGHTLY = join("src", "lib", "server", "nightly.ts");
+const CONFINED = [
+  {
+    secret: /SUPABASE_SECRET_KEY|service_role|sb_secret_/,
+    reader: join("src", "lib", "server", "admin.ts"),
+    module: "server/admin",
+    importers: [CRON_ROUTE],
+  },
+  {
+    secret: /VAPID_PRIVATE_KEY/,
+    reader: join("src", "lib", "server", "push.ts"),
+    module: "server/push",
+    importers: [NIGHTLY],
+  },
+  {
+    secret: /CRON_SECRET/,
+    reader: CRON_ROUTE,
+    module: "api/cron/nightly/route",
+    importers: [],
+  },
+  {
+    secret: null,
+    reader: NIGHTLY,
+    module: "server/nightly",
+    importers: [CRON_ROUTE],
+  },
+];
 // pdfjs-dist is heavy and needs its worker set up once; it lives in one module.
 const PDFJS_ALLOWED_DIR = join("src", "lib", "pdf");
 
@@ -69,12 +97,29 @@ const RULES = [
   },
   {
     name: "secret confinement",
-    check: perFile((file, text) =>
-      /SUPABASE_SECRET_KEY|service_role|sb_secret_/.test(text) &&
-      !file.startsWith(SECRET_ALLOWED_DIR)
-        ? [`${file}: secret key referenced outside ${SECRET_ALLOWED_DIR}`]
-        : [],
-    ),
+    check: perFile((file, text) => {
+      if (/\.test\.tsx?$/.test(file)) return [];
+      const out = [];
+      for (const c of CONFINED) {
+        if (c.secret?.test(text) && file !== c.reader)
+          out.push(`${file}: secret referenced outside ${c.reader}`);
+        const imports = new RegExp(
+          `(from\\s+|import\\s*\\(\\s*)["'][^"']*${c.module}["']`,
+        );
+        if (imports.test(text) && !c.importers.includes(file))
+          out.push(`${file}: may not import ${c.module}`);
+      }
+      return out;
+    }),
+  },
+  {
+    // Server-only modules must say so, so a client import fails the build.
+    name: "server-only marker",
+    check: () =>
+      CONFINED.map((c) => c.reader)
+        .filter((f) => f !== CRON_ROUTE)
+        .filter((f) => !/^import "server-only";/m.test(readFileSync(f, "utf8")))
+        .map((f) => `${f}: must import "server-only"`),
   },
   {
     name: "public env allowlist",
