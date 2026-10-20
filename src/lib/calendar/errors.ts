@@ -14,6 +14,13 @@ export const FEED_ERRORS = {
 export type FeedErrorCode = keyof typeof FEED_ERRORS;
 export type FeedErrorMessage = (typeof FEED_ERRORS)[FeedErrorCode];
 
+// The one log call for calendar code: a fixed place name and an error code, never
+// an error object, a URL, a header or a body.
+export function logCode(where: string, code: string | undefined): void {
+  // eslint-disable-next-line no-console
+  console.error(`[calendar] ${where}: ${code ?? "unknown"}`);
+}
+
 export class FeedError extends Error {
   constructor(readonly code: FeedErrorCode) {
     super(FEED_ERRORS[code]);
