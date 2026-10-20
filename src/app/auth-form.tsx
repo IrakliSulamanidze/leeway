@@ -12,6 +12,11 @@ type Props = {
 const copy = {
   signup: {
     title: "Create your account",
+    ids: {
+      email: "signup-email",
+      password: "signup-password",
+      submit: "signup-submit",
+    },
     submit: "Sign up",
     pending: "Creating account...",
     other: {
@@ -22,6 +27,11 @@ const copy = {
   },
   login: {
     title: "Log in",
+    ids: {
+      email: "login-email",
+      password: "login-password",
+      submit: "login-submit",
+    },
     submit: "Log in",
     pending: "Logging in...",
     other: { text: "New here?", href: "/signup", label: "Sign up" },
@@ -46,7 +56,7 @@ export function AuthForm({ kind, action }: Props) {
             type="email"
             autoComplete="email"
             required
-            data-testid={`${kind}-email`}
+            data-testid={c.ids.email}
             className="min-h-11 rounded-xl border border-line-input bg-surface px-3 text-[17px] text-ink"
           />
         </label>
@@ -59,14 +69,14 @@ export function AuthForm({ kind, action }: Props) {
               kind === "signup" ? "new-password" : "current-password"
             }
             required
-            data-testid={`${kind}-password`}
+            data-testid={c.ids.password}
             className="min-h-11 rounded-xl border border-line-input bg-surface px-3 text-[17px] text-ink"
           />
         </label>
         <button
           type="submit"
           disabled={pending}
-          data-testid={`${kind}-submit`}
+          data-testid={c.ids.submit}
           className="min-h-[52px] rounded-xl bg-primary px-4 font-semibold text-on-primary disabled:opacity-60"
         >
           {pending ? c.pending : c.submit}
