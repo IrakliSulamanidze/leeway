@@ -42,9 +42,20 @@ export type PreviewInput = {
 function rhythm(left: number, weeksToGo: number): string {
   const every = Math.floor(weeksToGo / left);
   if (every < 1) return "";
-  return every === 1
-    ? ": about one skip a week"
-    : `: about one skip every ${word(every)} weeks`;
+  if (every === 1) return ": about one skip a week";
+  if (every === 4) return ": about one skip a month";
+  return `: about one skip every ${word(every)} weeks`;
+}
+
+// The reserve life: a planned save that would spend a course's last spare asks
+// first. Courses with fewer than 2 lives have no reserve. Today never asks.
+export function asksLastSpare(
+  course: { lives: number; left: number } | undefined,
+  day: "today" | "tomorrow",
+  sessions: 1 | 2,
+): boolean {
+  if (!course || day !== "tomorrow" || course.lives < 2) return false;
+  return course.left >= 1 && course.left - sessions <= 0;
 }
 
 // state is null only for the prompt, which shows no state colour.
