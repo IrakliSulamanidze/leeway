@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { startTransition, useActionState, type FormEvent } from "react";
 import type { AuthState } from "./auth-actions";
 
 type Props = {
@@ -45,10 +45,17 @@ export function AuthForm({ kind, action }: Props) {
     null,
   );
   const c = copy[kind];
+  // Submit by hand instead of <form action>: React resets a form after an
+  // action, which would wipe the email after a wrong password.
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => formAction(formData));
+  }
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-5 px-5 py-10">
       <h1 className="text-[28px] font-bold">{c.title}</h1>
-      <form action={formAction} className="flex flex-col gap-3">
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm text-muted">
           Email
           <input
