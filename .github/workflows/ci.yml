@@ -117,11 +117,7 @@ jobs:
       - name: pgTAP (RLS on every table, user B cannot see A, anon gets nothing)
         run: supabase test db
       - name: Read local keys at runtime (never written to the repo)
-        run: |
-          supabase status -o env \
-            --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
-            --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
-            | grep -E '^NEXT_PUBLIC_SUPABASE_(URL|PUBLISHABLE_KEY)=' | tr -d '"' >> "$GITHUB_ENV"
+        run: bash scripts/supabase-env.sh >> "$GITHUB_ENV"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npx next build
