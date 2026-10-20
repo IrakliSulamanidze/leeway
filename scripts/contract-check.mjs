@@ -58,6 +58,7 @@ const PDFJS_ALLOWED_DIR = join(
 // course and import pages (server components) import only syllabusReadEnabled.
 const GEMINI_FILE = join("src", "lib", "server", "gemini.ts");
 const GEMINI_PAGES = [
+  join("src", "app", "app", "page.tsx"),
   join("src", "app", "app", "courses", "[id]", "page.tsx"),
   join(PDFJS_ALLOWED_DIR, "page.tsx"),
 ];

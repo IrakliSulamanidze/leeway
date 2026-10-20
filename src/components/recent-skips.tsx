@@ -52,10 +52,12 @@ export function RecentSkips({ skips }: { skips: SkipItem[] }) {
             className="flex min-h-14 items-center border-t border-line px-4 py-2 first:border-t-0"
           >
             <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
-              {s.text_typed}
-              {s.sessions === 2 && (
-                <span className="ml-1.5 font-semibold">x2</span>
-              )}
+              <span className="line-clamp-2">
+                {s.text_typed}
+                {s.sessions === 2 && (
+                  <span className="ml-1.5 font-semibold">x2</span>
+                )}
+              </span>
               <span className="block text-[13.5px] text-muted">
                 {skipMeta(s, today)}
               </span>
