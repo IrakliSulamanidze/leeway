@@ -3,6 +3,7 @@ import { CourseList, courseViews } from "@/components/course-list";
 import { RecentSkips } from "@/components/recent-skips";
 import { CalendarHome } from "@/components/calendar-home";
 import { RiskLine } from "@/components/risk-line";
+import { SetupLinks } from "@/components/setup-links";
 import { SkipForm } from "@/components/skip-form";
 import { TERM } from "@/lib/config";
 import {
@@ -118,6 +119,10 @@ export default async function AppHome() {
             </>
           )}
         </section>
+        <SetupLinks
+          calendar={calendar !== null}
+          courses={current.map(({ id, name }) => ({ id, name }))}
+        />
         <RecentSkips skips={skips ?? []} />
         <CalendarHome />
       </div>
