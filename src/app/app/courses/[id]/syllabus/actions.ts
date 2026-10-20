@@ -75,7 +75,6 @@ export async function confirmSyllabus(input: unknown): Promise<ConfirmResult> {
   for (const step of steps) {
     const res = await step();
     if (res?.error) {
-      console.error("syllabus confirm failed", res.error.code);
       return { ok: false, error: SAVE_FAILED };
     }
   }
