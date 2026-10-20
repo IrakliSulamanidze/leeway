@@ -238,6 +238,7 @@ export type Database = {
           missed_before: number;
           name: string;
           name_key: string;
+          participation_weight: number | null;
           sessions_calendar: number | null;
           sessions_syllabus: number | null;
           sessions_typed: number | null;
@@ -250,6 +251,7 @@ export type Database = {
           missed_before?: number;
           name: string;
           name_key?: never;
+          participation_weight?: number | null;
           sessions_calendar?: number | null;
           sessions_syllabus?: number | null;
           sessions_typed?: number | null;
@@ -261,6 +263,7 @@ export type Database = {
           missed_before?: number;
           name?: string;
           name_key?: never;
+          participation_weight?: number | null;
           sessions_calendar?: number | null;
           sessions_syllabus?: number | null;
           sessions_typed?: number | null;
