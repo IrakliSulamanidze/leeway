@@ -126,7 +126,7 @@ function inRange(c: WeekClass, range: Range): boolean {
   return day >= range.from && day <= range.to;
 }
 
-function isPlanned(c: WeekClass, skips: WeekSkip[]): boolean {
+export function isPlanned(c: WeekClass, skips: WeekSkip[]): boolean {
   return skips.some(
     (s) =>
       s.class_session_id === c.id ||

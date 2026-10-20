@@ -115,8 +115,21 @@ export async function toggleSkipped(form: FormData) {
     .from("skips")
     .select("id")
     .eq("class_session_id", classId);
+  // A skip typed in the skip box for that course and day shows as this class
+  // too (isPlanned), so switching it off removes that one.
+  const { data: typed } = existing?.length
+    ? { data: [] }
+    : await supabase
+        .from("skips")
+        .select("id")
+        .is("class_session_id", null)
+        .eq("course_id", cls.course_id)
+        .eq("skip_date", madridDate(cls.starts_at))
+        .limit(1);
   if (existing?.length) {
     await supabase.from("skips").delete().eq("class_session_id", classId);
+  } else if (typed?.length) {
+    await supabase.from("skips").delete().eq("id", typed[0].id);
   } else {
     const { data: course } = await supabase
       .from("courses")
