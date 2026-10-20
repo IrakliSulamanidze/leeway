@@ -1,3 +1,4 @@
+import { AlertsSetting } from "@/components/alerts-setting";
 import { DeleteAccount } from "@/components/delete-account";
 import { getSignedInEmail } from "@/lib/supabase/session";
 
@@ -15,6 +16,11 @@ export default async function SettingsPage() {
           <span className="block text-[13.5px] text-muted [overflow-wrap:anywhere]">
             {email}
           </span>
+        </li>
+      </ul>
+      <ul className="overflow-hidden rounded-xl border border-line bg-surface">
+        <li className="px-4 py-3.5">
+          <AlertsSetting />
         </li>
       </ul>
       <ul className="overflow-hidden rounded-xl border border-line bg-surface">
