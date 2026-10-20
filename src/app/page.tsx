@@ -35,14 +35,12 @@ export default async function Home() {
   return (
     <main className="mx-auto grid w-full max-w-5xl flex-1 content-start gap-9 px-5 pt-9 pb-12 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-12">
       <div className="grid gap-5 lg:gap-6">
-        <div data-testid="landing-hero" className="grid gap-5 lg:gap-6">
-          <h1 className="m-0 text-[38px] leading-[1.06] font-bold tracking-[-0.025em] text-balance lg:text-[60px]">
-            {APP_TAGLINE}
-          </h1>
-          <p className="m-0 text-[17px] leading-[1.4] text-muted lg:max-w-[32ch] lg:text-xl">
-            {APP_AUDIENCE}
-          </p>
-        </div>
+        <h1 className="m-0 text-[38px] leading-[1.06] font-bold tracking-[-0.025em] text-balance lg:text-[60px]">
+          {APP_TAGLINE}
+        </h1>
+        <p className="m-0 text-[17px] leading-[1.4] text-muted lg:max-w-[32ch] lg:text-xl">
+          {APP_AUDIENCE}
+        </p>
         <div className="grid gap-1 lg:max-w-[300px]">
           {signedIn ? (
             <Link href="/app" className={button}>
