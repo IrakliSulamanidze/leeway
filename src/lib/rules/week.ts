@@ -18,7 +18,13 @@ export type WeekClass = {
 };
 
 // `left` is lives left after logged and planned skips (lives.ts livesLeft).
-export type WeekCourse = { id: string; name: string; left: number };
+export type WeekCourse = {
+  id: string;
+  name: string;
+  left: number;
+  // Classes counted as missed before the student started marking them.
+  missedBefore?: number;
+};
 
 export type WeekSkip = {
   course_id: string;

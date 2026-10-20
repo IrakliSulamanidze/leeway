@@ -138,6 +138,47 @@ test("calendar: mark a past class missed, exam slots stay unskippable", async ({
   );
 });
 
+test("missed so far: a counted miss moves onto a class without counting twice", async ({
+  page,
+}) => {
+  const yesterday = shiftDay(madridToday(), -1);
+  const user = await seedCalendarUser({
+    courses: ["Financial Accounting"],
+    classes: [
+      {
+        key: "fin",
+        course: "Financial Accounting",
+        day: yesterday,
+        hourUtc: 8,
+      },
+    ],
+  });
+  await logIn(page, user);
+  await page.goto("/app/courses/missed");
+  const more = page.getByRole("button", {
+    name: "One more missed in Financial Accounting",
+  });
+  const count = (n: number) =>
+    page.getByRole("status", { name: `${n} missed in Financial Accounting` });
+  await more.click();
+  await expect(count(1)).toBeVisible();
+  await more.click();
+  await expect(count(2)).toBeVisible();
+  await expect(page.getByTestId("missed-course")).toContainText("4 of 6");
+
+  await page.goto(`/app/schedule?day=${yesterday}&view=day`);
+  await page.getByTestId("schedule-class").click();
+  const sheet = page.getByRole("dialog");
+  await sheet
+    .getByRole("button", { name: "One of the 2 I already counted" })
+    .click();
+  await expect(sheet).toContainText("Marked as missed. 4 left");
+
+  await page.goto("/app/courses/missed");
+  await expect(count(2)).toBeVisible();
+  await expect(page.getByTestId("missed-course")).toContainText("1 logged");
+});
+
 test("calendar: tap a class tomorrow, skip it, then undo", async ({ page }) => {
   const tomorrow = shiftDay(madridToday(), 1);
   const user = await seedCalendarUser({
@@ -242,7 +283,21 @@ test("add all: one tap adds every course, sections share one", async ({
   await expect(page.getByText(/We found/)).toHaveCount(0);
   // The new courses have no classes yet, so the schedule syncs right away.
   const synced = page.waitForRequest("**/api/calendar/sync");
-  await page.getByRole("link", { name: "See your week" }).click();
+  // Next asks once for classes already missed, then Done opens the week.
+  await page.getByRole("link", { name: "Next" }).click();
+  await expect(page).toHaveURL(/\/app\/courses\/missed\?next=schedule$/);
+  await expect(page.getByTestId("missed-course")).toHaveCount(2);
+  await page
+    .getByRole("button", { name: "One more missed in Statistics II" })
+    .click();
+  await expect(
+    page.getByRole("status", { name: "1 missed in Statistics II" }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("status", { name: "1 missed in Statistics II" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Done" }).click();
   await expect(page).toHaveURL(/\/app\/schedule$/);
   await synced;
   await page.goto("/app/courses");

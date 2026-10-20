@@ -79,30 +79,41 @@ export async function removeSkip(id: unknown): Promise<{ ok: boolean }> {
   return { ok: true };
 }
 
-// Sessions 1 to 200; missed before 0 up to the course's sessions.
+// Sessions 1 to 200.
 export async function setCourseNumbers(
   id: unknown,
   sessions: unknown,
-  missedBefore: unknown,
 ): Promise<{ ok: boolean; message?: string }> {
   if (!isId(id)) return { ok: false };
   if (!isInt(sessions, 1, 200))
     return { ok: false, message: "Sessions must be 1 to 200." };
-  if (!isInt(missedBefore, 0, sessions))
-    return {
-      ok: false,
-      message: `Missed before today must be 0 to ${sessions}.`,
-    };
   const supabase = await createClient();
   const { error } = await supabase
     .from("courses")
-    .update({ sessions_typed: sessions, missed_before: missedBefore })
+    .update({ sessions_typed: sessions })
     .eq("id", id);
   if (error)
     return {
       ok: false,
       message: "Couldn't save. Check your connection and try again.",
     };
+  revalidatePath("/app", "layout");
+  return { ok: true };
+}
+
+// Classes missed before the student started logging, 0 to 200. Classes
+// marked in the calendar are skips and never part of this number.
+export async function setMissedBefore(
+  id: unknown,
+  missed: unknown,
+): Promise<{ ok: boolean }> {
+  if (!isId(id) || !isInt(missed, 0, 200)) return { ok: false };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("courses")
+    .update({ missed_before: missed })
+    .eq("id", id);
+  if (error) return { ok: false };
   revalidatePath("/app", "layout");
   return { ok: true };
 }

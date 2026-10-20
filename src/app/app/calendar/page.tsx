@@ -177,10 +177,10 @@ export default async function CalendarPage() {
           />
           {pending.length === 0 && (mapped.count ?? 0) > 0 && (
             <Link
-              href="/app/schedule"
+              href="/app/courses/missed?next=schedule"
               className={`${ROW} flex items-center justify-center bg-primary text-on-primary`}
             >
-              See your week
+              Next
             </Link>
           )}
         </section>
