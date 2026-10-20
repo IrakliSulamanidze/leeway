@@ -6,6 +6,7 @@ import { RiskLine } from "@/components/risk-line";
 import { GetStarted } from "@/components/get-started";
 import { SkipForm } from "@/components/skip-form";
 import { TERM } from "@/lib/config";
+import { syllabusReadEnabled } from "@/lib/server/gemini";
 import {
   loadCourseCalendar,
   loadFeeds,
@@ -55,6 +56,7 @@ export default async function AppHome() {
   const setup = (
     <GetStarted
       calendar={calendar !== null}
+      syllabus={syllabusReadEnabled()}
       courses={views.length}
       guessed={current
         .filter((c) => c.estimated)
@@ -80,6 +82,7 @@ export default async function AppHome() {
       </div>
       <div className="grid content-start gap-5">
         {views.length === 0 && setup}
+        <CalendarHome />
         <section className="grid gap-3">
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="m-0 text-xl font-bold tracking-tight">
@@ -111,7 +114,6 @@ export default async function AppHome() {
         </section>
         {views.length > 0 && setup}
         <RecentSkips skips={skips ?? []} />
-        <CalendarHome />
       </div>
     </main>
   );

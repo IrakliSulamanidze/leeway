@@ -61,6 +61,8 @@ export function SkipForm({
         text,
         courses.map((c) => c.name),
       );
+  // Past the 80% line the button says so too, not only the preview.
+  const overLimit = match !== undefined && match.left - sessions < 0;
   const preview = previewLine({
     typed: text,
     course: match ? { lives: match.lives, left: match.left } : null,
@@ -234,7 +236,7 @@ export function SkipForm({
         aria-disabled={pending}
         className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-primary px-5 text-[17px] font-semibold text-on-primary"
       >
-        Log a skip
+        {overLimit ? "Log it anyway" : "Log a skip"}
       </button>
       {toast && (
         <Toast

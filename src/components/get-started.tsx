@@ -36,16 +36,19 @@ function Step({ n, done }: { n: number; done: boolean }) {
 // Gone once there's a calendar and no guessed course left.
 export function GetStarted({
   calendar,
+  syllabus,
   courses,
   guessed,
 }: {
   calendar: boolean;
+  // False when the syllabus reader is switched off: the step is left out.
+  syllabus: boolean;
   courses: number;
   guessed: Course[];
 }) {
   const router = useRouter();
   const [pick, setPick] = useState(guessed[0]?.id ?? "");
-  if (calendar && guessed.length === 0) return null;
+  if (calendar && (!syllabus || guessed.length === 0)) return null;
   const chosen = guessed.some((c) => c.id === pick) ? pick : guessed[0]?.id;
 
   return (
@@ -75,42 +78,46 @@ export function GetStarted({
             </Link>
           )}
         </li>
-        <li className="flex gap-3 border-t border-line px-4 py-3.5">
-          <Step n={2} done={false} />
-          <div className="grid min-w-0 flex-1 gap-2">
-            <span className="grid">
-              <b className="font-semibold">Import a syllabus</b>
-              <span className="text-sm text-muted">
-                {guessed.length
-                  ? `For a course where ${APP_NAME} is guessing 30 sessions. It reads the real number and your test days.`
-                  : "Once a course is here, its syllabus gives the real session count and test days."}
+        {syllabus && (
+          <li className="flex gap-3 border-t border-line px-4 py-3.5">
+            <Step n={2} done={false} />
+            <div className="grid min-w-0 flex-1 gap-2">
+              <span className="grid">
+                <b className="font-semibold">Import a syllabus</b>
+                <span className="text-sm text-muted">
+                  {guessed.length
+                    ? `For a course where ${APP_NAME} is guessing 30 sessions. It reads the real number and your test days.`
+                    : "Once a course is here, its syllabus gives the real session count and test days."}
+                </span>
               </span>
-            </span>
-            {guessed.length > 0 && (
-              <div className="flex gap-2">
-                <select
-                  aria-label="Course for the syllabus"
-                  value={chosen}
-                  onChange={(e) => setPick(e.target.value)}
-                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-line-input bg-surface px-3 text-[15px] text-ink"
-                >
-                  {guessed.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/app/courses/${chosen}/syllabus`)}
-                  className="min-h-11 rounded-xl border border-line-input bg-surface px-4 font-semibold"
-                >
-                  Import
-                </button>
-              </div>
-            )}
-          </div>
-        </li>
+              {guessed.length > 0 && (
+                <div className="flex gap-2">
+                  <select
+                    aria-label="Course for the syllabus"
+                    value={chosen}
+                    onChange={(e) => setPick(e.target.value)}
+                    className="min-h-11 min-w-0 flex-1 rounded-xl border border-line-input bg-surface px-3 text-[15px] text-ink"
+                  >
+                    {guessed.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(`/app/courses/${chosen}/syllabus`)
+                    }
+                    className="min-h-11 rounded-xl border border-line-input bg-surface px-4 font-semibold"
+                  >
+                    Import
+                  </button>
+                </div>
+              )}
+            </div>
+          </li>
+        )}
       </ol>
       {courses === 0 && (
         <p className="m-0 text-sm text-muted">

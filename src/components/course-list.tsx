@@ -128,12 +128,12 @@ export function CourseList({
                 {linked ? (
                   <Link
                     href={`/app/courses/${c.id}`}
-                    className="-my-2.5 min-w-11 py-2.5 text-[17px] font-semibold [overflow-wrap:anywhere]"
+                    className="-my-2.5 line-clamp-2 min-w-11 py-2.5 text-[17px] font-semibold [overflow-wrap:anywhere]"
                   >
                     {c.name}
                   </Link>
                 ) : (
-                  <span className="text-[17px] font-semibold [overflow-wrap:anywhere]">
+                  <span className="line-clamp-2 text-[17px] font-semibold [overflow-wrap:anywhere]">
                     {c.name}
                   </span>
                 )}
