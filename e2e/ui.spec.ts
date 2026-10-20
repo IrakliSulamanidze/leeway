@@ -45,7 +45,14 @@ test("landing: at most 30 words above the sign-up button", async ({ page }) => {
   expect(words).toBeLessThanOrEqual(30);
 });
 
-for (const path of ["/", "/signup", "/login", "/app", "/app/settings"]) {
+for (const path of [
+  "/",
+  "/signup",
+  "/login",
+  "/app",
+  "/app/settings",
+  "/app/courses/[id]",
+]) {
   test(`${path} passes the phone and accessibility checks`, async ({
     page,
   }) => {
@@ -56,7 +63,10 @@ for (const path of ["/", "/signup", "/login", "/app", "/app/settings"]) {
       await expect(page.getByTestId("core-item")).toHaveCount(1);
       await page.getByTestId("core-input").fill("Statistics II");
     }
-    if (path !== "/app") await page.goto(path);
+    if (path === "/app/courses/[id]") {
+      await page.getByRole("link", { name: "Statistics II" }).click();
+      await expect(page).toHaveURL(/\/app\/courses\//);
+    } else if (path !== "/app") await page.goto(path);
     const overflow = await page.evaluate(
       () =>
         document.documentElement.scrollWidth -
