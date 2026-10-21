@@ -371,8 +371,10 @@ export function Tour({ calendar }: { calendar: Promise<boolean> }) {
         };
   const card = spot.card;
   const text = shown.say[found.key] ?? Object.values(shown.say)[0];
+  // Animate only the glide and the opening itself: the jump of the shut light
+  // to the next part's middle happens at once, so it can't be seen sliding.
   const ease =
-    found.at === at && !settled
+    found.at === at && !settled && (samePage || openAt === spot.at)
       ? "transition-[top,left,width,height] duration-300 ease-out motion-reduce:transition-none"
       : "";
 
