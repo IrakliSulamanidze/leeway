@@ -7,7 +7,7 @@ import { APP_NAME } from "@/lib/config";
 
 type Course = { id: string; name: string };
 
-function Step({ n, done }: { n: number; done: boolean }) {
+export function Step({ n, done }: { n: number; done: boolean }) {
   return (
     <span
       aria-hidden="true"

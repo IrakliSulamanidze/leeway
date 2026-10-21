@@ -20,7 +20,10 @@ export default async function SettingsPage() {
         </li>
       </ul>
       <CalendarRow />
-      <ul className="overflow-hidden rounded-xl border border-line bg-surface">
+      <ul
+        className="overflow-hidden rounded-xl border border-line bg-surface"
+        data-tour="alerts"
+      >
         <li className="px-4 py-3.5">
           <AlertsSetting />
         </li>

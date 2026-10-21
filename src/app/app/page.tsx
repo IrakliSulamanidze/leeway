@@ -1,10 +1,12 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { courseViews } from "@/components/course-list";
+import { FirstRunGuide } from "@/components/first-run-guide";
 import { RecentSkips } from "@/components/recent-skips";
 import { SkipForm } from "@/components/skip-form";
 import { SyncStatus } from "@/components/sync-status";
-import { TERM } from "@/lib/config";
+import { GUIDE_COOKIE, TERM } from "@/lib/config";
 import {
   hasUnsyncedCourses,
   loadFeeds,
@@ -24,7 +26,7 @@ export default async function SkipPage() {
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims?.claims) redirect("/login");
 
-  const [{ data: courses }, { data: skips }, feeds, unsynced] =
+  const [{ data: courses }, { data: skips }, feeds, unsynced, jar] =
     await Promise.all([
       supabase
         .from("courses")
@@ -37,14 +39,17 @@ export default async function SkipPage() {
         .order("created_at", { ascending: false }),
       loadFeeds(),
       hasUnsyncedCourses(),
+      cookies(),
     ]);
 
   const today = madridToday();
   const views = courseViews(courses ?? [], skips ?? [], today);
+  const guide = jar.get(GUIDE_COOKIE)?.value !== claims.claims.sub;
 
   return (
     <main className="mx-auto grid w-full max-w-xl content-start gap-6 px-5 py-5">
-      <div className="grid gap-4">
+      {guide && <FirstRunGuide calendar={feeds.length > 0} />}
+      <div className="grid gap-4" data-tour="skip">
         <h1 className="m-0 text-[28px] font-bold">Skip a class</h1>
         <SkipForm
           courses={views.map(({ name, lives, left, planned }) => ({
@@ -57,7 +62,7 @@ export default async function SkipPage() {
           weekOfTerm={weekOfTerm(today, TERM.start)}
         />
       </div>
-      {feeds.length === 0 && (
+      {feeds.length === 0 && !guide && (
         <p className="m-0 text-[15px] text-muted">
           <Link
             href="/app/calendar"
