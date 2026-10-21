@@ -9,3 +9,6 @@ export const TERM = { start: "2026-09-07", end: "2026-12-18" };
 
 // Longest text a saved item may have (matches the database check).
 export const MAX_ITEM_LENGTH = 200;
+
+// Cookie that remembers "Got it" on the first-run guide (holds the user id).
+export const GUIDE_COOKIE = "leeway_guide_hidden";
