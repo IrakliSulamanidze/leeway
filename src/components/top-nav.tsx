@@ -8,7 +8,11 @@ import { TABS, isCurrent } from "./bottom-tabs";
 export function TopNav() {
   const path = usePathname();
   return (
-    <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
+    <nav
+      aria-label="Main"
+      data-tabs="top"
+      className="relative hidden items-center gap-1 lg:flex"
+    >
       {TABS.map((t) => {
         const on = isCurrent(t, path);
         return (
