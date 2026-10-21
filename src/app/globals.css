@@ -59,3 +59,41 @@ body {
   color: var(--text);
   font-family: var(--font);
 }
+
+/* The tour (components/tour.tsx): the tabs stay lit above its dim layer, with
+   the current one marked, and each stop's card fades in. */
+html[data-touring] [data-tabs] {
+  z-index: 50;
+}
+/* Room to scroll the last part of a short page up to the top. */
+html[data-touring] body {
+  padding-bottom: 70vh;
+}
+html[data-touring] [data-tabs] a[aria-current="page"] {
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--text);
+}
+@keyframes tour-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes tour-fade {
+  from {
+    opacity: 0;
+  }
+}
+.tour-in {
+  animation: tour-in 220ms ease-out;
+}
+.tour-fade {
+  animation: tour-fade 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-in,
+  .tour-fade {
+    animation: none;
+  }
+}

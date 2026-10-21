@@ -212,7 +212,7 @@ export default async function CalendarPage({
         <h1 className="m-0 text-[26px] font-bold">
           {fmt(day, { month: "long", year: "numeric" })}
         </h1>
-        <Link href="/app/plan" className={pill}>
+        <Link href="/app/plan" className={pill} data-tour="trip-button">
           Plan a trip
         </Link>
       </div>

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { madridToday, seedCalendarUser } from "./helpers/seed";
 
 // The "Start here" guide a new student sees on the Skip tab: it never moves the
 // skip box, "Got it" hides it for that account only, and it stays hidden.
@@ -61,7 +62,7 @@ test("Got it hides the guide for that account only", async ({ browser }) => {
   await context.close();
 });
 
-test("Show me around walks every tab, and Done puts the guide away", async ({
+test("a new student's tour: skip box, connect, alerts, then connect for real", async ({
   page,
 }) => {
   await signUp(page);
@@ -70,7 +71,52 @@ test("Show me around walks every tab, and Done puts the guide away", async ({
   const stops = [
     ["/app", "Skip a class"],
     ["/app/schedule", "Your calendar"],
-    ["/app/plan", "Plan a trip"],
+    ["/app/settings", "Night-before alerts"],
+  ];
+  for (const [i, [path, title]] of stops.entries()) {
+    await expect(page).toHaveURL(new RegExp(`${path}\\?tour=${i}$`));
+    await expect(tour.getByRole("heading", { name: title })).toBeVisible();
+    if (i === 1) {
+      // The tab it lives on stays lit, and the arrow keys move too.
+      await expect(
+        page.locator('[data-tabs] a[aria-current="page"]').first(),
+      ).toHaveText(/Calendar/);
+      await page.keyboard.press("ArrowLeft");
+      await expect(page).toHaveURL(/\/app\?tour=0$/);
+      await page.keyboard.press("ArrowRight");
+      await expect(page).toHaveURL(/\/app\/schedule\?tour=1$/);
+      await expect(tour.getByRole("heading", { name: title })).toBeVisible();
+    }
+    if (i < stops.length - 1)
+      await tour.getByRole("button", { name: "Next", exact: true }).click();
+  }
+  await tour.getByRole("button", { name: "Connect my calendar" }).click();
+  await expect(page).toHaveURL(/\/app\/calendar$/);
+  await expect(tour).toHaveCount(0);
+  await page.goto("/app");
+  await expect(guide(page)).toHaveCount(0);
+});
+
+test("with a calendar the tour shows the week, Plan a trip and courses", async ({
+  page,
+}) => {
+  const user = await seedCalendarUser({
+    courses: ["Microeconomics"],
+    classes: [
+      { key: "a", course: "Microeconomics", day: madridToday(), hourUtc: 9 },
+    ],
+  });
+  await page.goto("/login");
+  await page.getByTestId("login-email").fill(user.email);
+  await page.getByTestId("login-password").fill(user.password);
+  await page.getByTestId("login-submit").click();
+  await expect(page).toHaveURL(/\/app$/);
+  await guide(page).getByRole("link", { name: "Show me around" }).click();
+  const tour = page.getByTestId("tour");
+  const stops = [
+    ["/app", "Skip a class"],
+    ["/app/schedule", "Your calendar"],
+    ["/app/schedule", "Plan a trip"],
     ["/app/courses", "Your courses"],
     ["/app/settings", "Night-before alerts"],
   ];
@@ -99,4 +145,15 @@ test("Skip tour closes it and keeps the guide", async ({ page }) => {
   await expect(page.getByTestId("tour")).toHaveCount(0);
   await expect(page).toHaveURL(/\/app$/);
   await expect(guide(page)).toBeVisible();
+});
+
+test("the lit part stays usable: tapping Connect leaves the tour for it", async ({
+  page,
+}) => {
+  await signUp(page);
+  await page.goto("/app/schedule?tour=1");
+  await expect(page.getByTestId("tour")).toBeVisible();
+  await page.getByRole("link", { name: "Connect your IE calendar" }).click();
+  await expect(page).toHaveURL(/\/app\/calendar$/);
+  await expect(page.getByTestId("tour")).toHaveCount(0);
 });

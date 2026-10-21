@@ -43,6 +43,7 @@ export function BottomTabs() {
   return (
     <nav
       aria-label="Main"
+      data-tabs="bottom"
       className="fixed inset-x-0 bottom-0 z-10 grid lg:hidden grid-cols-4 border-t border-line bg-bg/95 px-2 pt-1 pb-[max(8px,env(safe-area-inset-bottom))]"
     >
       {TABS.map((t) => {
