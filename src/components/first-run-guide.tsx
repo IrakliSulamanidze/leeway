@@ -1,28 +1,17 @@
 import Link from "next/link";
 import { hideGuide } from "@/app/app/guide-actions";
-import { Step } from "./get-started";
 
-const STEPS = [
-  {
-    href: "/app/schedule",
-    title: "Tap a class to skip it",
-    note: "On Calendar. You see what it costs first.",
-  },
-  {
-    href: "/app/plan",
-    title: "Plan a trip",
-    note: "Pick the dates. See what the trip costs.",
-  },
-];
+const BUTTON =
+  "flex min-h-[52px] flex-1 items-center justify-center rounded-xl px-3 text-center font-semibold whitespace-nowrap";
 
-// A new student's map of the app, on top of the Skip tab until "Got it".
-// Inline, never a dialog: it shows the same before and after a save, so the
-// skip box under it doesn't move.
+// A new student's way in, on top of the Skip tab until "Got it" or the end of
+// the tour. Inline, never a dialog: it shows the same before and after a save,
+// so the skip box under it doesn't move.
 export function FirstRunGuide({ calendar }: { calendar: boolean }) {
   return (
     <section
       aria-labelledby="guide-h"
-      className="grid gap-2 rounded-xl border border-line bg-surface px-4 py-3"
+      className="grid gap-3 rounded-xl border border-line bg-surface px-4 py-3"
     >
       <div className="flex items-center justify-between gap-3">
         <h2 id="guide-h" className="m-0 text-xl font-bold tracking-tight">
@@ -38,37 +27,23 @@ export function FirstRunGuide({ calendar }: { calendar: boolean }) {
         Every course gives you lives: the classes you can miss before the 80%
         rule fails you.
       </p>
-      <ol className="m-0 grid gap-1 p-0">
-        <li className="flex gap-3 py-1">
-          <Step n={1} done={calendar} />
-          {calendar ? (
-            <span className="grid">
-              <b className="font-semibold">IE calendar connected</b>
-              <span className="text-sm text-muted">
-                Your courses and lives come from it.
-              </span>
-            </span>
-          ) : (
-            <Link href="/app/calendar" className="grid min-h-11 flex-1">
-              <b className="font-semibold underline">
-                Connect your IE calendar
-              </b>
-              <span className="text-sm text-muted">
-                Adds your courses and their real lives.
-              </span>
-            </Link>
-          )}
-        </li>
-        {STEPS.map((s, i) => (
-          <li key={s.href} className="flex gap-3 py-1">
-            <Step n={i + 2} done={false} />
-            <Link href={s.href} className="grid min-h-11 flex-1">
-              <b className="font-semibold underline">{s.title}</b>
-              <span className="text-sm text-muted">{s.note}</span>
-            </Link>
-          </li>
-        ))}
-      </ol>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/app?tour=0"
+          scroll={false}
+          className={`${BUTTON} bg-primary text-on-primary`}
+        >
+          Show me around
+        </Link>
+        {!calendar && (
+          <Link
+            href="/app/calendar"
+            className={`${BUTTON} border border-line-input`}
+          >
+            Connect calendar
+          </Link>
+        )}
+      </div>
     </section>
   );
 }

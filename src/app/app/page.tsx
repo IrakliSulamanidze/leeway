@@ -49,7 +49,7 @@ export default async function SkipPage() {
   return (
     <main className="mx-auto grid w-full max-w-xl content-start gap-6 px-5 py-5">
       {guide && <FirstRunGuide calendar={feeds.length > 0} />}
-      <div className="grid gap-4">
+      <div className="grid gap-4" data-tour="skip">
         <h1 className="m-0 text-[28px] font-bold">Skip a class</h1>
         <SkipForm
           courses={views.map(({ name, lives, left, planned }) => ({

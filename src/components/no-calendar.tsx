@@ -18,6 +18,7 @@ export function NoCalendar({
       </p>
       <Link
         href="/app/calendar"
+        data-tour="connect"
         className="flex min-h-[52px] items-center justify-center rounded-xl bg-primary px-5 font-semibold text-on-primary sm:max-w-xs"
       >
         Connect your IE calendar

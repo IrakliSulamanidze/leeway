@@ -27,11 +27,9 @@ test("a new student sees the guide, and a save doesn't move the skip box", async
   await signUp(page);
   await expect(guide(page)).toBeVisible();
   await expect(
-    guide(page).getByRole("link", { name: /Connect your IE calendar/ }),
+    guide(page).getByRole("link", { name: "Connect calendar" }),
   ).toHaveAttribute("href", "/app/calendar");
-  await expect(
-    guide(page).getByRole("link", { name: /Plan a trip/ }),
-  ).toHaveAttribute("href", "/app/plan");
+  await expect(page.getByTestId("tour")).toHaveCount(0);
 
   const input = await page.getByTestId("core-input").boundingBox();
   const submit = await page.getByTestId("core-submit").boundingBox();
@@ -61,4 +59,44 @@ test("Got it hides the guide for that account only", async ({ browser }) => {
   await signUp(page);
   await expect(guide(page)).toBeVisible();
   await context.close();
+});
+
+test("Show me around walks every tab, and Done puts the guide away", async ({
+  page,
+}) => {
+  await signUp(page);
+  await guide(page).getByRole("link", { name: "Show me around" }).click();
+  const tour = page.getByTestId("tour");
+  const stops = [
+    ["/app", "Skip a class"],
+    ["/app/schedule", "Your calendar"],
+    ["/app/plan", "Plan a trip"],
+    ["/app/courses", "Your courses"],
+    ["/app/settings", "Night-before alerts"],
+  ];
+  for (const [i, [path, title]] of stops.entries()) {
+    await expect(page).toHaveURL(new RegExp(`${path}\\?tour=${i}$`));
+    await expect(tour.getByRole("heading", { name: title })).toBeVisible();
+    if (i < stops.length - 1)
+      await tour.getByRole("button", { name: "Next", exact: true }).click();
+  }
+  await tour.getByRole("button", { name: "Back" }).click();
+  await expect(page).toHaveURL(/\/app\/courses\?tour=3$/);
+  await tour.getByRole("button", { name: "Next", exact: true }).click();
+  await tour.getByRole("button", { name: "Done" }).click();
+  await expect(page).toHaveURL(/\/app$/);
+  await expect(tour).toHaveCount(0);
+  await expect(guide(page)).toHaveCount(0);
+});
+
+test("Skip tour closes it and keeps the guide", async ({ page }) => {
+  await signUp(page);
+  await guide(page).getByRole("link", { name: "Show me around" }).click();
+  await page
+    .getByTestId("tour")
+    .getByRole("button", { name: "Skip tour" })
+    .click();
+  await expect(page.getByTestId("tour")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/app$/);
+  await expect(guide(page)).toBeVisible();
 });

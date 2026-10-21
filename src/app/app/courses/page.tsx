@@ -61,7 +61,10 @@ export default async function CoursesPage() {
 
   return (
     <main className="mx-auto grid w-full max-w-2xl content-start gap-5 px-5 py-5">
-      <div className="flex items-baseline justify-between gap-2">
+      <div
+        className="flex items-baseline justify-between gap-2"
+        data-tour="courses-title"
+      >
         <h1 className="m-0 text-[28px] font-bold">Courses</h1>
         {week > 0 && week <= TERM_WEEKS && (
           <span className="text-sm text-muted">
@@ -80,7 +83,9 @@ export default async function CoursesPage() {
         </Link>
       )}
       {current.length > 0 && (
-        <CourseList courses={current} linked colors={colors} />
+        <div data-tour="courses">
+          <CourseList courses={current} linked colors={colors} />
+        </div>
       )}
       {current.length > 0 && (
         <Link

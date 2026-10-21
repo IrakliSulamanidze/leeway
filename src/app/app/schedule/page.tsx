@@ -290,6 +290,7 @@ export default async function CalendarPage({
       {unsynced && classes.length === 0 ? (
         <section
           role="status"
+          data-tour="grid"
           className="grid justify-items-center gap-2 rounded-xl border border-line bg-surface px-5 py-12 text-center"
         >
           <span
@@ -302,7 +303,10 @@ export default async function CalendarPage({
           </span>
         </section>
       ) : (
-        <div className="rounded-xl border border-line bg-surface">
+        <div
+          className="rounded-xl border border-line bg-surface"
+          data-tour="grid"
+        >
           <div
             className={`${view === "day" ? "hidden" : view === "week" ? "flex" : "hidden lg:flex"} border-b border-line pl-12`}
           >

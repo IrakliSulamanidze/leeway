@@ -141,7 +141,7 @@ export default async function PlanPage({
         <h1 id="trip-h" className="text-[28px] font-bold">
           Plan a trip
         </h1>
-        <form method="get" className="grid grid-cols-2 gap-2">
+        <form method="get" className="grid grid-cols-2 gap-2" data-tour="trip">
           <label className="grid gap-1 text-sm">
             From
             <input
