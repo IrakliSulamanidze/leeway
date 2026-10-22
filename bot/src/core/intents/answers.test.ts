@@ -122,4 +122,80 @@ describe("skipped", () => {
     );
     expect(s.text).toBe("That button has expired.");
   });
+
+  it("saves the second class of the day when the first is already skipped", async () => {
+    const micro = student.data.sessions.filter(
+      (c) =>
+        c.course_id === student.data.courses[0].id &&
+        c.starts_at.startsWith("2026-10-26"),
+    )[0];
+    student.data.sessions.push({
+      ...micro,
+      id: "00000000-0000-4000-a000-000000000999",
+      starts_at: "2026-10-26T15:00:00.000Z",
+    });
+    await say("skipped micro");
+    await say("skipped micro");
+    expect(student.data.skips.map((k) => k.class_session_id)).toEqual([
+      micro.id,
+      "00000000-0000-4000-a000-000000000999",
+    ]);
+  });
+
+  it("counts a class in two calendars once", async () => {
+    const micro = student.data.sessions.find(
+      (c) =>
+        c.course_id === student.data.courses[0].id &&
+        c.starts_at.startsWith("2026-10-26"),
+    )!;
+    student.data.sessions.push({
+      ...micro,
+      id: "00000000-0000-4000-a000-000000000888",
+    });
+    student.data.skips.push({
+      id: "00000000-0000-4000-b000-000000000001",
+      course_id: micro.course_id,
+      class_session_id: "00000000-0000-4000-a000-000000000888",
+      skip_date: "2026-10-26",
+      sessions: 1,
+      planned: false,
+    });
+    const [r] = await say("skipped micro");
+    expect(r.text).toBe("Already saved: Microeconomics, Mon 26 Oct.");
+    expect(r.buttons?.[0].id).toBe(
+      "skip.undo:00000000-0000-4000-b000-000000000001",
+    );
+    expect(student.data.skips).toHaveLength(1);
+  });
+
+  it("asks first when the calendar has no class of that course that day", async () => {
+    student.data.sessions = student.data.sessions.filter(
+      (c) =>
+        !(
+          c.course_id === student.data.courses[2].id &&
+          c.starts_at.startsWith("2026-10-26")
+        ),
+    );
+    const [r] = await say("skipped financial reporting today");
+    expect(r.text).toBe(
+      "Financial Reporting, Mon 26 Oct: there's no Financial Reporting class in your calendar that day. Save the skip anyway?",
+    );
+  });
+});
+
+describe("this week", () => {
+  it("counts only the days left in the week, as the web does", async () => {
+    const thursday = "2026-10-29T09:00:00Z";
+    const s = new MemoryStudent(sampleSnapshot(new Date(NOW)));
+    const [r] = await handle(
+      {
+        id: "w",
+        from: "ES.a",
+        at: new Date(thursday),
+        body: { kind: "text", text: "this week" },
+      },
+      { clock: fixedClock(thursday), student: s },
+    );
+    expect(r.text).toMatch(/^This week: You'd miss 6 classes\./);
+  });
 });

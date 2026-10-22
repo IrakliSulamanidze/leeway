@@ -2,7 +2,7 @@ import { addDays, madridToday } from "@/lib/rules/dates";
 import { normName, nearMatch, partialMatches } from "@/lib/rules/match";
 import {
   classCost,
-  isPlanned,
+  dedupeClasses,
   madridDate,
   skippable,
   testOn,
@@ -13,7 +13,7 @@ import type { Button, Reply } from "../types";
 import type { Intent, Outcome, Turn } from "./types";
 
 // "skipped micro" saves today's skip; "skipping micro tomorrow" plans one.
-const TODAY = /^(?:skipped|missed) (.{2,80})$/;
+const TODAY = /^(?:skipped|missed) (.{2,80}?)(?: today| this morning)?$/;
 const TOMORROW = /^(?:skipping|will skip|gonna skip) (.{2,80}) tomorrow$/;
 // Button ids: skip.pick:<course>:<day>, skip.yes:<course>:<class or ->:<day>,
 // skip.no, skip.undo:<skip>.
@@ -23,8 +23,10 @@ const PICK = new RegExp(`^skip\\.pick:(${ID}):(${DAY})$`);
 const YES = new RegExp(`^skip\\.yes:(${ID}):(${ID}|-):(${DAY})$`);
 const UNDO = new RegExp(`^skip\\.undo:(${ID})$`);
 
+// Button titles are at most 20 characters; long names keep their start and
+// end so "Financial Reporting I" and "II" stay apart.
 const shortTitle = (name: string) =>
-  name.length <= 20 ? name : `${name.slice(0, 19)}…`;
+  name.length <= 20 ? name : `${name.slice(0, 12)}…${name.slice(-7)}`;
 const livesWord = (n: number) => `${n} ${n === 1 ? "life" : "lives"}`;
 
 function findCourses(typed: string, snap: Snapshot) {
@@ -48,10 +50,17 @@ type Plan = {
   sessions: 1 | 2;
   after: number;
   test: string | null;
-  already: boolean;
+  // The skip that already covers this course and day, if there is one.
+  existing: string | null;
+  // The student has a calendar, but no class of this course that day.
+  noClass: boolean;
 };
 
+const startKey = (iso: string) => new Date(iso).toISOString();
+
 // What skipping this course on this day would cost, by the web app's rules.
+// The first class that day not already skipped is the one saved; the same
+// class in two calendars counts once.
 function plan(
   snap: Snapshot,
   courseId: string,
@@ -60,34 +69,64 @@ function plan(
 ): Plan {
   const course = snap.courses.find((c) => c.id === courseId)!;
   const left = weekCourses(snap, today).find((c) => c.id === courseId)!.left;
-  const cls = snap.sessions.find(
+  const dayClasses = snap.sessions.filter(
     (s) =>
       s.course_id === courseId &&
       skippable(s) &&
       madridDate(s.starts_at) === day,
   );
+  const skipOf = (classId: string) =>
+    snap.skips.find((k) => k.class_session_id === classId);
+  const copies = (start: string) =>
+    dayClasses.filter((c) => startKey(c.starts_at) === startKey(start));
+  const distinct = dedupeClasses(dayClasses).sort((a, b) =>
+    a.starts_at.localeCompare(b.starts_at),
+  );
+  const free = distinct.find(
+    (c) => !copies(c.starts_at).some((o) => skipOf(o.id)),
+  );
+  // A skip saved without a class covers the course's whole day, as on the web.
+  const dayWide = snap.skips.find(
+    (k) =>
+      k.course_id === courseId &&
+      k.skip_date === day &&
+      k.class_session_id === null,
+  );
+  const existing =
+    dayWide?.id ??
+    (distinct.length && !free
+      ? (copies(distinct[0].starts_at)
+          .map((c) => skipOf(c.id))
+          .find(Boolean)?.id ?? null)
+      : null);
+  const cls = existing ? undefined : free;
   const sessions = (cls ? classCost(cls) : 1) as 1 | 2;
-  // With no class in the calendar, one skip per course and day.
-  const already = cls
-    ? isPlanned(cls, snap.skips)
-    : snap.skips.some(
-        (k) =>
-          k.course_id === courseId &&
-          k.skip_date === day &&
-          k.class_session_id === null,
+  const test = cls
+    ? testOn(cls, snap.assessments)
+    : snap.assessments.find(
+        (a) => a.course_id === courseId && a.on_date === day,
       );
-  const test = cls ? testOn(cls, snap.assessments) : undefined;
   return {
     name: course.name,
     courseId,
     classId: cls?.id ?? null,
     day,
     sessions,
-    after: already ? left : left - sessions,
+    after: existing ? left : left - sessions,
     test: test ? test.title || "Test" : null,
-    already,
+    existing,
+    noClass: !existing && distinct.length === 0 && snap.sessions.length > 0,
   };
 }
+
+const alreadySaved = (p: Plan): Outcome => ({
+  replies: [
+    {
+      text: `Already saved: ${p.name}, ${dayName(p.day)}.`,
+      buttons: [{ id: `skip.undo:${p.existing}`, title: "Undo" }],
+    },
+  ],
+});
 
 async function save(turn: Turn, deps: Deps, p: Plan): Promise<Outcome> {
   const id = await deps.student.logSkip(
@@ -120,17 +159,16 @@ function confirmOrSave(
   deps: Deps,
   p: Plan,
 ): Promise<Outcome> | Outcome {
-  if (p.already)
-    return {
-      replies: [{ text: `Already saved: ${p.name}, ${dayName(p.day)}.` }],
-    };
-  const reason = p.test
-    ? `that's the ${p.test} day`
-    : p.after < 0
-      ? "this takes you over the limit"
-      : p.after === 0
-        ? "this uses your last life"
-        : null;
+  if (p.existing) return alreadySaved(p);
+  const reason = p.noClass
+    ? `there's no ${p.name} class in your calendar that day`
+    : p.test
+      ? `that's the ${p.test} day`
+      : p.after < 0
+        ? "this takes you over the limit"
+        : p.after === 0
+          ? "this uses your last life"
+          : null;
   if (!reason) return save(turn, deps, p);
   const yes: Button = {
     id: `skip.yes:${p.courseId}:${p.classId ?? "-"}:${p.day}`,
@@ -191,9 +229,7 @@ export const skipped: Intent = {
     if (yes) {
       if (!owned(yes[1])) return reply("That button has expired.");
       const p = plan(snap, yes[1], day, today);
-      return p.already
-        ? reply(`Already saved: ${p.name}, ${dayName(day)}.`)
-        : save(turn, deps, p);
+      return p.existing ? alreadySaved(p) : save(turn, deps, p);
     }
     if (pick) {
       if (!owned(pick[1])) return reply("That button has expired.");

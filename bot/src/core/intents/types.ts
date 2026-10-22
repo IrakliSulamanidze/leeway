@@ -11,9 +11,9 @@ export type Turn = {
   now: Date;
 };
 
-// What handling a turn produced. The pipeline, not the intent, commits it, so
-// writes, the redelivery check and the replies land together. Effects (saved
-// skips, a pending question) join this type with the store.
+// What handling a turn produced. Writes happen inside the intent through the
+// Student port, each keyed on the message id, so a rerun of the same message
+// changes nothing.
 export type Outcome = { replies: Reply[] };
 
 // One kind of request. Adding a feature means adding an Intent and listing it

@@ -15,7 +15,11 @@ function rangeFor(turn: Turn): { range: Range; label: string } | null {
     return { range: { from: day, to: day }, label: "Tomorrow" };
   }
   if (word === "week" || word === "this week")
-    return { range: weekRange(today), label: "This week" };
+    // The rest of the week, as the web's plan page counts it.
+    return {
+      range: { from: today, to: weekRange(today).to },
+      label: "This week",
+    };
   return null;
 }
 

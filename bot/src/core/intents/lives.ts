@@ -29,10 +29,14 @@ export const lives: Intent = {
       };
     const lines = courseLives(snap, today)
       .sort((a, b) => a.left - b.left || a.name.localeCompare(b.name))
-      .map(
-        (c) =>
-          `${c.name}: ${Math.max(c.left, 0)} of ${c.lives} left${status(c.left)}`,
-      );
+      .map((c) => {
+        const notes = [
+          c.planned ? `${c.planned} planned` : "",
+          c.estimated ? "estimated, no session count yet" : "",
+        ].filter(Boolean);
+        const extra = notes.length ? ` (${notes.join("; ")})` : "";
+        return `${c.name}: ${Math.max(c.left, 0)} of ${c.lives} left${status(c.left)}${extra}`;
+      });
     return { replies: [{ text: `Your lives:\n${lines.join("\n")}` }] };
   },
 };

@@ -18,15 +18,23 @@ export type CourseLives = {
   name: string;
   left: number;
   lives: number;
+  planned: number;
+  estimated: boolean;
 };
 
 export function courseLives(snap: Snapshot, today: string): CourseLives[] {
-  return snap.courses.map((c) => ({
-    id: c.id,
-    name: c.name,
-    left: livesLeft(c, snap.skips, today).left,
-    lives: livesFor(sessionsFor(c).sessions),
-  }));
+  return snap.courses.map((c) => {
+    const { left, planned } = livesLeft(c, snap.skips, today);
+    const { sessions, estimated } = sessionsFor(c);
+    return {
+      id: c.id,
+      name: c.name,
+      left,
+      lives: livesFor(sessions),
+      planned,
+      estimated,
+    };
+  });
 }
 
 // "Tue 3 Nov" for a Madrid date.
