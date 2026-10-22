@@ -1,4 +1,4 @@
-import type { Accounts, LinkState } from "../ports";
+import type { Accounts, LinkResult, LinkState } from "../ports";
 
 // In-memory Accounts for tests and the chat simulator.
 export class MemoryAccounts implements Accounts {
@@ -23,6 +23,17 @@ export class MemoryAccounts implements Accounts {
   async newLinkUrl() {
     this.issued++;
     return `https://bot.test/link?t=token${this.issued}`;
+  }
+
+  // The code the fake sign-in page "showed".
+  pendingCode: string | null = null;
+
+  async confirmCode(sender: string, code: string): Promise<LinkResult> {
+    if (this.pendingCode === null) return { outcome: "no_code" };
+    if (code !== this.pendingCode) return { outcome: "wrong_code" };
+    this.pendingCode = null;
+    this.states.set(sender, { state: "active" });
+    return { outcome: "linked" };
   }
 
   async adult(sender: string) {

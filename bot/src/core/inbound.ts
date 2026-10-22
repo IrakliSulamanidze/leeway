@@ -40,14 +40,16 @@ export async function processInbound(
   if (count > cap) return [];
 
   const link = await deps.accounts.state(msg.from);
-  if (link.state === "none")
-    return [{ text: linkPrompt(await deps.accounts.newLinkUrl(msg.from)) }];
+  if (link.state === "none") return linkReplies(msg, text, deps);
   if (link.state === "waitlisted") return [{ text: waitlisted(link.place) }];
   if (link.state === "suspended") return [{ text: LINES.suspended }];
 
   const ageButton =
     msg.body.kind === "button" ? AGE_BUTTONS[msg.body.id] : undefined;
-  if (ageButton !== undefined) {
+  if (
+    ageButton !== undefined &&
+    (await deps.accounts.adult(msg.from)) === null
+  ) {
     await deps.accounts.setAdult(msg.from, ageButton);
     return [{ text: LINES.ageThanks }];
   }
@@ -69,3 +71,26 @@ const AGE_BUTTONS: Record<string, boolean> = {
   "age.adult": true,
   "age.minor": false,
 };
+
+const CODE = /^\d{3} ?\d{3}$/;
+
+// An unlinked sender: the code from the sign-in page, or a new link.
+async function linkReplies(
+  msg: Inbound,
+  text: string | null,
+  deps: InboundDeps,
+): Promise<Reply[]> {
+  if (text !== null && CODE.test(text)) {
+    const result = await deps.accounts.confirmCode(
+      msg.from,
+      text.replace(" ", ""),
+    );
+    if (result.outcome === "linked") return [{ text: LINES.linked }];
+    if (result.outcome === "waitlisted")
+      return [{ text: waitlisted(result.place) }];
+    if (result.outcome === "wrong_code") return [{ text: LINES.wrongCode }];
+    if (result.outcome === "account_taken")
+      return [{ text: LINES.accountTaken }];
+  }
+  return [{ text: linkPrompt(await deps.accounts.newLinkUrl(msg.from)) }];
+}

@@ -73,6 +73,21 @@ describe("processInbound", () => {
     ]);
   });
 
+  it("links when the code from the sign-in page comes back from the same number", async () => {
+    accounts.states.set(FROM, { state: "none" });
+    accounts.pendingCode = "482913";
+    expect(await replyTo("111111")).toEqual([LINES.wrongCode]);
+    expect(await replyTo("482 913")).toEqual([LINES.linked]);
+    expect((await accounts.state(FROM)).state).toBe("active");
+  });
+
+  it("sends a new link when a code arrives with nothing waiting for it", async () => {
+    accounts.states.set(FROM, { state: "none" });
+    expect(await replyTo("123456")).toEqual([
+      linkPrompt("https://bot.test/link?t=token1"),
+    ]);
+  });
+
   it("tells a waitlisted student their place, and a suspended one what to do", async () => {
     accounts.states.set(FROM, { state: "waitlisted", place: 12 });
     expect(await replyTo("help")).toEqual([waitlisted(12)]);
@@ -94,5 +109,14 @@ describe("processInbound", () => {
     ]);
     expect(accounts.ages.get(FROM)).toBe(false);
     expect(await replyTo("help")).toEqual([LINES.help]);
+    // An old age button later changes nothing.
+    const later: Inbound = {
+      ...text("y"),
+      body: { kind: "button", id: "age.adult" },
+    };
+    expect(
+      (await processInbound(later, deps())).map((r) => r.text),
+    ).not.toEqual([LINES.ageThanks]);
+    expect(accounts.ages.get(FROM)).toBe(false);
   });
 });

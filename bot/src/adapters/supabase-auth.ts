@@ -48,7 +48,11 @@ export async function signIn(
     user?: { id?: string };
   };
   const sessionId = body.access_token ? sessionIdOf(body.access_token) : null;
-  if (!body.access_token || !body.user?.id || !sessionId) return null;
+  if (!body.access_token || !body.user?.id || !sessionId) {
+    // Signed in but unusable here: end the session rather than leave it open.
+    if (body.access_token) await signOut(body.access_token, cfg);
+    return null;
+  }
   return { userId: body.user.id, sessionId, accessToken: body.access_token };
 }
 

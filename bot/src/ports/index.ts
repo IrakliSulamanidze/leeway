@@ -24,11 +24,17 @@ export type LinkState =
   | { state: "suspended" }
   | { state: "waitlisted"; place: number };
 
+export type LinkResult =
+  | { outcome: "linked" | "wrong_code" | "no_code" | "account_taken" }
+  | { outcome: "waitlisted"; place: number };
+
 // Who a sender is to Leeway, and the one-time sign-in link for a new sender.
 export interface Accounts {
   state(sender: string): Promise<LinkState>;
   // Issues a fresh link (valid 30 minutes) and returns its URL.
   newLinkUrl(sender: string): Promise<string>;
+  // The 6-digit code the sign-in page showed, sent back from WhatsApp.
+  confirmCode(sender: string, code: string): Promise<LinkResult>;
   // The linked student's age answer: true for 18 or over, null if not given.
   adult(sender: string): Promise<boolean | null>;
   setAdult(sender: string, adult: boolean): Promise<void>;

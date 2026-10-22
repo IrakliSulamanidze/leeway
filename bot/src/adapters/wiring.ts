@@ -2,10 +2,12 @@
 import { processInbound } from "../core/inbound";
 import { systemClock } from "./clock";
 import { sharedPool } from "./db";
-import { dbAccounts, tokenHash } from "./db-accounts";
+import { randomInt } from "node:crypto";
+import { codeHash, dbAccounts, tokenHash } from "./db-accounts";
 import { dbGate } from "./db-gate";
 import { env } from "./env";
-import type { LinkPageDeps } from "./link-page";
+import { keyedHash } from "./hash";
+import type { LinkPageDeps, Prepared } from "./link-page";
 import { cloudApiMessenger } from "./meta/cloud-api";
 import { signIn, signOut } from "./supabase-auth";
 import type { WebhookDeps } from "./webhook";
@@ -16,7 +18,7 @@ let linkDeps: LinkPageDeps | undefined;
 export function webhookDeps(): WebhookDeps {
   if (deps) return deps;
   const gate = dbGate(env.hashKey());
-  const accounts = dbAccounts(env.publicUrl());
+  const accounts = dbAccounts(env.publicUrl(), env.hashKey());
   deps = {
     appSecret: env.appSecret(),
     inbox: gate,
@@ -34,26 +36,37 @@ export function linkPageDeps(): LinkPageDeps {
     publishableKey: env.supabasePublishableKey(),
   };
   const db = () => sharedPool();
+  const hashKey = env.hashKey();
+  const call = async (sql: string, params: unknown[]) =>
+    (await db().query(sql, params)).rows[0];
   linkDeps = {
-    async tokenOk(token) {
-      const { rows } = await db().query(
-        "select wa_api.link_token_ok($1) as ok",
-        [tokenHash(token)],
-      );
-      return rows[0]?.ok === true;
-    },
-    async failed(token) {
-      await db().query("select wa_api.link_failed($1)", [tokenHash(token)]);
-    },
+    tokenOk: async (token) =>
+      (await call("select wa_api.link_token_ok($1) as ok", [tokenHash(token)]))
+        ?.ok === true,
+    takeAttempt: async (token) =>
+      (
+        await call("select wa_api.take_link_attempt($1) as ok", [
+          tokenHash(token),
+        ])
+      )?.ok === true,
+    countIp: async (ip) =>
+      (
+        await call("select wa_api.count_ip_attempt($1) as n", [
+          keyedHash(`ip:${ip}`, hashKey),
+        ])
+      )?.n as number,
     signIn: (email, password) => signIn(email, password, auth),
     signOut: (accessToken) => signOut(accessToken, auth),
-    async complete(token, who) {
-      const { rows } = await db().query(
-        "select outcome, place from wa_api.complete_link($1, $2, $3)",
-        [tokenHash(token), who.userId, who.sessionId],
-      );
-      return rows[0] as { outcome: string; place: number | null };
-    },
+    prepare: async (token, who, code) =>
+      (
+        await call("select wa_api.prepare_link($1, $2, $3, $4) as outcome", [
+          tokenHash(token),
+          who.userId,
+          who.sessionId,
+          codeHash(code, hashKey),
+        ])
+      )?.outcome as Prepared,
+    newCode: () => String(randomInt(0, 1_000_000)).padStart(6, "0"),
   };
   return linkDeps;
 }
