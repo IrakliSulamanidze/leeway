@@ -65,7 +65,6 @@ jobs:
   bot:
     name: whatsapp bot (format, types, lint, unit, boundaries, build)
     runs-on: ubuntu-latest
-    if: hashFiles('bot/package.json') != ''
     defaults:
       run: { working-directory: bot }
     steps:
