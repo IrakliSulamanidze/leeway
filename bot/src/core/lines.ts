@@ -20,7 +20,7 @@ export const LINES = {
   voiceSet: 'Done. Send "help" to see what I can do.',
   voiceNoteOff: "I can't listen to voice notes yet. Type it and I'll answer.",
   voiceNoteLong:
-    "That voice note is too long for me. Keep it under a minute, or type it.",
+    "That voice note is too long for me. Keep it to about a minute, or type it.",
   voiceNoteFailed:
     "I couldn't make out that voice note. Try again, or type it.",
   detailsHidden:

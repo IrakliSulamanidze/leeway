@@ -22,6 +22,7 @@ const deps = () => ({
     m1: { ok: true, text: "my lives" },
     m2: { ok: true, text: "I want to kill myself" },
     m3: { ok: false, reason: "too_long" },
+    m4: { ok: true, text: "Stop." },
   }),
 });
 const text = (t: string): Inbound => ({

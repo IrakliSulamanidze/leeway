@@ -2,13 +2,11 @@ import type { Audio } from "./meta-media";
 
 const URL = "https://api.elevenlabs.io/v1/speech-to-text";
 
-// ElevenLabs Scribe, the planning research's first pick for accented English.
-// Price as published: about $0.40 an hour of audio.
-export const MICROS_PER_SECOND = 0.4e6 / 3600;
-
+// ElevenLabs Scribe (API reference: elevenlabs.io/docs/api-reference/speech-to-text).
 export async function scribe(
   audio: Audio,
   apiKey: string,
+  signal: AbortSignal,
   fetchImpl: typeof fetch = fetch,
 ): Promise<string> {
   const form = new FormData();
@@ -23,7 +21,7 @@ export async function scribe(
     method: "POST",
     headers: { "xi-api-key": apiKey },
     body: form,
-    signal: AbortSignal.timeout(4000),
+    signal,
   });
   if (!res.ok) throw new Error(`speech-to-text answered ${res.status}`);
   const json = (await res.json()) as { text?: unknown };
