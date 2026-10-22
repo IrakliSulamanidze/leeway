@@ -2,7 +2,7 @@
 -- student gets at most one reminder a day.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(10);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000f7', 'rem@test.local');
 insert into wa.links (wa_id, user_id, adult) values ('ES.remind', '00000000-0000-0000-0000-0000000000f7', true);
@@ -34,6 +34,8 @@ select is(pg_temp.as_bot($$ select wa_api.claim_reminder() $$), 'false', 'a seco
 select is(pg_temp.as_bot($$ select count(*) from wa_api.reminder_targets('s3cret') $$), '0',
   'a student reminded today is not listed again');
 select lives_ok($$ select pg_temp.as_bot('select wa_api.set_hide_details(true)') $$, 'details can be hidden');
+select lives_ok($$ select pg_temp.as_bot('select wa_api.unclaim_reminder()') $$, 'a refused reminder gives the day back');
+select is(pg_temp.as_bot($$ select wa_api.claim_reminder() $$), 'true', 'so it can be claimed again');
 
 select * from finish();
 rollback;
