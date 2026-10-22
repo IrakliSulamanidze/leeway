@@ -2,7 +2,7 @@
 -- per sender and day, and STOP is recorded.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(13);
+select plan(16);
 
 grant wa_gateway to postgres;
 create function pg_temp.as_bot(p_sql text) returns text
@@ -40,6 +40,12 @@ select lives_ok($$ select pg_temp.as_bot('select wa_api.set_opt_out(sha256(''s1'
 update wa.settings set value = '80.5' where name = 'daily_message_cap';
 select is(pg_temp.as_bot($$ select (wa_api.count_message(sha256('s3'))).cap $$), '60',
   'a cap that is not a whole number falls back to 60');
+
+-- The AI ceiling.
+update wa.settings set value = '1000' where name = 'ai_daily_cap_micros';
+select is(pg_temp.as_bot($$ select wa_api.ai_budget_left() $$), 'true', 'AI budget is open at the start of the day');
+select lives_ok($$ select pg_temp.as_bot('select wa_api.add_ai_spend(1000)') $$, 'spend is recorded');
+select is(pg_temp.as_bot($$ select wa_api.ai_budget_left() $$), 'false', 'past the ceiling the budget is closed');
 
 select * from finish();
 rollback;
