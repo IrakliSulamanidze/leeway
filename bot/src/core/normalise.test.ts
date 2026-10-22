@@ -7,7 +7,7 @@ describe("normalise", () => {
   });
 
   it("removes zero-width characters that would defeat exact commands", () => {
-    expect(normalise("he​lp")).toBe("help");
+    expect(normalise("he\u200Blp")).toBe("help");
   });
 
   it("folds full-width letters", () => {

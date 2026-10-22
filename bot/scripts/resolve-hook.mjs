@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const SRC = new URL("../../src/", import.meta.url);
@@ -6,7 +6,7 @@ const SRC = new URL("../../src/", import.meta.url);
 function withExtension(url) {
   const path = fileURLToPath(url);
   for (const candidate of [path, `${path}.ts`, `${path}/index.ts`])
-    if (existsSync(candidate) && !candidate.endsWith("/"))
+    if (existsSync(candidate) && statSync(candidate).isFile())
       return pathToFileURL(candidate).href;
   return null;
 }

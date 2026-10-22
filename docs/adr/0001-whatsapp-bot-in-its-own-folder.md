@@ -26,6 +26,13 @@ pages, crons or tables.
   allowed shared modules (checked transitively), the core imports no adapters,
   Node built-ins or framework code, and only adapters read `process.env`.
 
+- The bot builds with webpack (`next build --webpack`). Turbopack needs the
+  repository as its root to compile `../src`, and then also bundles the web
+  app's `src/proxy.ts`. CI fails if web sign-in code reaches the bot bundle.
+- On Vercel the bot project keeps "Include files outside the Root Directory"
+  on, uses Node 22, and both projects get an Ignored Build Step so a bot
+  commit does not redeploy the web app and the reverse.
+
 ## Consequences
 
 - A rule change in `src/lib/rules` reaches both channels at once, and the bot's

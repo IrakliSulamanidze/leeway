@@ -7,5 +7,5 @@ export const help: Intent = {
   name: "help",
   matches: (turn) =>
     turn.button === "help" || (turn.text !== null && WORDS.has(turn.text)),
-  run: () => [{ text: LINES.help }],
+  run: () => ({ replies: [{ text: LINES.help }] }),
 };

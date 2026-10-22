@@ -22,7 +22,8 @@ Run from `bot/`.
 
 - `npm run chat` talk to the bot in the terminal. No Meta account, no AI calls.
   Type a message, or `/tap <button id>` to press a button.
-- `npm run check` format, types, lint, unit tests and boundaries, in at most 40 lines.
+- `npm run check` types, lint, unit tests and boundaries, in at most 40 lines
+  (formatting is checked from the repository root).
 - `npm run build` production build.
 - `npm run dev` local server on port 3100; `GET /api/wa/health` answers.
 

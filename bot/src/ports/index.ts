@@ -1,13 +1,7 @@
 // Everything the core needs from the outside world. Each port has a production
-// adapter and a fake in src/adapters; tests and the chat simulator use the fakes.
-import type { Reply } from "../core/types";
-
+// adapter and a fake in src/adapters.
 export interface Clock {
   now(): Date;
-}
-
-export interface Messenger {
-  send(to: string, reply: Reply): Promise<void>;
 }
 
 // What a handler may use. Later ports (store, reader, speech) are added here as
