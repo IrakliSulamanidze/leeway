@@ -43,8 +43,6 @@ select set_eq(
        and has_function_privilege('wa_gateway', p.oid, 'execute') $$,
   array['wa_api.begin_turn', 'wa_api.setting', 'wa_api.claim_message', 'wa_api.finish_message',
         'wa_api.release_message', 'wa_api.count_message', 'wa_api.set_opt_out', 'wa_api.link_state',
-  array['wa_api.begin_turn', 'wa_api.setting', 'wa_api.claim_message', 'wa_api.finish_message',
-        'wa_api.release_message', 'wa_api.count_message', 'wa_api.set_opt_out', 'wa_api.link_state',
         'wa_api.issue_link_token', 'wa_api.link_token_ok', 'wa_api.take_link_attempt',
         'wa_api.prepare_link', 'wa_api.confirm_link', 'wa_api.count_ip_attempt',
         'wa_api.set_adult', 'wa_api.my_link', 'wa_api.my_snapshot', 'wa_api.log_skip_on',
