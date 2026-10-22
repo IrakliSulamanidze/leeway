@@ -6,6 +6,7 @@ import { randomInt } from "node:crypto";
 import { codeHash, dbAccounts, tokenHash } from "./db-accounts";
 import { dbGate } from "./db-gate";
 import { dbStudent } from "./db-student";
+import { anthropicClient, claudeReader } from "./claude/reader";
 import { env } from "./env";
 import { keyedHash } from "./hash";
 import type { LinkPageDeps, Prepared } from "./link-page";
@@ -21,12 +22,26 @@ export function webhookDeps(): WebhookDeps {
   const gate = dbGate(env.hashKey());
   const accounts = dbAccounts(env.publicUrl(), env.hashKey());
   const student = dbStudent(env.hashKey());
+  const reader = claudeReader(anthropicClient(env.anthropicKey()), {
+    left: async () =>
+      (await sharedPool().query("select wa_api.ai_budget_left() as ok")).rows[0]
+        ?.ok === true,
+    spend: async (micros) => {
+      await sharedPool().query("select wa_api.add_ai_spend($1)", [micros]);
+    },
+  });
   deps = {
     appSecret: env.appSecret(),
     inbox: gate,
     messenger: cloudApiMessenger(env.phoneNumberId(), env.accessToken()),
     process: (msg) =>
-      processInbound(msg, { clock: systemClock, gate, accounts, student }),
+      processInbound(msg, {
+        clock: systemClock,
+        gate,
+        accounts,
+        student,
+        reader,
+      }),
   };
   return deps;
 }

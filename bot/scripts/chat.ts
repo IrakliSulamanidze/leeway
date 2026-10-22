@@ -5,6 +5,8 @@ import { systemClock } from "../src/adapters/clock";
 import { MemoryAccounts } from "../src/adapters/memory-accounts";
 import { MemoryGate } from "../src/adapters/memory-gate";
 import { MemoryStudent, sampleSnapshot } from "../src/adapters/memory-student";
+import { ScriptedReader } from "../src/adapters/memory-reader";
+import { anthropicClient, claudeReader } from "../src/adapters/claude/reader";
 import { processInbound } from "../src/core/inbound";
 import type { InboundBody, Reply } from "../src/core/types";
 
@@ -13,6 +15,15 @@ const gate = new MemoryGate();
 // The simulator plays a linked student; the age question comes first.
 const accounts = new MemoryAccounts(true);
 const student = new MemoryStudent(sampleSnapshot(new Date()));
+// With ANTHROPIC_API_KEY set, free text goes to the real reader (a cent buys
+// about a hundred messages); without it, only commands work.
+let spent = 0;
+const reader = process.env.ANTHROPIC_API_KEY
+  ? claudeReader(anthropicClient(process.env.ANTHROPIC_API_KEY), {
+      left: async () => spent < 50_000,
+      spend: async (micros) => void (spent += micros),
+    })
+  : new ScriptedReader();
 let seq = 0;
 
 function show(reply: Reply) {
@@ -37,7 +48,7 @@ for await (const line of rl) {
     : { kind: "text", text: line };
   const replies = await processInbound(
     { id: `sim.${++seq}`, from: FROM, at: new Date(), body },
-    { clock: systemClock, gate, accounts, student },
+    { clock: systemClock, gate, accounts, student, reader },
   );
   replies.forEach(show);
   rl.prompt();
