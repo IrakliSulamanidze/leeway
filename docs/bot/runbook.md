@@ -10,6 +10,8 @@ Run in the Supabase SQL editor. Each takes effect on the next message.
 | Unpause | `update wa.settings set value = 'false', updated_at = now() where name = 'paused';` |
 | Change the daily cap per student | `update wa.settings set value = '80', updated_at = now() where name = 'daily_message_cap';` |
 | Change the student cap | `update wa.settings set value = '100', updated_at = now() where name = 'student_cap';` |
+| Change the daily AI ceiling ($5 = 5000000) | `update wa.settings set value = '5000000', updated_at = now() where name = 'ai_daily_cap_micros';` |
+| See today's AI spend | `select micros / 1e6 as dollars from wa.ai_spend where day = (now() at time zone 'Europe/Madrid')::date;` |
 
 Crisis replies and STOP confirmations still go out while paused.
 
@@ -25,6 +27,7 @@ Set in `bot/.env.local` locally and in the bot's Vercel project. Names are in
   page. Production uses a system user's permanent token.
 - `WA_HASH_KEY`: a long random string. Message ids and senders are stored as
   keyed hashes; changing the key resets redelivery checks and daily counts.
+- `ANTHROPIC_API_KEY`: for the AI reader. Without it the bot answers commands only.
 - `WA_DB_URL`, `WA_DB_CA`: see [database.md](database.md).
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`: the web app's public Supabase
   values; the link page signs students in with them.
