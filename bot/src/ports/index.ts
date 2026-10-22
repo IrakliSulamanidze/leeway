@@ -71,6 +71,33 @@ export interface Student {
   undoSkip(sender: string, skipId: string): Promise<boolean>;
 }
 
+// What the AI reader found in a message: one request from a fixed list, never
+// a reply. Code checks it and decides everything else.
+export type ReadingKind =
+  | "lives"
+  | "today"
+  | "tomorrow"
+  | "week"
+  | "tests"
+  | "log_skip"
+  | "plan_skip"
+  | "help"
+  | "off_topic"
+  | "unclear";
+
+export type Reading = {
+  kind: ReadingKind;
+  // The course as the student wrote it ("micro", "stats"), for log_skip and
+  // plan_skip. Matched against their courses by code, never shown back.
+  course: string | null;
+};
+
+export interface Reader {
+  // null when the reader is unavailable: over the daily AI ceiling, or the
+  // model did not answer in time.
+  read(text: string, today: string): Promise<Reading | null>;
+}
+
 export interface Messenger {
   send(to: string, reply: Reply): Promise<void>;
 }
@@ -80,6 +107,7 @@ export interface Messenger {
 export type Deps = {
   clock: Clock;
   student: Student;
+  reader: Reader;
 };
 
 export type InboundDeps = Deps & { gate: Gate; accounts: Accounts };
