@@ -34,7 +34,9 @@ describe("share", () => {
     sharing.preview_ = { outcome: "ok", courses: ["Statistics II"] };
     const [r] = await say("share k7q2m9xz");
     expect(r.text).toContain("courses you both take: Statistics II.");
-    expect(r.text).toContain("Never your timetable, absences, skips or notes, and no course you add later.");
+    expect(r.text).toContain(
+      "Never your timetable, absences, skips or notes, and no course you add later.",
+    );
     expect(r.buttons?.map((b) => b.id)).toEqual([
       "share.allow:K7Q2M9XZ",
       "share.not_now:K7Q2M9XZ",
