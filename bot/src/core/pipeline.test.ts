@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fixedClock } from "../adapters/clock";
 import { MemoryStudent, sampleSnapshot } from "../adapters/memory-student";
+import { ScriptedReader } from "../adapters/memory-reader";
 import { INTENTS } from "./intents/registry";
 import { LINES } from "./lines";
 import { handle } from "./pipeline";
@@ -10,6 +11,7 @@ import type { Inbound, InboundBody } from "./types";
 const deps = {
   clock: fixedClock("2026-10-26T09:00:00Z"),
   student: new MemoryStudent(sampleSnapshot(new Date("2026-10-26T09:00:00Z"))),
+  reader: new ScriptedReader(),
 };
 const msg = (body: InboundBody): Inbound => ({
   id: "wamid.1",
@@ -31,10 +33,10 @@ describe("handle", () => {
     ).toBe(LINES.help);
   });
 
-  it("points unknown text and unknown buttons to help", async () => {
-    expect(await handle(text("can i skip micro tmrw"), deps)).toEqual([
-      { text: LINES.notUnderstood },
-    ]);
+  it("points unread text and unknown buttons to help", async () => {
+    expect((await handle(text("can i skip micro tmrw"), deps))[0].text).toBe(
+      LINES.notUnderstood,
+    );
     expect(await handle(msg({ kind: "button", id: "gone" }), deps)).toEqual([
       { text: LINES.notUnderstood },
     ]);

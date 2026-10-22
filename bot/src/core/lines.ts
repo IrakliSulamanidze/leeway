@@ -17,6 +17,8 @@ export const LINES = {
   askAge: "One quick question before we start: are you 18 or older?",
   ageThanks: 'Thanks. Send "help" to see what I can do.',
   linked: "You're connected to Leeway.",
+  offTopic:
+    "That's not something I can help with. I can check your lives, today, tomorrow, this week or your tests, and save a skip.",
   wrongCode:
     "That code doesn't match. Check the code on the page and send it again.",
   accountTaken:

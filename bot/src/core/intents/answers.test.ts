@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { fixedClock } from "../../adapters/clock";
 import { MemoryStudent, sampleSnapshot } from "../../adapters/memory-student";
+import { ScriptedReader } from "../../adapters/memory-reader";
 import { handle } from "../pipeline";
 import type { Inbound, Reply } from "../types";
 
@@ -10,7 +11,11 @@ import type { Inbound, Reply } from "../types";
 const NOW = "2026-10-26T09:00:00Z";
 let student: MemoryStudent;
 let seq = 0;
-const deps = () => ({ clock: fixedClock(NOW), student });
+const deps = () => ({
+  clock: fixedClock(NOW),
+  student,
+  reader: new ScriptedReader(),
+});
 const send = (body: Inbound["body"]): Promise<Reply[]> =>
   handle(
     { id: `wamid.${++seq}`, from: "ES.a", at: new Date(NOW), body },
@@ -194,7 +199,7 @@ describe("this week", () => {
         at: new Date(thursday),
         body: { kind: "text", text: "this week" },
       },
-      { clock: fixedClock(thursday), student: s },
+      { clock: fixedClock(thursday), student: s, reader: new ScriptedReader() },
     );
     expect(r.text).toMatch(/^This week: You'd miss 6 classes\./);
   });

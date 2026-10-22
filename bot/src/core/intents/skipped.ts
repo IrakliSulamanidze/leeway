@@ -153,7 +153,8 @@ async function save(turn: Turn, deps: Deps, p: Plan): Promise<Outcome> {
   };
 }
 
-// A skip on a test day, or one that uses the last life or more, asks first.
+// A skip on a test day, one that uses the last life or more, or one the AI
+// reader picked out of free text asks first.
 function confirmOrSave(
   turn: Turn,
   deps: Deps,
@@ -169,7 +170,7 @@ function confirmOrSave(
         : p.after === 0
           ? "this uses your last life"
           : null;
-  if (!reason) return save(turn, deps, p);
+  if (!reason && !turn.viaReader) return save(turn, deps, p);
   const yes: Button = {
     id: `skip.yes:${p.courseId}:${p.classId ?? "-"}:${p.day}`,
     title: "Save it",
@@ -177,7 +178,9 @@ function confirmOrSave(
   return {
     replies: [
       {
-        text: `${p.name}, ${dayName(p.day)}: ${reason}. Save the skip anyway?`,
+        text: reason
+          ? `${p.name}, ${dayName(p.day)}: ${reason}. Save the skip anyway?`
+          : `Save a skip for ${p.name}, ${dayName(p.day)}? ${livesWord(p.after)} left after it.`,
         buttons: [yes, { id: "skip.no", title: "Don't save" }],
       },
     ],
