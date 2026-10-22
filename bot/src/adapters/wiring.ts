@@ -103,12 +103,12 @@ export function reminderJob(now: Date): Promise<JobResult> {
     targets: async () =>
       (
         await call(
-          "select wa_id, last_seen_at from wa_api.reminder_targets($1)",
+          "select wa_id, last_inbound_at from wa_api.reminder_targets($1)",
           [env.cronSecret()],
         )
       ).map((r) => ({
         waId: r.wa_id as string,
-        lastSeenAt: (r.last_seen_at as Date | null) ?? null,
+        lastSeenAt: (r.last_inbound_at as Date | null) ?? null,
       })),
     optedOut: async (waId) =>
       (
@@ -116,6 +116,9 @@ export function reminderJob(now: Date): Promise<JobResult> {
           keyedHash(waId, hashKey),
         ])
       )[0]?.out === true,
+    unclaim: async (waId) => {
+      await inTurn(waId, (tx) => tx.query("select wa_api.unclaim_reminder()"));
+    },
     claim: (waId) =>
       inTurn(
         waId,
@@ -130,7 +133,9 @@ export function reminderJob(now: Date): Promise<JobResult> {
   });
 }
 
-export const cronAllowed = (header: string | null) =>
-  sameToken(header?.replace(/^Bearer /, "") ?? null, env.cronSecret());
+export function cronAllowed(header: string | null): boolean {
+  // An unset secret matches nothing (sameToken refuses an empty one).
+  return sameToken(header?.replace(/^Bearer /, "") ?? null, env.cronSecret());
+}
 
 export const verifyToken = () => env.verifyToken();

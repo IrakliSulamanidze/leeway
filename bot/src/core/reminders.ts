@@ -1,11 +1,27 @@
 // What Leeway sends on its own: on Sundays a look at the week ahead, on other
-// days a heads-up for tomorrow (the web's night alert, word for word). At most
-// one a day; nothing when there is nothing to say.
+// days a heads-up for tomorrow built from the web's night alert (the web adds
+// a "calendar as of" line the bot leaves out). At most one a day; nothing
+// when there is nothing to say.
 import { addDays, madridToday } from "@/lib/rules/dates";
 import { nightAlert } from "@/lib/rules/alert";
-import { madridDate } from "@/lib/rules/week";
+import { madridDate, skippable } from "@/lib/rules/week";
 import type { Snapshot } from "../ports";
 import { courseLives, dayName } from "./data";
+
+// Meta refuses template values with line breaks, tabs or long runs of
+// spaces, and caps a body at 1024 characters.
+const MAX_PARAM = 400;
+export function cleanParam(value: string): string {
+  const flat = value.replace(/\s+/g, " ").trim();
+  return flat.length <= MAX_PARAM ? flat : `${flat.slice(0, MAX_PARAM - 1)}…`;
+}
+
+const MAX_ITEMS = 6;
+function capped(items: string[]): string[] {
+  return items.length <= MAX_ITEMS
+    ? items
+    : [...items.slice(0, MAX_ITEMS), `and ${items.length - MAX_ITEMS} more`];
+}
 
 export type Reminder = {
   kind: "evening" | "weekly";
@@ -65,13 +81,16 @@ function evening(
     return {
       kind: "evening",
       text: `Heads-up for tomorrow: ${count}. Send "tomorrow" for details.`,
-      template: { name: "leeway_evening_private", params: [count] },
+      template: { name: "leeway_evening_private", params: [cleanParam(count)] },
     };
   }
   return {
     kind: "evening",
     text: `Heads-up for tomorrow:\n${alert}`,
-    template: { name: "leeway_evening", params: [lines.join(" · ")] },
+    template: {
+      name: "leeway_evening",
+      params: [cleanParam(capped(lines).join(" · "))],
+    },
   };
 }
 
@@ -79,7 +98,20 @@ function weekly(snap: Snapshot, today: string, hide: boolean): Reminder | null {
   const from = addDays(today, 1);
   const to = addDays(today, 7);
   const tests = testDays(snap).filter((t) => t.day >= from && t.day <= to);
-  const watch = courseLives(snap, today).filter((c) => c.left <= 1);
+  // Only courses with a class still to come this week are worth watching.
+  const hasClass = new Set(
+    snap.sessions
+      .filter(
+        (s) =>
+          skippable(s) &&
+          madridDate(s.starts_at) >= from &&
+          madridDate(s.starts_at) <= to,
+      )
+      .map((s) => s.course_id),
+  );
+  const watch = courseLives(snap, today).filter(
+    (c) => c.left <= 1 && hasClass.has(c.id),
+  );
   if (!tests.length && !watch.length) return null;
   const range = `${dayName(from)} to ${dayName(to)}`;
   const n = (k: number, one: string, many: string) =>
@@ -96,7 +128,10 @@ function weekly(snap: Snapshot, today: string, hide: boolean): Reminder | null {
     return {
       kind: "weekly",
       text: `Your week, ${range}: ${summary}. Send "this week" for details.`,
-      template: { name: "leeway_weekly_private", params: [range, summary] },
+      template: {
+        name: "leeway_weekly_private",
+        params: [cleanParam(range), cleanParam(summary)],
+      },
     };
   }
   const parts = [
@@ -107,8 +142,11 @@ function weekly(snap: Snapshot, today: string, hide: boolean): Reminder | null {
   ];
   return {
     kind: "weekly",
-    text: `Your week, ${range}:\n${parts.join("\n")}`,
-    template: { name: "leeway_weekly", params: [range, parts.join(" · ")] },
+    text: `Your week, ${range}:\n${capped(parts).join("\n")}`,
+    template: {
+      name: "leeway_weekly",
+      params: [cleanParam(range), cleanParam(capped(parts).join(" · "))],
+    },
   };
 }
 
@@ -119,5 +157,9 @@ export function reminderFor(
 ): Reminder | null {
   const today = madridToday(now);
   const sunday = new Date(`${today}T12:00:00Z`).getUTCDay() === 0;
-  return sunday ? weekly(snap, today, hide) : evening(snap, today, hide);
+  // On Sundays the week ahead, or tomorrow's heads-up when the week holds
+  // nothing to flag (a planned skip on Monday still gets said).
+  return (
+    (sunday ? weekly(snap, today, hide) : null) ?? evening(snap, today, hide)
+  );
 }

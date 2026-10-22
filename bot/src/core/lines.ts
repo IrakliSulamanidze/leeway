@@ -1,7 +1,7 @@
 // Fixed lines, one wording in every personality. Personality lines arrive with
 // the reply library; these stay word for word.
 export const LINES = {
-  help: 'Hi, I\'m Leeway. Ask me "lives", "today", "tomorrow", "this week" or "tests". To save a skip, send "skipped micro" or "skipping micro tomorrow".',
+  help: 'Hi, I\'m Leeway. Ask me "lives", "today", "tomorrow", "this week" or "tests". To save a skip, send "skipped micro" or "skipping micro tomorrow". "hide details" keeps reminders off your lock screen.',
   notUnderstood: 'I didn\'t get that one. Send "help" to see what I can do.',
   textOnly: "I can only read text messages for now.",
   crisis:

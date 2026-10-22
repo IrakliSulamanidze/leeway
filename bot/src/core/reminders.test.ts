@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { sampleSnapshot } from "../adapters/memory-student";
-import { reminderFor } from "./reminders";
+import { cleanParam, reminderFor } from "./reminders";
 
 // The sample student: Statistics II is on its last life and has a quiz three
 // days after the snapshot's date; classes every weekday.
@@ -72,5 +72,35 @@ describe("Sunday look-ahead", () => {
     expect(r.text).toBe(
       'Your week, Mon 2 Nov to Sun 8 Nov: 1 test, 1 course to watch. Send "this week" for details.',
     );
+  });
+});
+
+describe("template values", () => {
+  it("never carry line breaks, tabs or long runs of spaces, and stay short", () => {
+    expect(cleanParam("Stats\tII\n\nQuiz      Wed")).toBe("Stats II Quiz Wed");
+    expect(cleanParam("x".repeat(1000)).length).toBe(400);
+  });
+});
+
+describe("Sunday without anything to flag", () => {
+  it("falls back to tomorrow's heads-up", () => {
+    const now = at("2026-11-01T18:00:00Z");
+    const snap = sampleSnapshot(now);
+    snap.assessments = [];
+    snap.courses = snap.courses.map((c) => ({ ...c, missed_before: 0 }));
+    const monday = snap.sessions.find((s) =>
+      s.starts_at.startsWith("2026-11-02"),
+    )!;
+    snap.skips.push({
+      id: "k1",
+      course_id: monday.course_id,
+      class_session_id: monday.id,
+      skip_date: "2026-11-02",
+      sessions: 1,
+      planned: true,
+    });
+    const r = reminderFor(snap, now, false)!;
+    expect(r.kind).toBe("evening");
+    expect(r.text).toContain("You planned to skip");
   });
 });

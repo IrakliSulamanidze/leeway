@@ -66,6 +66,9 @@ export function dbAccounts(
         };
       });
     },
+    async markInbound(sender) {
+      await db().query("select wa_api.mark_inbound($1)", [sender]);
+    },
     async setHideDetails(sender, hide) {
       await inTurn(sender, (tx) =>
         tx.query("select wa_api.set_hide_details($1)", [hide]),

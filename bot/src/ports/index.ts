@@ -50,6 +50,8 @@ export interface Accounts {
   setAdult(sender: string, adult: boolean): Promise<void>;
   setVoice(sender: string, voice: Voice): Promise<void>;
   setHideDetails(sender: string, hide: boolean): Promise<void>;
+  // Records that the student wrote just now (Meta's 24-hour window).
+  markInbound(sender: string): Promise<void>;
 }
 
 // One student's data, in the shapes the web app's rule functions take.

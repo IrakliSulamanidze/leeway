@@ -47,6 +47,12 @@ export class MemoryAccounts implements Accounts {
     };
   }
 
+  readonly inbound: string[] = [];
+
+  async markInbound(sender: string) {
+    this.inbound.push(sender);
+  }
+
   async setHideDetails(sender: string, hide: boolean) {
     if (hide) this.hidden.add(sender);
     else this.hidden.delete(sender);

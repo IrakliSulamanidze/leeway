@@ -45,6 +45,7 @@ export async function processInbound(
   if (link.state === "none") return linkReplies(msg, text, deps);
   if (link.state === "waitlisted") return [{ text: waitlisted(link.place) }];
   if (link.state === "suspended") return [{ text: LINES.suspended }];
+  await deps.accounts.markInbound(msg.from);
 
   const profile = await deps.accounts.profile(msg.from);
   const button = msg.body.kind === "button" ? msg.body.id : null;
