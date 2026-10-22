@@ -10,7 +10,7 @@ Run in the Supabase SQL editor. Each takes effect on the next message.
 | Unpause | `update wa.settings set value = 'false', updated_at = now() where name = 'paused';` |
 | Change the daily cap per student | `update wa.settings set value = '80', updated_at = now() where name = 'daily_message_cap';` |
 | Change the student cap | `update wa.settings set value = '100', updated_at = now() where name = 'student_cap';` |
-| Change the daily AI ceiling ($5 = 5000000) | `update wa.settings set value = '5000000', updated_at = now() where name = 'ai_daily_cap_micros';` |
+| Change the daily AI ceiling ($5 = 5000000; 0 turns the AI off) | `update wa.settings set value = '5000000', updated_at = now() where name = 'ai_daily_cap_micros';` |
 | See today's AI spend | `select micros / 1e6 as dollars from wa.ai_spend where day = (now() at time zone 'Europe/Madrid')::date;` |
 
 Crisis replies and STOP confirmations still go out while paused.
