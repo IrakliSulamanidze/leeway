@@ -28,6 +28,7 @@ Set in `bot/.env.local` locally and in the bot's Vercel project. Names are in
 - `WA_HASH_KEY`: a long random string. Message ids and senders are stored as
   keyed hashes; changing the key resets redelivery checks and daily counts.
 - `ANTHROPIC_API_KEY`: for the AI reader. Without it the bot answers commands only.
+- `ELEVENLABS_API_KEY`: for voice notes. Without it students are asked to type.
 - `WA_DB_URL`, `WA_DB_CA`: see [database.md](database.md).
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`: the web app's public Supabase
   values; the link page signs students in with them.
