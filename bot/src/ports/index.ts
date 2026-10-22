@@ -1,6 +1,13 @@
 // Everything the core needs from the outside world. Each port has a production
 // adapter and a fake in src/adapters.
 import type { Reply } from "../core/types";
+import type { CourseRow, SkipRow } from "@/lib/rules/lives";
+import type {
+  Range,
+  WeekAssessment,
+  WeekClass,
+  WeekSkip,
+} from "@/lib/rules/week";
 
 export interface Clock {
   now(): Date;
@@ -40,6 +47,30 @@ export interface Accounts {
   setAdult(sender: string, adult: boolean): Promise<void>;
 }
 
+// One student's data, in the shapes the web app's rule functions take.
+export type Snapshot = {
+  courses: (CourseRow & { name: string })[];
+  sessions: WeekClass[];
+  skips: (SkipRow & WeekSkip & { id: string })[];
+  assessments: WeekAssessment[];
+};
+
+export type SkipInput = {
+  courseId: string;
+  classId: string | null;
+  day: string;
+  sessions: 1 | 2;
+};
+
+// Reads and writes for the linked student who sent the message. Each call is
+// its own database turn for that student only.
+export interface Student {
+  snapshot(sender: string, range: Range): Promise<Snapshot>;
+  // Saves once per message id: a rerun returns the skip already saved.
+  logSkip(sender: string, skip: SkipInput, messageId: string): Promise<string>;
+  undoSkip(sender: string, skipId: string): Promise<boolean>;
+}
+
 export interface Messenger {
   send(to: string, reply: Reply): Promise<void>;
 }
@@ -48,6 +79,7 @@ export interface Messenger {
 // the features that need them land, so a handler's dependencies stay explicit.
 export type Deps = {
   clock: Clock;
+  student: Student;
 };
 
 export type InboundDeps = Deps & { gate: Gate; accounts: Accounts };
