@@ -18,6 +18,22 @@ export interface Gate {
   setOptOut(sender: string, optedOut: boolean): Promise<void>;
 }
 
+export type LinkState =
+  | { state: "none" }
+  | { state: "active" }
+  | { state: "suspended" }
+  | { state: "waitlisted"; place: number };
+
+// Who a sender is to Leeway, and the one-time sign-in link for a new sender.
+export interface Accounts {
+  state(sender: string): Promise<LinkState>;
+  // Issues a fresh link (valid 30 minutes) and returns its URL.
+  newLinkUrl(sender: string): Promise<string>;
+  // The linked student's age answer: true for 18 or over, null if not given.
+  adult(sender: string): Promise<boolean | null>;
+  setAdult(sender: string, adult: boolean): Promise<void>;
+}
+
 export interface Messenger {
   send(to: string, reply: Reply): Promise<void>;
 }
@@ -28,4 +44,4 @@ export type Deps = {
   clock: Clock;
 };
 
-export type InboundDeps = Deps & { gate: Gate };
+export type InboundDeps = Deps & { gate: Gate; accounts: Accounts };

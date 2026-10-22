@@ -2,12 +2,15 @@
 // Type a message, or "/tap <button id>" to press a button. Ctrl+D quits.
 import { createInterface } from "node:readline";
 import { systemClock } from "../src/adapters/clock";
+import { MemoryAccounts } from "../src/adapters/memory-accounts";
 import { MemoryGate } from "../src/adapters/memory-gate";
 import { processInbound } from "../src/core/inbound";
 import type { InboundBody, Reply } from "../src/core/types";
 
 const FROM = "34600000000";
 const gate = new MemoryGate();
+// The simulator plays a linked student; the age question comes first.
+const accounts = new MemoryAccounts(true);
 let seq = 0;
 
 function show(reply: Reply) {
@@ -32,7 +35,7 @@ for await (const line of rl) {
     : { kind: "text", text: line };
   const replies = await processInbound(
     { id: `sim.${++seq}`, from: FROM, at: new Date(), body },
-    { clock: systemClock, gate },
+    { clock: systemClock, gate, accounts },
   );
   replies.forEach(show);
   rl.prompt();
