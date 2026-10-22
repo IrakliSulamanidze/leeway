@@ -13,6 +13,8 @@ export const env = {
   hashKey: () => required("WA_HASH_KEY"),
   // Optional: without it the bot answers commands and buttons only.
   anthropicKey: () => process.env.ANTHROPIC_API_KEY || null,
+  // Optional: without it voice notes get a "type it instead" reply.
+  speechKey: () => process.env.ELEVENLABS_API_KEY || null,
   // Public values: the Supabase project the web app uses, and this bot's address.
   supabaseUrl: () => required("SUPABASE_URL"),
   supabasePublishableKey: () => required("SUPABASE_PUBLISHABLE_KEY"),

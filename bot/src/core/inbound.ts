@@ -82,7 +82,17 @@ export async function processInbound(
     ];
   }
 
-  return applyVoice(await handle(msg, deps), profile, msg.id);
+  // A voice note is transcribed only for a linked student, then goes the way
+  // typed text goes, crisis check included.
+  let request = msg;
+  if (msg.body.kind === "voice") {
+    const heard = await deps.speech.transcribe(msg.body.mediaId);
+    if (!heard.ok) return [{ text: VOICE_NOTE_LINES[heard.reason] }];
+    if (isCrisis(normalise(heard.text))) return [{ text: LINES.crisis }];
+    request = { ...msg, body: { kind: "text", text: heard.text } };
+  }
+
+  return applyVoice(await handle(request, deps), profile, msg.id);
 }
 
 const ASK_AGE: Reply = {
@@ -107,6 +117,12 @@ const VOICE_BUTTONS: Record<string, Voice> = {
   "voice.friendly": "friendly",
   "voice.roast": "roast",
 };
+
+const VOICE_NOTE_LINES = {
+  off: LINES.voiceNoteOff,
+  too_long: LINES.voiceNoteLong,
+  failed: LINES.voiceNoteFailed,
+} as const;
 
 const AGE_BUTTONS: Record<string, boolean> = {
   "age.adult": true,

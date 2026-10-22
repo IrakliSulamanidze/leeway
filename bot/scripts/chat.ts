@@ -6,6 +6,7 @@ import { MemoryAccounts } from "../src/adapters/memory-accounts";
 import { MemoryGate } from "../src/adapters/memory-gate";
 import { MemoryStudent, sampleSnapshot } from "../src/adapters/memory-student";
 import { ScriptedReader } from "../src/adapters/memory-reader";
+import { ScriptedSpeech } from "../src/adapters/memory-speech";
 import { anthropicClient, claudeReader } from "../src/adapters/claude/reader";
 import { processInbound } from "../src/core/inbound";
 import type { InboundBody, Reply } from "../src/core/types";
@@ -48,7 +49,14 @@ for await (const line of rl) {
     : { kind: "text", text: line };
   const replies = await processInbound(
     { id: `sim.${++seq}`, from: FROM, at: new Date(), body },
-    { clock: systemClock, gate, accounts, student, reader },
+    {
+      clock: systemClock,
+      gate,
+      accounts,
+      student,
+      reader,
+      speech: new ScriptedSpeech(),
+    },
   );
   replies.forEach(show);
   rl.prompt();

@@ -106,6 +106,15 @@ export interface Reader {
   read(text: string, today: string): Promise<Reading | null>;
 }
 
+export type Transcript =
+  | { ok: true; text: string }
+  | { ok: false; reason: "off" | "too_long" | "failed" };
+
+// Turns a voice note into text. Neither the audio nor the text is kept.
+export interface Speech {
+  transcribe(mediaId: string): Promise<Transcript>;
+}
+
 export interface Messenger {
   send(to: string, reply: Reply): Promise<void>;
   // A Meta-approved template, for messages outside the 24-hour window after
@@ -121,4 +130,8 @@ export type Deps = {
   reader: Reader;
 };
 
-export type InboundDeps = Deps & { gate: Gate; accounts: Accounts };
+export type InboundDeps = Deps & {
+  gate: Gate;
+  accounts: Accounts;
+  speech: Speech;
+};
