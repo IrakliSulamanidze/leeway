@@ -1,16 +1,9 @@
 import type { Reply } from "../types";
+import { replyProblems } from "../reply";
 import { LIBRARY } from "./library";
-import type { Situation, Voice } from "./types";
+import type { Library, Voice } from "./types";
 
 export type Profile = { voice: Voice | null; adult: boolean | null };
-
-// For these, the voice line replaces the fixed first sentence; the rest of
-// the fixed line still says what the bot can do.
-const SWAP: Partial<Record<Situation, string>> = {
-  off_topic:
-    "I can check your lives, today, tomorrow, this week or your tests, and save a skip.",
-  not_understood: 'Send "help" to see what I can do.',
-};
 
 // A stable pick per message, so a retried message gets the same line.
 function pick(n: number, seed: string): number {
@@ -24,22 +17,21 @@ function pick(n: number, seed: string): number {
 // unset voice, or no approved line leaves the reply exactly as code wrote it.
 export function applyVoice(
   replies: Reply[],
-  profile: Profile,
+  profile: Pick<Profile, "voice" | "adult">,
   seed: string,
+  library: Library = LIBRARY,
 ): Reply[] {
   return replies.map((reply) => {
     const { situation, ...rest } = reply;
     if (!situation || !profile.voice || profile.voice === "straight")
       return rest;
-    const lines = LIBRARY[profile.voice][situation].filter(
+    const lines = library[profile.voice][situation].filter(
       (l) => l.approved && (!l.swears || profile.adult === true),
     );
     if (!lines.length) return rest;
     const line = lines[pick(lines.length, `${seed}:${situation}`)].text;
-    const swap = SWAP[situation];
-    return {
-      ...rest,
-      text: swap ? `${line} ${swap}` : `${line}\n${rest.text}`,
-    };
+    const voiced = { ...rest, text: `${line}\n${rest.text}` };
+    // A line never costs a reply: past WhatsApp's limits, send the facts alone.
+    return replyProblems(voiced).length ? rest : voiced;
   });
 }

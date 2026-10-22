@@ -149,7 +149,13 @@ async function save(turn: Turn, deps: Deps, p: Plan): Promise<Outcome> {
       {
         text: `Saved: ${p.name}, ${dayName(p.day)}. ${lives}`,
         buttons: [{ id: `skip.undo:${id}`, title: "Undo" }],
-        situation: p.after <= 1 ? "skip_saved_tight" : "skip_saved",
+        // No joke after a skip that took a test day, the last life or more.
+        situation:
+          p.test || p.after <= 0
+            ? undefined
+            : p.after === 1
+              ? "skip_saved_tight"
+              : "skip_saved",
       },
     ],
   };

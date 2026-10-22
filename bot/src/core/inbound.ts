@@ -49,20 +49,27 @@ export async function processInbound(
   const profile = await deps.accounts.profile(msg.from);
   const button = msg.body.kind === "button" ? msg.body.id : null;
 
-  const age = button ? AGE_BUTTONS[button] : undefined;
+  const age =
+    button && Object.hasOwn(AGE_BUTTONS, button)
+      ? AGE_BUTTONS[button]
+      : undefined;
   if (age !== undefined && profile.adult === null) {
     await deps.accounts.setAdult(msg.from, age);
     return [ASK_VOICE];
   }
   if (profile.adult === null) return [ASK_AGE];
 
-  const voice = button ? VOICE_BUTTONS[button] : undefined;
+  const voice =
+    button && Object.hasOwn(VOICE_BUTTONS, button)
+      ? VOICE_BUTTONS[button]
+      : undefined;
   if (voice) {
     await deps.accounts.setVoice(msg.from, voice);
     return [{ text: LINES.voiceSet }];
   }
-  if (profile.voice === null || text === "voice" || text === "change voice")
-    return [ASK_VOICE];
+  if (text === "voice" || text === "change voice") return [ASK_VOICE];
+  // The voice question comes once, right after the age answer. Until one is
+  // picked, replies are Straight; a request is never held back for it.
 
   return applyVoice(await handle(msg, deps), profile, msg.id);
 }

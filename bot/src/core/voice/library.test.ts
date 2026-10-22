@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyVoice } from "./apply";
 import { LIBRARY } from "./library";
+import type { Library } from "./types";
 
 const lines = Object.entries(LIBRARY).flatMap(([voice, bySituation]) =>
   Object.entries(bySituation).flatMap(([situation, list]) =>
@@ -8,9 +9,10 @@ const lines = Object.entries(LIBRARY).flatMap(([voice, bySituation]) =>
   ),
 );
 
-// Topics a joke must never touch (the plan's guardrails).
+// Topics a joke must never touch (the plan's guardrails), and words that
+// assume why a class was missed.
 const OFF_LIMITS =
-  /\b(fat|ugly|skinny|body|looks|gay|straight up|girl|boy|race|religio|sex|depress|anxiety|mental|crazy|stupid|dumb|idiot|poor|broke|money|kill|die|dead)\b/i;
+  /\b(fat|ugly|skinny|body|looks|race|religio|sex|depress|anxiety|mental|crazy|stupid|dumb|idiot|poor|broke|money|kill|die|dead|alive|sick|bed|lazy|hangover|drunk)\b/i;
 
 describe("the line library", () => {
   it.each(lines)("$voice/$situation: $text", (l) => {
@@ -25,6 +27,20 @@ describe("the line library", () => {
     expect(lines.filter((l) => l.voice === "friendly" && l.swears)).toEqual([]);
   });
 });
+
+// A small library with approved lines, so the rules are tested whatever
+// Irakli has approved so far.
+const FIXTURE = {
+  friendly: { ...LIBRARY.friendly },
+  roast: {
+    ...LIBRARY.roast,
+    skip_saved: [
+      { text: "Clean line.", approved: true },
+      { text: "Damn line.", approved: true, swears: true },
+    ],
+    lives_ok: [{ text: "Not approved yet.", approved: false }],
+  },
+} satisfies Library;
 
 describe("applyVoice", () => {
   const reply = {
@@ -42,13 +58,12 @@ describe("applyVoice", () => {
   });
 
   it("uses only approved lines", () => {
-    // Roast lines wait for Irakli's approval.
-    expect(applyVoice([reply], { voice: "roast", adult: true }, "m1")).toEqual([
-      { text: reply.text },
-    ]);
+    expect(
+      applyVoice([reply], { voice: "roast", adult: true }, "m1", FIXTURE),
+    ).toEqual([{ text: reply.text }]);
   });
 
-  it("keeps the facts word for word after the voice line, and picks the same line for the same message", () => {
+  it("keeps the facts word for word after the line, and picks the same line for the same message", () => {
     const a = applyVoice([reply], { voice: "friendly", adult: true }, "m1")[0]
       .text;
     expect(a.endsWith(`\n${reply.text}`)).toBe(true);
@@ -57,18 +72,33 @@ describe("applyVoice", () => {
     ).toBe(a);
   });
 
-  it("never sends a swearing line to a student under 18 or who did not say", () => {
+  it("sends swearing lines to adults only", () => {
+    const used = (adult: boolean | null) =>
+      new Set(
+        Array.from(
+          { length: 60 },
+          (_, i) =>
+            applyVoice(
+              [{ text: "x", situation: "skip_saved" }],
+              { voice: "roast", adult },
+              `m${i}`,
+              FIXTURE,
+            )[0].text.split("\n")[0],
+        ),
+      );
+    expect(used(true)).toContain("Damn line.");
     for (const adult of [false, null])
-      for (let i = 0; i < 50; i++) {
-        const [r] = applyVoice(
-          [{ text: "x", situation: "skip_saved" }],
-          { voice: "roast", adult },
-          `m${i}`,
-        );
-        const used = LIBRARY.roast.skip_saved.find((l) =>
-          r.text.startsWith(l.text),
-        );
-        expect(used?.swears ?? false).toBe(false);
-      }
+      expect(used(adult)).toEqual(new Set(["Clean line."]));
+  });
+
+  it("drops the line rather than break WhatsApp's limits", () => {
+    const long = {
+      text: "x".repeat(1020),
+      buttons: [{ id: "a", title: "Ok" }],
+      situation: "skip_ask" as const,
+    };
+    expect(
+      applyVoice([long], { voice: "friendly", adult: true }, "m1")[0].text,
+    ).toBe(long.text);
   });
 });

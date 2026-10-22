@@ -1,6 +1,8 @@
 export type Voice = "straight" | "friendly" | "roast";
 
 // The moments a voice may add a line to. The facts after it never change.
+// Off-topic and not-understood replies get no voice: the reader cannot tell a
+// silly message from a sad one, and a joke must never land on the second.
 export type Situation =
   | "lives_ok"
   | "lives_tight"
@@ -11,9 +13,7 @@ export type Situation =
   | "week_safe"
   | "week_risky"
   | "tests_some"
-  | "tests_none"
-  | "off_topic"
-  | "not_understood";
+  | "tests_none";
 
 export type Line = {
   text: string;

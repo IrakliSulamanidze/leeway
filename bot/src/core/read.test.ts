@@ -86,6 +86,15 @@ describe("free text through the reader", () => {
     expect(a[0].text).toBe(LINES.offTopic);
   });
 
+  it("answers something personal with one gentle line and no menu", async () => {
+    const reader = new ScriptedReader({
+      "my grandma died": { kind: "personal", course: null },
+    });
+    const [r] = await run("my grandma died", reader);
+    expect(r.text).toBe(LINES.personal);
+    expect(r.buttons).toBeUndefined();
+  });
+
   it("offers the menu when the reader is unavailable or unsure", async () => {
     const [r] = await run("hmm", new ScriptedReader());
     expect(r.text).toBe(LINES.notUnderstood);

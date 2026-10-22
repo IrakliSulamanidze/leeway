@@ -124,6 +124,21 @@ describe("processInbound", () => {
     expect(await replyTo("voice")).toEqual([LINES.askVoice]);
   });
 
+  it("answers in Straight while no voice is picked, without asking again", async () => {
+    accounts.voices.clear();
+    expect(await replyTo("help")).toEqual([LINES.help]);
+  });
+
+  it("ignores button ids that only look like answers", async () => {
+    accounts.ages.clear();
+    const odd: Inbound = {
+      ...text("odd"),
+      body: { kind: "button", id: "toString" },
+    };
+    expect((await processInbound(odd, deps()))[0].text).toBe(LINES.askAge);
+    expect(accounts.ages.has(FROM)).toBe(false);
+  });
+
   it("adds a friendly line before the facts, and none for straight", async () => {
     accounts.voices.set(FROM, "friendly");
     const [friendly] = await processInbound(text("lives"), deps());

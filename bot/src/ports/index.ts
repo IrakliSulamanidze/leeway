@@ -86,6 +86,7 @@ export type ReadingKind =
   | "log_skip"
   | "plan_skip"
   | "help"
+  | "personal"
   | "off_topic"
   | "unclear";
 

@@ -15,6 +15,7 @@ const KINDS = [
   "log_skip",
   "plan_skip",
   "help",
+  "personal",
   "off_topic",
   "unclear",
 ] as const satisfies readonly ReadingKind[];

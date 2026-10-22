@@ -11,8 +11,13 @@ approved, to students some of whom are 17.
 ## Decision
 
 - Code writes every reply's facts. A voice may only add one line before
-  them, chosen from `bot/src/core/voice/library.ts`; for off-topic and
-  not-understood replies the line takes the place of the first sentence.
+  them, chosen from `bot/src/core/voice/library.ts`. A voiced reply that would
+  break WhatsApp's length limits is sent without the line.
+- No voice on off-topic or not-understood replies: the reader cannot tell a
+  silly message from a sad one. Messages about something hard in a student's
+  life read as `personal` and get one gentle fixed line with 024.
+- No joke after a skip saved on a test day, on the last life or over the
+  limit, and no line assumes why a class was missed (a student may be ill).
 - Lines hold no numbers, names, dates or placeholders, and tests reject
   digits, links and a list of off-limits topics. Funny lines tease what a
   student does, never who they are.
@@ -21,7 +26,8 @@ approved, to students some of whom are 17.
 - Lines marked `swears` go only to students who said they are 18 or over.
 - The same message always gets the same line (picked from a hash of the
   message id), so a retried message reads the same.
-- Crisis, STOP, linking, age and other fixed lines never get a voice.
+- Crisis, STOP, linking, age and other fixed lines never get a voice. Until a
+  student picks a voice, replies are Straight; no request waits on the choice.
 
 ## Consequences
 
