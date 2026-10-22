@@ -10,10 +10,14 @@ plain text, which needs no template.
 
 | Name | Body | Example values |
 | --- | --- | --- |
-| `leeway_evening` | Heads-up for tomorrow: {{1}} | Tomorrow 11:00 Statistics II. Last life, don't skip. |
-| `leeway_evening_private` | Heads-up for tomorrow: {{1}}. Send "tomorrow" for details. | 1 thing to check |
-| `leeway_weekly` | Your week, {{1}}: {{2}} | Mon 2 Nov to Sun 8 Nov / Statistics II Quiz, Wed 4 Nov · Statistics II: last life |
-| `leeway_weekly_private` | Your week, {{1}}: {{2}}. Send "this week" for details. | Mon 2 Nov to Sun 8 Nov / 1 test, 1 course to watch |
+| `leeway_evening` | Leeway heads-up for tomorrow: {{1}} Reply "tomorrow" for the full picture, or STOP to turn reminders off. | Tomorrow 11:00 Statistics II. Last life, don't skip. |
+| `leeway_evening_private` | Leeway heads-up for tomorrow: {{1}}. Reply "tomorrow" for details, or STOP to turn reminders off. | 1 thing to check |
+| `leeway_weekly` | Leeway look at your week, {{1}}: {{2}}. Reply "this week" for the full picture, or STOP to turn reminders off. | Mon 2 Nov to Sun 8 Nov / Statistics II Quiz, Wed 4 Nov · Statistics II: last life |
+| `leeway_weekly_private` | Leeway look at your week, {{1}}: {{2}}. Reply "this week" for details, or STOP to turn reminders off. | Mon 2 Nov to Sun 8 Nov / 1 test, 1 course to watch |
+
+Each body starts and ends with fixed text, as Meta requires. The bot cleans
+every value (no line breaks, tabs or runs of spaces, at most 400 characters)
+and lists at most six items before "and N more".
 
 The bot fills the values from the web app's rules; they never hold links,
 emails or phone numbers, and the private versions name no course.
