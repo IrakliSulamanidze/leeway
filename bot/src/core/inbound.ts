@@ -47,6 +47,22 @@ export async function processInbound(
   if (link.state === "suspended") return [{ text: LINES.suspended }];
   await deps.accounts.markInbound(msg.from);
 
+  // A voice note is transcribed only for a linked student, before anything
+  // else is asked, so a spoken crisis or STOP is heard like a typed one.
+  let request = msg;
+  if (msg.body.kind === "voice") {
+    const heard = await deps.speech.transcribe(msg.body.mediaId);
+    if (!heard.ok) return [{ text: VOICE_NOTE_LINES[heard.reason] }];
+    const spoken = normalise(heard.text);
+    if (isCrisis(spoken)) return [{ text: LINES.crisis }];
+    const opt = optCommand(spoken);
+    if (opt) {
+      await deps.gate.setOptOut(msg.from, opt === "stop");
+      return [{ text: opt === "stop" ? LINES.stopped : LINES.started }];
+    }
+    request = { ...msg, body: { kind: "text", text: heard.text } };
+  }
+
   const profile = await deps.accounts.profile(msg.from);
   const button = msg.body.kind === "button" ? msg.body.id : null;
 
@@ -82,7 +98,7 @@ export async function processInbound(
     ];
   }
 
-  return applyVoice(await handle(msg, deps), profile, msg.id);
+  return applyVoice(await handle(request, deps), profile, msg.id);
 }
 
 const ASK_AGE: Reply = {
@@ -107,6 +123,12 @@ const VOICE_BUTTONS: Record<string, Voice> = {
   "voice.friendly": "friendly",
   "voice.roast": "roast",
 };
+
+const VOICE_NOTE_LINES = {
+  off: LINES.voiceNoteOff,
+  too_long: LINES.voiceNoteLong,
+  failed: LINES.voiceNoteFailed,
+} as const;
 
 const AGE_BUTTONS: Record<string, boolean> = {
   "age.adult": true,

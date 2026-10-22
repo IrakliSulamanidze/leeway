@@ -2,7 +2,7 @@
 -- per sender and day, and STOP is recorded.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(19);
 
 grant wa_gateway to postgres;
 create function pg_temp.as_bot(p_sql text) returns text
@@ -47,7 +47,8 @@ select is(pg_temp.as_bot($$ select wa_api.ai_budget_left() $$), 'true', 'AI budg
 select lives_ok($$ select pg_temp.as_bot('select wa_api.add_ai_spend(1000)') $$, 'spend is recorded');
 select is(pg_temp.as_bot($$ select wa_api.ai_budget_left() $$), 'false', 'past the ceiling the budget is closed');
 select throws_ok($$ select pg_temp.as_bot('select wa_api.add_ai_spend(-1)') $$, '22023', null, 'a negative cost is refused');
-select throws_ok($$ select pg_temp.as_bot('select wa_api.add_ai_spend(5001)') $$, '22023', null, 'an impossible cost is refused');
+select lives_ok($$ select pg_temp.as_bot('select wa_api.add_ai_spend(7300)') $$, 'a minute of voice can be charged');
+select throws_ok($$ select pg_temp.as_bot('select wa_api.add_ai_spend(20001)') $$, '22023', null, 'an impossible cost is refused');
 
 select * from finish();
 rollback;

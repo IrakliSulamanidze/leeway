@@ -4,6 +4,7 @@ import { MemoryAccounts } from "../adapters/memory-accounts";
 import { MemoryGate } from "../adapters/memory-gate";
 import { MemoryStudent, sampleSnapshot } from "../adapters/memory-student";
 import { ScriptedReader } from "../adapters/memory-reader";
+import { ScriptedSpeech } from "../adapters/memory-speech";
 import { processInbound } from "./inbound";
 import { LINES, linkPrompt, waitlisted } from "./lines";
 import type { Inbound } from "./types";
@@ -17,6 +18,12 @@ const deps = () => ({
   accounts,
   student: new MemoryStudent(sampleSnapshot(new Date("2026-10-26T09:00:00Z"))),
   reader: new ScriptedReader(),
+  speech: new ScriptedSpeech({
+    m1: { ok: true, text: "my lives" },
+    m2: { ok: true, text: "I want to kill myself" },
+    m3: { ok: false, reason: "too_long" },
+    m4: { ok: true, text: "Stop." },
+  }),
 });
 const text = (t: string): Inbound => ({
   id: `wamid.${t}`,
@@ -147,5 +154,33 @@ describe("processInbound", () => {
     accounts.voices.set(FROM, "straight");
     const [straight] = await processInbound(text("lives"), deps());
     expect(straight.text.startsWith("Your lives:")).toBe(true);
+  });
+
+  it("answers a voice note the way it answers the same words typed", async () => {
+    const voice = (mediaId: string): Inbound => ({
+      ...text(mediaId),
+      body: { kind: "voice", mediaId },
+    });
+    expect((await processInbound(voice("m1"), deps()))[0].text).toMatch(
+      /^Your lives:/,
+    );
+    expect(await processInbound(voice("m2"), deps())).toEqual([
+      { text: LINES.crisis },
+    ]);
+    expect(await processInbound(voice("m3"), deps())).toEqual([
+      { text: LINES.voiceNoteLong },
+    ]);
+    expect(await processInbound(voice("unknown"), deps())).toEqual([
+      { text: LINES.voiceNoteOff },
+    ]);
+  });
+
+  it("never transcribes a voice note from an unlinked sender", async () => {
+    accounts.states.set(FROM, { state: "none" });
+    const [r] = await processInbound(
+      { ...text("m1"), body: { kind: "voice", mediaId: "m1" } },
+      deps(),
+    );
+    expect(r.text).toMatch(/^Welcome to Leeway/);
   });
 });

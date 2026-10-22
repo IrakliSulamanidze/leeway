@@ -18,6 +18,11 @@ export const LINES = {
   askVoice:
     'How should I talk to you?\nStraight: just the facts.\nFriendly: the facts, kindly.\nRoast: the facts, from a friend who teases your choices.\n\nSend "voice" any time to change it.',
   voiceSet: 'Done. Send "help" to see what I can do.',
+  voiceNoteOff: "I can't listen to voice notes yet. Type it and I'll answer.",
+  voiceNoteLong:
+    "That voice note is too long for me. Keep it to about a minute, or type it.",
+  voiceNoteFailed:
+    "I couldn't make out that voice note. Try again, or type it.",
   detailsHidden:
     'Done. Reminders will show counts only, so nothing personal shows on your lock screen. Send "show details" to undo.',
   detailsShown:
