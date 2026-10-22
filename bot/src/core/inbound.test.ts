@@ -31,6 +31,7 @@ beforeEach(() => {
   gate = new MemoryGate();
   accounts = new MemoryAccounts(true);
   accounts.ages.set(FROM, true);
+  accounts.voices.set(FROM, "straight");
 });
 
 describe("processInbound", () => {
@@ -99,28 +100,37 @@ describe("processInbound", () => {
     expect(await replyTo("help")).toEqual([LINES.suspended]);
   });
 
-  it("asks the age question once, then answers normally", async () => {
+  it("asks the age, then the voice, once each, then answers normally", async () => {
     accounts.ages.clear();
-    const [ask] = await processInbound(text("help"), deps());
-    expect(ask.text).toBe(LINES.askAge);
-    expect(ask.buttons?.map((b) => b.id)).toEqual(["age.adult", "age.minor"]);
-    const tap: Inbound = {
-      ...text("x"),
-      body: { kind: "button", id: "age.minor" },
-    };
-    expect((await processInbound(tap, deps())).map((r) => r.text)).toEqual([
-      LINES.ageThanks,
-    ]);
+    accounts.voices.clear();
+    const tap = (id: string): Inbound => ({
+      ...text(id),
+      body: { kind: "button", id },
+    });
+    const [age] = await processInbound(text("help"), deps());
+    expect(age.text).toBe(LINES.askAge);
+    expect(age.buttons?.map((b) => b.id)).toEqual(["age.adult", "age.minor"]);
+    const [voice] = await processInbound(tap("age.minor"), deps());
+    expect(voice.text).toBe(LINES.askVoice);
     expect(accounts.ages.get(FROM)).toBe(false);
-    expect(await replyTo("help")).toEqual([LINES.help]);
+    expect((await processInbound(tap("voice.friendly"), deps()))[0].text).toBe(
+      LINES.voiceSet,
+    );
+    expect(accounts.voices.get(FROM)).toBe("friendly");
     // An old age button later changes nothing.
-    const later: Inbound = {
-      ...text("y"),
-      body: { kind: "button", id: "age.adult" },
-    };
-    expect(
-      (await processInbound(later, deps())).map((r) => r.text),
-    ).not.toEqual([LINES.ageThanks]);
+    await processInbound(tap("age.adult"), deps());
     expect(accounts.ages.get(FROM)).toBe(false);
+    // "voice" asks again.
+    expect(await replyTo("voice")).toEqual([LINES.askVoice]);
+  });
+
+  it("adds a friendly line before the facts, and none for straight", async () => {
+    accounts.voices.set(FROM, "friendly");
+    const [friendly] = await processInbound(text("lives"), deps());
+    expect(friendly.text.split("\n")[1]).toBe("Your lives:");
+    expect(friendly).not.toHaveProperty("situation");
+    accounts.voices.set(FROM, "straight");
+    const [straight] = await processInbound(text("lives"), deps());
+    expect(straight.text.startsWith("Your lives:")).toBe(true);
   });
 });

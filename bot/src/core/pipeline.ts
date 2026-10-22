@@ -46,7 +46,11 @@ async function fallback(
   const reading = await deps.reader.read(turn.text, madridToday(turn.now));
   if (reading?.kind === "off_topic")
     return {
-      outcome: { replies: [{ text: LINES.offTopic, buttons: MENU }] },
+      outcome: {
+        replies: [
+          { text: LINES.offTopic, buttons: MENU, situation: "off_topic" },
+        ],
+      },
       via: "reader",
     };
   const command = reading ? commandFor(reading) : null;
@@ -64,7 +68,15 @@ async function fallback(
       via: intent.name,
     };
   return {
-    outcome: { replies: [{ text: LINES.notUnderstood, buttons: MENU }] },
+    outcome: {
+      replies: [
+        {
+          text: LINES.notUnderstood,
+          buttons: MENU,
+          situation: "not_understood",
+        },
+      ],
+    },
     via: "reader",
   };
 }

@@ -15,7 +15,9 @@ export const LINES = {
   suspended:
     "This number's link to Leeway is paused. Sign in on the Leeway website to sort it out.",
   askAge: "One quick question before we start: are you 18 or older?",
-  ageThanks: 'Thanks. Send "help" to see what I can do.',
+  askVoice:
+    'How should I talk to you?\nStraight: just the facts.\nFriendly: the facts, kindly.\nRoast: the facts, from a friend who teases your choices.\n\nSend "voice" any time to change it.',
+  voiceSet: 'Done. Send "help" to see what I can do.',
   linked: "You're connected to Leeway.",
   offTopic:
     "That's not something I can help with. I can check your lives, today, tomorrow, this week or your tests, and save a skip.",

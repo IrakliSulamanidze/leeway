@@ -1,3 +1,5 @@
+import type { Situation } from "./voice/types";
+
 // Shapes that cross the core boundary. Adapters translate provider payloads into
 // Inbound and Reply into provider calls; the core never sees either provider.
 
@@ -19,4 +21,9 @@ export type InboundBody =
 
 export type Button = { id: string; title: string };
 
-export type Reply = { text: string; buttons?: Button[] };
+export type Reply = {
+  text: string;
+  buttons?: Button[];
+  // Which moment this is, so the student's voice can add a line. Never sent.
+  situation?: Situation;
+};
