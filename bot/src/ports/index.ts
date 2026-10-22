@@ -115,6 +115,42 @@ export interface Speech {
   transcribe(mediaId: string): Promise<Transcript>;
 }
 
+export type SharePreview =
+  | { outcome: "ok"; courses: string[] }
+  | { outcome: "expired" | "self" | "nothing_shared" | "closed" };
+
+export type ShareAnswer = "allow" | "not_now" | "block";
+
+// `source` tells classmates apart within one answer; it is not an id.
+export type SharedTest = {
+  courseId: string;
+  title: string;
+  onDate: string;
+  source: number;
+};
+
+// Classmates sharing test dates, with consent. Each call is a turn for the
+// sender only; codes are hashed before they leave the process. Everything is
+// closed until sharing in chat is switched on.
+export interface Sharing {
+  newCode(
+    sender: string,
+    code: string,
+  ): Promise<"ok" | "too_many" | "full" | "closed">;
+  preview(sender: string, code: string): Promise<SharePreview>;
+  answer(
+    sender: string,
+    code: string,
+    answer: ShareAnswer,
+  ): Promise<ShareAnswer | "expired" | "closed" | "you_full" | "they_full">;
+  sharedTests(
+    sender: string,
+    range: { from: string; to: string },
+  ): Promise<SharedTest[]>;
+  stopSharing(sender: string): Promise<number>;
+  stopFollowing(sender: string): Promise<number>;
+}
+
 export interface Messenger {
   send(to: string, reply: Reply): Promise<void>;
   // A Meta-approved template, for messages outside the 24-hour window after
@@ -128,6 +164,9 @@ export type Deps = {
   clock: Clock;
   student: Student;
   reader: Reader;
+  sharing: Sharing;
+  // Makes a fresh share code; random in production, fixed in tests.
+  newCode: () => string;
 };
 
 export type InboundDeps = Deps & {

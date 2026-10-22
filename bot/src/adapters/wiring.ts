@@ -9,6 +9,8 @@ import { dbStudent } from "./db-student";
 import { anthropicClient, claudeReader } from "./claude/reader";
 import { ScriptedReader } from "./memory-reader";
 import { voiceNotes } from "./speech";
+import { dbSharing } from "./db-sharing";
+import { CODE_ALPHABET } from "../core/intents/share";
 import { env } from "./env";
 import { keyedHash } from "./hash";
 import type { LinkPageDeps, Prepared } from "./link-page";
@@ -19,6 +21,12 @@ import { signIn, signOut } from "./supabase-auth";
 import type { WebhookDeps } from "./webhook";
 
 let deps: WebhookDeps | undefined;
+
+const shareCode = () =>
+  Array.from(
+    { length: 8 },
+    () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)],
+  ).join("");
 let linkDeps: LinkPageDeps | undefined;
 
 export function webhookDeps(): WebhookDeps {
@@ -39,6 +47,7 @@ export function webhookDeps(): WebhookDeps {
     ? claudeReader(anthropicClient(key), budget)
     : new ScriptedReader();
   const speech = voiceNotes(env.accessToken(), env.speechKey(), budget);
+  const sharing = dbSharing(env.hashKey());
   deps = {
     appSecret: env.appSecret(),
     inbox: gate,
@@ -51,6 +60,8 @@ export function webhookDeps(): WebhookDeps {
         student,
         reader,
         speech,
+        sharing,
+        newCode: shareCode,
       }),
   };
   return deps;

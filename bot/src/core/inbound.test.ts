@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { MemorySharing } from "../adapters/memory-sharing";
 import { fixedClock } from "../adapters/clock";
 import { MemoryAccounts } from "../adapters/memory-accounts";
 import { MemoryGate } from "../adapters/memory-gate";
@@ -18,6 +19,8 @@ const deps = () => ({
   accounts,
   student: new MemoryStudent(sampleSnapshot(new Date("2026-10-26T09:00:00Z"))),
   reader: new ScriptedReader(),
+  sharing: new MemorySharing(),
+  newCode: () => "K7Q2M9XZ",
   speech: new ScriptedSpeech({
     m1: { ok: true, text: "my lives" },
     m2: { ok: true, text: "I want to kill myself" },

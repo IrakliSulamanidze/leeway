@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { MemorySharing } from "../../adapters/memory-sharing";
 import { fixedClock } from "../../adapters/clock";
 import { MemoryStudent, sampleSnapshot } from "../../adapters/memory-student";
 import { ScriptedReader } from "../../adapters/memory-reader";
@@ -15,6 +16,8 @@ const deps = () => ({
   clock: fixedClock(NOW),
   student,
   reader: new ScriptedReader(),
+  sharing: new MemorySharing(),
+  newCode: () => "K7Q2M9XZ",
 });
 const send = (body: Inbound["body"]): Promise<Reply[]> =>
   handle(
@@ -199,7 +202,13 @@ describe("this week", () => {
         at: new Date(thursday),
         body: { kind: "text", text: "this week" },
       },
-      { clock: fixedClock(thursday), student: s, reader: new ScriptedReader() },
+      {
+        clock: fixedClock(thursday),
+        student: s,
+        reader: new ScriptedReader(),
+        sharing: new MemorySharing(),
+        newCode: () => "K7Q2M9XZ",
+      },
     );
     expect(r.text).toMatch(/^This week: You'd miss 6 classes\./);
   });

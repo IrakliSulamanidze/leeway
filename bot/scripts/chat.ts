@@ -7,6 +7,7 @@ import { MemoryGate } from "../src/adapters/memory-gate";
 import { MemoryStudent, sampleSnapshot } from "../src/adapters/memory-student";
 import { ScriptedReader } from "../src/adapters/memory-reader";
 import { ScriptedSpeech } from "../src/adapters/memory-speech";
+import { MemorySharing } from "../src/adapters/memory-sharing";
 import { anthropicClient, claudeReader } from "../src/adapters/claude/reader";
 import { processInbound } from "../src/core/inbound";
 import type { InboundBody, Reply } from "../src/core/types";
@@ -55,6 +56,8 @@ for await (const line of rl) {
       accounts,
       student,
       reader,
+      sharing: new MemorySharing(),
+      newCode: () => "K7Q2M9XZ",
       speech: new ScriptedSpeech(),
     },
   );
