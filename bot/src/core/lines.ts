@@ -18,6 +18,10 @@ export const LINES = {
   askVoice:
     'How should I talk to you?\nStraight: just the facts.\nFriendly: the facts, kindly.\nRoast: the facts, from a friend who teases your choices.\n\nSend "voice" any time to change it.',
   voiceSet: 'Done. Send "help" to see what I can do.',
+  detailsHidden:
+    'Done. Reminders will show counts only, so nothing personal shows on your lock screen. Send "show details" to undo.',
+  detailsShown:
+    'Done. Reminders will name the test or class again. Send "hide details" to undo.',
   linked: "You're connected to Leeway.",
   personal:
     "I'm sorry, that sounds hard. I'm only an attendance helper, but if you'd like to talk to someone, you can call 024 any time in Spain, free and confidential.",

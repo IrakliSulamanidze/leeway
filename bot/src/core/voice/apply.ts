@@ -3,7 +3,12 @@ import { replyProblems } from "../reply";
 import { LIBRARY } from "./library";
 import type { Library, Voice } from "./types";
 
-export type Profile = { voice: Voice | null; adult: boolean | null };
+export type Profile = {
+  voice: Voice | null;
+  adult: boolean | null;
+  // Reminders show counts only, for students who share their lock screen.
+  hideDetails: boolean;
+};
 
 // A stable pick per message, so a retried message gets the same line.
 function pick(n: number, seed: string): number {

@@ -71,6 +71,16 @@ export async function processInbound(
   // The voice question comes once, right after the age answer. Until one is
   // picked, replies are Straight; a request is never held back for it.
 
+  if (text === "hide details" || text === "show details") {
+    await deps.accounts.setHideDetails(msg.from, text === "hide details");
+    return [
+      {
+        text:
+          text === "hide details" ? LINES.detailsHidden : LINES.detailsShown,
+      },
+    ];
+  }
+
   return applyVoice(await handle(msg, deps), profile, msg.id);
 }
 
