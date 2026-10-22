@@ -11,7 +11,7 @@ type PoolLike = {
 
 let pool: pg.Pool | undefined;
 
-function sharedPool(): pg.Pool {
+export function sharedPool(): pg.Pool {
   if (pool) return pool;
   const url = process.env.WA_DB_URL;
   if (!url) throw new Error("WA_DB_URL is not set");
