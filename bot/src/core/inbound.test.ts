@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { fixedClock } from "../adapters/clock";
 import { MemoryAccounts } from "../adapters/memory-accounts";
 import { MemoryGate } from "../adapters/memory-gate";
+import { MemoryStudent, sampleSnapshot } from "../adapters/memory-student";
 import { processInbound } from "./inbound";
 import { LINES, linkPrompt, waitlisted } from "./lines";
 import type { Inbound } from "./types";
@@ -13,6 +14,7 @@ const deps = () => ({
   clock: fixedClock("2026-10-26T09:00:00Z"),
   gate,
   accounts,
+  student: new MemoryStudent(sampleSnapshot(new Date("2026-10-26T09:00:00Z"))),
 });
 const text = (t: string): Inbound => ({
   id: `wamid.${t}`,

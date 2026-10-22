@@ -5,6 +5,7 @@ import { sharedPool } from "./db";
 import { randomInt } from "node:crypto";
 import { codeHash, dbAccounts, tokenHash } from "./db-accounts";
 import { dbGate } from "./db-gate";
+import { dbStudent } from "./db-student";
 import { env } from "./env";
 import { keyedHash } from "./hash";
 import type { LinkPageDeps, Prepared } from "./link-page";
@@ -19,12 +20,13 @@ export function webhookDeps(): WebhookDeps {
   if (deps) return deps;
   const gate = dbGate(env.hashKey());
   const accounts = dbAccounts(env.publicUrl(), env.hashKey());
+  const student = dbStudent(env.hashKey());
   deps = {
     appSecret: env.appSecret(),
     inbox: gate,
     messenger: cloudApiMessenger(env.phoneNumberId(), env.accessToken()),
     process: (msg) =>
-      processInbound(msg, { clock: systemClock, gate, accounts }),
+      processInbound(msg, { clock: systemClock, gate, accounts, student }),
   };
   return deps;
 }
