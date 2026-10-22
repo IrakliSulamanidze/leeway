@@ -199,7 +199,7 @@ describe("this week", () => {
         at: new Date(thursday),
         body: { kind: "text", text: "this week" },
       },
-      { clock: fixedClock(thursday), student: s },
+      { clock: fixedClock(thursday), student: s, reader: new ScriptedReader() },
     );
     expect(r.text).toMatch(/^This week: You'd miss 6 classes\./);
   });
