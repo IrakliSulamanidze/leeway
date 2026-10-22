@@ -57,10 +57,22 @@ export function dbAccounts(
     async profile(sender) {
       return inTurn(sender, async (tx) => {
         const { rows } = await tx.query(
-          "select adult, voice from wa_api.my_profile()",
+          "select adult, voice, hide_details from wa_api.my_profile()",
         );
-        return { adult: rows[0]?.adult ?? null, voice: rows[0]?.voice ?? null };
+        return {
+          adult: rows[0]?.adult ?? null,
+          voice: rows[0]?.voice ?? null,
+          hideDetails: rows[0]?.hide_details === true,
+        };
       });
+    },
+    async markInbound(sender) {
+      await db().query("select wa_api.mark_inbound($1)", [sender]);
+    },
+    async setHideDetails(sender, hide) {
+      await inTurn(sender, (tx) =>
+        tx.query("select wa_api.set_hide_details($1)", [hide]),
+      );
     },
     async setVoice(sender, voice) {
       await inTurn(sender, (tx) =>

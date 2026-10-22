@@ -45,6 +45,7 @@ export async function processInbound(
   if (link.state === "none") return linkReplies(msg, text, deps);
   if (link.state === "waitlisted") return [{ text: waitlisted(link.place) }];
   if (link.state === "suspended") return [{ text: LINES.suspended }];
+  await deps.accounts.markInbound(msg.from);
 
   const profile = await deps.accounts.profile(msg.from);
   const button = msg.body.kind === "button" ? msg.body.id : null;
@@ -70,6 +71,16 @@ export async function processInbound(
   if (text === "voice" || text === "change voice") return [ASK_VOICE];
   // The voice question comes once, right after the age answer. Until one is
   // picked, replies are Straight; a request is never held back for it.
+
+  if (text === "hide details" || text === "show details") {
+    await deps.accounts.setHideDetails(msg.from, text === "hide details");
+    return [
+      {
+        text:
+          text === "hide details" ? LINES.detailsHidden : LINES.detailsShown,
+      },
+    ];
+  }
 
   return applyVoice(await handle(msg, deps), profile, msg.id);
 }

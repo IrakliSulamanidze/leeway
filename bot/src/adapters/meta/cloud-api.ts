@@ -15,12 +15,18 @@ export class MetaSendError extends Error {
   }
 }
 
+// A phone number goes in `to`; a business-scoped user id ("ES.1349...") goes
+// in `recipient`. That split is what providers on the Cloud API document;
+// confirm it on the first real send.
+const BSUID = /^[A-Z]{2}(\.[A-Z]{3})?\.[A-Za-z0-9]+$/;
+const address = (to: string) => (BSUID.test(to) ? { recipient: to } : { to });
+
 // The request body for one reply: plain text, or text with reply buttons.
 export function messageBody(to: string, reply: Reply) {
   const base = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
-    to,
+    ...address(to),
   };
   if (!reply.buttons?.length)
     return {
@@ -44,6 +50,25 @@ export function messageBody(to: string, reply: Reply) {
   };
 }
 
+export function templateBody(to: string, name: string, params: string[]) {
+  return {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    ...address(to),
+    type: "template",
+    template: {
+      name,
+      language: { code: "en" },
+      components: [
+        {
+          type: "body",
+          parameters: params.map((text) => ({ type: "text", text })),
+        },
+      ],
+    },
+  };
+}
+
 // Sends through the WhatsApp Cloud API. Errors carry Meta's status and code,
 // never the token or the message text.
 export function cloudApiMessenger(
@@ -51,23 +76,25 @@ export function cloudApiMessenger(
   token: string,
   fetchImpl: typeof fetch = fetch,
 ): Messenger {
+  async function post(body: object) {
+    const res = await fetchImpl(`${GRAPH}/${phoneNumberId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) {
+      const json = (await res.json().catch(() => null)) as {
+        error?: { code?: number };
+      } | null;
+      throw new MetaSendError(res.status, json?.error?.code);
+    }
+  }
   return {
-    async send(to, reply) {
-      const res = await fetchImpl(`${GRAPH}/${phoneNumberId}/messages`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(messageBody(to, reply)),
-        signal: AbortSignal.timeout(4000),
-      });
-      if (!res.ok) {
-        const json = (await res.json().catch(() => null)) as {
-          error?: { code?: number };
-        } | null;
-        throw new MetaSendError(res.status, json?.error?.code);
-      }
-    },
+    send: (to, reply) => post(messageBody(to, reply)),
+    sendTemplate: (to, name, params) => post(templateBody(to, name, params)),
   };
 }

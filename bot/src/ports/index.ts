@@ -49,6 +49,9 @@ export interface Accounts {
   profile(sender: string): Promise<Profile>;
   setAdult(sender: string, adult: boolean): Promise<void>;
   setVoice(sender: string, voice: Voice): Promise<void>;
+  setHideDetails(sender: string, hide: boolean): Promise<void>;
+  // Records that the student wrote just now (Meta's 24-hour window).
+  markInbound(sender: string): Promise<void>;
 }
 
 // One student's data, in the shapes the web app's rule functions take.
@@ -105,6 +108,9 @@ export interface Reader {
 
 export interface Messenger {
   send(to: string, reply: Reply): Promise<void>;
+  // A Meta-approved template, for messages outside the 24-hour window after
+  // the student last wrote.
+  sendTemplate(to: string, name: string, params: string[]): Promise<void>;
 }
 
 // What a handler may use. Later ports (store, reader, speech) are added here as

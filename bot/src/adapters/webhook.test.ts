@@ -58,6 +58,7 @@ const deps = (): WebhookDeps => ({
     },
   },
   messenger: {
+    sendTemplate: async () => undefined,
     send: async (to, reply) => {
       if (sendError && sendFailures-- > 0) throw sendError;
       sent.push({ to, reply });
@@ -149,6 +150,7 @@ describe("receive", () => {
     let calls = 0;
     const d = deps();
     d.messenger = {
+      sendTemplate: async () => undefined,
       send: async (to, reply) => {
         if (calls++ > 0) throw new MetaSendError(503, undefined);
         sent.push({ to, reply });

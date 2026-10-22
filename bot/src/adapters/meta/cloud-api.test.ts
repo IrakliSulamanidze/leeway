@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { cloudApiMessenger, MetaSendError, messageBody } from "./cloud-api";
+import {
+  cloudApiMessenger,
+  MetaSendError,
+  messageBody,
+  templateBody,
+} from "./cloud-api";
 
 describe("messageBody", () => {
   it("sends plain text without link previews", () => {
@@ -23,6 +28,30 @@ describe("messageBody", () => {
         action: {
           buttons: [{ type: "reply", reply: { id: "yes", title: "Save" } }],
         },
+      },
+    });
+  });
+});
+
+describe("addressing", () => {
+  it("sends to a phone number in `to` and to a user id in `recipient`", () => {
+    expect(messageBody("34600000001", { text: "Hi" })).toMatchObject({
+      to: "34600000001",
+    });
+    const byId = messageBody("ES.13491208655302741918", { text: "Hi" });
+    expect(byId).toMatchObject({ recipient: "ES.13491208655302741918" });
+    expect(byId).not.toHaveProperty("to");
+  });
+
+  it("builds a template message with body values", () => {
+    expect(templateBody("ES.abc", "leeway_evening", ["x"])).toMatchObject({
+      recipient: "ES.abc",
+      type: "template",
+      template: {
+        name: "leeway_evening",
+        components: [
+          { type: "body", parameters: [{ type: "text", text: "x" }] },
+        ],
       },
     });
   });

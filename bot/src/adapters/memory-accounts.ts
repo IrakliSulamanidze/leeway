@@ -6,6 +6,7 @@ export class MemoryAccounts implements Accounts {
   readonly states = new Map<string, LinkState>();
   readonly ages = new Map<string, boolean>();
   readonly voices = new Map<string, Voice>();
+  readonly hidden = new Set<string>();
   issued = 0;
 
   constructor(linkedByDefault = false) {
@@ -42,7 +43,19 @@ export class MemoryAccounts implements Accounts {
     return {
       adult: this.ages.get(sender) ?? null,
       voice: this.voices.get(sender) ?? null,
+      hideDetails: this.hidden.has(sender),
     };
+  }
+
+  readonly inbound: string[] = [];
+
+  async markInbound(sender: string) {
+    this.inbound.push(sender);
+  }
+
+  async setHideDetails(sender: string, hide: boolean) {
+    if (hide) this.hidden.add(sender);
+    else this.hidden.delete(sender);
   }
 
   async setVoice(sender: string, voice: Voice) {

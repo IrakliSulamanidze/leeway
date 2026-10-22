@@ -1,7 +1,7 @@
 // Builds the production dependencies once per server instance.
 import { processInbound } from "../core/inbound";
 import { systemClock } from "./clock";
-import { sharedPool } from "./db";
+import { inTurn, sharedPool } from "./db";
 import { randomInt } from "node:crypto";
 import { codeHash, dbAccounts, tokenHash } from "./db-accounts";
 import { dbGate } from "./db-gate";
@@ -12,6 +12,8 @@ import { env } from "./env";
 import { keyedHash } from "./hash";
 import type { LinkPageDeps, Prepared } from "./link-page";
 import { cloudApiMessenger } from "./meta/cloud-api";
+import { sameToken } from "./meta/signature";
+import { type JobResult, runReminders } from "./reminders-job";
 import { signIn, signOut } from "./supabase-auth";
 import type { WebhookDeps } from "./webhook";
 
@@ -90,6 +92,50 @@ export function linkPageDeps(): LinkPageDeps {
     newCode: () => String(randomInt(0, 1_000_000)).padStart(6, "0"),
   };
   return linkDeps;
+}
+
+export function reminderJob(now: Date): Promise<JobResult> {
+  const hashKey = env.hashKey();
+  const call = async (sql: string, params: unknown[]) =>
+    (await sharedPool().query(sql, params)).rows;
+  return runReminders({
+    now,
+    targets: async () =>
+      (
+        await call(
+          "select wa_id, last_inbound_at from wa_api.reminder_targets($1)",
+          [env.cronSecret()],
+        )
+      ).map((r) => ({
+        waId: r.wa_id as string,
+        lastSeenAt: (r.last_inbound_at as Date | null) ?? null,
+      })),
+    optedOut: async (waId) =>
+      (
+        await call("select wa_api.opted_out($1) as out", [
+          keyedHash(waId, hashKey),
+        ])
+      )[0]?.out === true,
+    unclaim: async (waId) => {
+      await inTurn(waId, (tx) => tx.query("select wa_api.unclaim_reminder()"));
+    },
+    claim: (waId) =>
+      inTurn(
+        waId,
+        async (tx) =>
+          (await tx.query("select wa_api.claim_reminder() as ok")).rows[0]
+            ?.ok === true,
+      ),
+    student: dbStudent(hashKey),
+    accounts: dbAccounts(env.publicUrl(), hashKey),
+    messenger: cloudApiMessenger(env.phoneNumberId(), env.accessToken()),
+    templatesReady: env.templatesReady(),
+  });
+}
+
+export function cronAllowed(header: string | null): boolean {
+  // An unset secret matches nothing (sameToken refuses an empty one).
+  return sameToken(header?.replace(/^Bearer /, "") ?? null, env.cronSecret());
 }
 
 export const verifyToken = () => env.verifyToken();
