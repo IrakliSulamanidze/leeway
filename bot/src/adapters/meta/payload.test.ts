@@ -20,6 +20,7 @@ const wrap = (messages: unknown[], field = "messages") => ({
     },
   ],
 });
+const read = (json: unknown) => readMessages(json).messages;
 const base = {
   id: "wamid.1",
   from: "34600000001",
@@ -29,9 +30,7 @@ const base = {
 
 describe("readMessages", () => {
   it("reads a text, keyed on the user id and answered on the phone number", () => {
-    const [m] = readMessages(
-      wrap([{ ...base, type: "text", text: { body: "help" } }]),
-    );
+    const [m] = read(wrap([{ ...base, type: "text", text: { body: "help" } }]));
     expect(m.msg).toEqual({
       id: "wamid.1",
       from: "ES.abc123",
@@ -42,7 +41,7 @@ describe("readMessages", () => {
   });
 
   it("reads button taps, voice notes and anything else as unsupported", () => {
-    const out = readMessages(
+    const out = read(
       wrap([
         {
           ...base,
@@ -66,7 +65,7 @@ describe("readMessages", () => {
   });
 
   it("falls back to the phone number when no user id is sent, and back again", () => {
-    const [m] = readMessages(
+    const [m] = read(
       wrap([
         {
           id: "w",
@@ -78,7 +77,7 @@ describe("readMessages", () => {
       ]),
     );
     expect(m.msg.from).toBe("34600000001");
-    const [n] = readMessages(
+    const [n] = read(
       wrap([
         {
           id: "w",
@@ -92,25 +91,36 @@ describe("readMessages", () => {
     expect(n.replyTo).toBe("ES.abc123");
   });
 
-  it("skips status updates, system notices and other fields", () => {
+  it("skips status updates, reactions, system notices and other fields", () => {
     expect(
-      readMessages(
-        wrap([{ ...base, type: "system", system: { body: "changed" } }]),
-      ),
+      read(wrap([{ ...base, type: "system", system: { body: "x" } }])),
     ).toEqual([]);
-    expect(readMessages(wrap([], "account_update"))).toEqual([]);
+    expect(
+      read(wrap([{ ...base, type: "reaction", reaction: { emoji: "x" } }])),
+    ).toEqual([]);
+    expect(read(wrap([], "account_update"))).toEqual([]);
     const statuses = wrap([]);
     delete (statuses.entry[0].changes[0].value as { messages?: unknown })
       .messages;
-    expect(readMessages(statuses)).toEqual([]);
+    expect(read(statuses)).toEqual([]);
   });
 
-  it("refuses payloads that are not Meta's shape", () => {
-    expect(() => readMessages({ object: "page", entry: [] })).toThrow();
-    expect(() =>
-      readMessages(
-        wrap([{ ...base, type: "text", text: { body: "x".repeat(4097) } }]),
-      ),
-    ).toThrow();
+  it("skips an unreadable message without dropping the others", () => {
+    const out = readMessages(
+      wrap([
+        { ...base, type: "text", text: { body: "x".repeat(4097) } },
+        { ...base, id: "wamid.2", type: "text", text: { body: "help" } },
+      ]),
+    );
+    expect(out.skipped).toBe(1);
+    expect(out.messages.map((m) => m.msg.id)).toEqual(["wamid.2"]);
+  });
+
+  it("reads nothing from a payload that is not Meta's", () => {
+    expect(readMessages({ object: "page", entry: [] })).toEqual({
+      messages: [],
+      skipped: 1,
+    });
+    expect(readMessages("nonsense").messages).toEqual([]);
   });
 });

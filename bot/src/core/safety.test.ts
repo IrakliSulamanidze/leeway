@@ -13,6 +13,14 @@ describe("isCrisis", () => {
     "there's no reason to live",
     "I just want to end it all.",
     "i dont want to be alive",
+    "I don\u2019t want to live",
+    "i wanna kms",
+    "i just want to end it",
+    "thinking of taking my own life",
+    "me quiero morir",
+    "quiero suicidarme",
+    "no quiero vivir",
+    "a veces pienso en hacerme daño",
   ])("flags %j", (t) => expect(crisis(t)).toBe(true));
 
   it.each([
@@ -21,6 +29,8 @@ describe("isCrisis", () => {
     "I'd die for a day off",
     "dead tired after stats",
     "how many lives do I have left",
+    "I'm going to die if I fail this exam",
+    "can I end it early and skip the last class",
   ])("leaves %j alone", (t) => expect(crisis(t)).toBe(false));
 });
 

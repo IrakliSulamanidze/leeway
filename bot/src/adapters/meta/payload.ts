@@ -7,7 +7,8 @@ const Message = z.object({
   id: z.string().min(1).max(256),
   // Phone number; Meta may omit it for users with a username.
   from: z.string().max(32).optional(),
-  // Business-scoped user id, present on every message since April 2026.
+  // Business-scoped user id. Meta's docs say incoming messages carry it; the
+  // phone number is the fallback.
   from_user_id: z.string().max(140).optional(),
   timestamp: z.string().regex(/^\d{1,12}$/),
   type: z.string(),
@@ -23,19 +24,32 @@ const Message = z.object({
   audio: z.object({ id: z.string().max(256) }).optional(),
 });
 
+// The envelope is checked loosely and each message on its own, so one odd
+// message never stops the others in the same delivery.
 const Payload = z.object({
-  object: z.literal("whatsapp_business_account"),
+  object: z.string(),
   entry: z.array(
     z.object({
       changes: z.array(
         z.object({
           field: z.string(),
-          value: z.object({ messages: z.array(Message).optional() }).loose(),
+          value: z
+            .object({ messages: z.array(z.unknown()).optional() })
+            .loose(),
         }),
       ),
     }),
   ),
 });
+
+// Not something a student asked: no reply, and not counted against the cap.
+const IGNORED = new Set([
+  "system",
+  "reaction",
+  "unsupported",
+  "ephemeral",
+  "request_welcome",
+]);
 
 type MetaMessage = z.infer<typeof Message>;
 
@@ -54,17 +68,29 @@ function bodyOf(m: MetaMessage): InboundBody {
   return { kind: "unsupported" };
 }
 
-// Returns the messages in a webhook POST. Status updates and Meta's system
-// notices produce nothing here. Throws on a payload that is not Meta's shape.
-export function readMessages(json: unknown): Incoming[] {
-  const payload = Payload.parse(json);
+// Returns the messages in a webhook POST, and how many were skipped as
+// unreadable. Status updates, reactions and Meta's notices produce nothing.
+export function readMessages(json: unknown): {
+  messages: Incoming[];
+  skipped: number;
+} {
+  const payload = Payload.safeParse(json);
+  if (!payload.success || payload.data.object !== "whatsapp_business_account")
+    return { messages: [], skipped: 1 };
   const out: Incoming[] = [];
-  for (const entry of payload.entry)
+  let skipped = 0;
+  for (const entry of payload.data.entry)
     for (const change of entry.changes) {
       if (change.field !== "messages") continue;
-      for (const m of change.value.messages ?? []) {
+      for (const raw of change.value.messages ?? []) {
+        const parsed = Message.safeParse(raw);
+        if (!parsed.success) {
+          skipped++;
+          continue;
+        }
+        const m = parsed.data;
         const sender = m.from_user_id ?? m.from;
-        if (!sender || m.type === "system") continue;
+        if (!sender || IGNORED.has(m.type)) continue;
         out.push({
           msg: {
             id: m.id,
@@ -76,5 +102,5 @@ export function readMessages(json: unknown): Incoming[] {
         });
       }
     }
-  return out;
+  return { messages: out, skipped };
 }

@@ -26,6 +26,8 @@ export function sharedPool(): pg.Pool {
     // and the transaction pooler multiplexes them.
     max: 2,
     idleTimeoutMillis: 10_000,
+    // Meta waits about 10 s for the webhook; a slow connect must fail fast.
+    connectionTimeoutMillis: 3_000,
   });
   // The pooler may close an idle connection; without a listener that error
   // would crash the process.

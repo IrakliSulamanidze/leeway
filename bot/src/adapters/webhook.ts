@@ -8,14 +8,18 @@ import { MetaSendError } from "./meta/cloud-api";
 import { readMessages } from "./meta/payload";
 import { sameToken, validSignature } from "./meta/signature";
 
-// Meta's largest webhook body.
+// Meta documents webhook bodies of up to 3 MB.
 const MAX_BODY = 3 * 1024 * 1024;
+// Meta expects an answer within about 10 s; stop starting work well before.
+const BUDGET_MS = 8_500;
+const MIN_LEFT_MS = 3_000;
 
 export type WebhookDeps = {
   appSecret: string;
   inbox: Inbox;
   messenger: Messenger;
   process: (msg: Inbound) => Promise<Reply[]>;
+  now?: () => number;
 };
 
 // GET: Meta's subscription handshake.
@@ -28,12 +32,37 @@ export function verifySubscription(url: URL, verifyToken: string): Response {
     : new Response(null, { status: 403 });
 }
 
+// Errors where trying again later can work: Meta or the network having a bad
+// moment, rate limits, and an expired or wrong token (fixed by updating it).
+// A refusal about this one recipient or message will not change.
+function retryable(error: unknown): boolean {
+  if (!(error instanceof MetaSendError)) return true;
+  return (
+    error.status >= 500 ||
+    error.status === 429 ||
+    error.status === 401 ||
+    error.status === 403 ||
+    error.code === 190
+  );
+}
+
+const describeError = (error: unknown) =>
+  error instanceof MetaSendError
+    ? `meta status ${error.status}, code ${error.code ?? "none"}`
+    : `${error instanceof Error ? error.name : "unknown"}${
+        typeof (error as { code?: unknown })?.code === "string"
+          ? ` ${(error as { code: string }).code}`
+          : ""
+      }`;
+
 // POST: checks the signature on the raw body, then handles each message once.
 // Answers 500 only when a retry could help, so Meta redelivers just those.
 export async function receive(
   req: Request,
   deps: WebhookDeps,
 ): Promise<Response> {
+  const now = deps.now ?? Date.now;
+  const deadline = now() + BUDGET_MS;
   if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY)
     return new Response(null, { status: 413 });
   const raw = Buffer.from(await req.arrayBuffer());
@@ -43,48 +72,87 @@ export async function receive(
   )
     return new Response(null, { status: 401 });
 
-  let incoming;
+  let json: unknown;
   try {
-    incoming = readMessages(JSON.parse(raw.toString("utf8")));
+    json = JSON.parse(raw.toString("utf8"));
   } catch {
-    log.warn("webhook: unreadable payload");
-    return new Response(null, { status: 400 });
+    json = null;
   }
+  // Signed by Meta but unreadable: a retry would bring the same bytes.
+  const { messages, skipped } = readMessages(json);
+  if (skipped)
+    log.warn("webhook: skipped unreadable messages", String(skipped));
 
   let retry = false;
-  for (const { msg, replyTo } of incoming) {
+  for (const { msg, replyTo } of messages) {
+    // Left unclaimed, so Meta's retry handles it with a fresh time budget.
+    if (deadline - now() < MIN_LEFT_MS) {
+      retry = true;
+      break;
+    }
     if (!(await deps.inbox.claim(msg.id))) continue;
+
+    let replies: Reply[];
     try {
-      for (const reply of await deps.process(msg))
-        await deps.messenger.send(replyTo, reply);
+      replies = await deps.process(msg);
     } catch (error) {
       if (error instanceof ReplyError) {
-        // A bug in a reply won't fix itself on retry: say so and move on.
+        // A bug in a reply won't fix itself on retry.
         log.error(
           "reply: invalid",
           `${error.intent}: ${error.problems.join("; ")}`,
         );
-        await deps.messenger
-          .send(replyTo, { text: LINES.notUnderstood })
-          .catch(() => undefined);
-      } else if (
-        error instanceof MetaSendError &&
-        error.status < 500 &&
-        error.status !== 429
-      ) {
-        log.error(
-          "send: refused",
-          `status ${error.status}, code ${error.code ?? "none"}`,
-        );
+        replies = [{ text: LINES.notUnderstood }];
       } else {
-        log.error(
-          "message: failed, will retry",
-          error instanceof Error ? error.name : "unknown",
-        );
+        log.error("message: failed, will retry", describeError(error));
         await deps.inbox.release(msg.id).catch(() => undefined);
         retry = true;
+        continue;
+      }
+    }
+
+    // Once anything reached the student the message is finished, even if a
+    // later reply fails: a retry would repeat what they already have. Before
+    // that, a passing failure releases it for Meta's retry, which runs the
+    // request again; writes made by requests are keyed on the message id so a
+    // second run changes nothing.
+    let sent = 0;
+    try {
+      for (const reply of replies) {
+        await sendWithOneRetry(
+          deps.messenger,
+          replyTo,
+          reply,
+          () => deadline - now(),
+        );
+        sent++;
+      }
+      await deps.inbox.finish(msg.id);
+    } catch (error) {
+      if (sent === 0 && retryable(error)) {
+        log.error("send: failed, will retry", describeError(error));
+        await deps.inbox.release(msg.id).catch(() => undefined);
+        retry = true;
+      } else {
+        log.error("send: failed, not retrying", describeError(error));
+        await deps.inbox.finish(msg.id).catch(() => undefined);
       }
     }
   }
   return new Response(null, { status: retry ? 500 : 200 });
+}
+
+async function sendWithOneRetry(
+  messenger: Messenger,
+  to: string,
+  reply: Reply,
+  timeLeft: () => number,
+): Promise<void> {
+  try {
+    await messenger.send(to, reply);
+  } catch (error) {
+    if (!retryable(error) || timeLeft() < MIN_LEFT_MS) throw error;
+    await new Promise((r) => setTimeout(r, 300));
+    await messenger.send(to, reply);
+  }
 }

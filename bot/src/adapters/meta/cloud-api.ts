@@ -60,7 +60,7 @@ export function cloudApiMessenger(
           "Content-Type": "application/json",
         },
         body: JSON.stringify(messageBody(to, reply)),
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(4000),
       });
       if (!res.ok) {
         const json = (await res.json().catch(() => null)) as {

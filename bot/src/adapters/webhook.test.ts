@@ -41,6 +41,8 @@ const post = (body: string, secret = SECRET) =>
 
 let claimed: Set<string>;
 let released: string[];
+let finished: string[];
+let sendFailures: number;
 let sent: { to: string; reply: Reply }[];
 let process: (msg: Inbound) => Promise<Reply[]>;
 let sendError: Error | null;
@@ -49,6 +51,7 @@ const deps = (): WebhookDeps => ({
   appSecret: SECRET,
   inbox: {
     claim: async (id) => (claimed.has(id) ? false : (claimed.add(id), true)),
+    finish: async (id) => void finished.push(id),
     release: async (id) => {
       released.push(id);
       claimed.delete(id);
@@ -56,7 +59,7 @@ const deps = (): WebhookDeps => ({
   },
   messenger: {
     send: async (to, reply) => {
-      if (sendError) throw sendError;
+      if (sendError && sendFailures-- > 0) throw sendError;
       sent.push({ to, reply });
     },
   },
@@ -66,6 +69,8 @@ const deps = (): WebhookDeps => ({
 beforeEach(() => {
   claimed = new Set();
   released = [];
+  finished = [];
+  sendFailures = Infinity;
   sent = [];
   sendError = null;
   process = async () => [{ text: "ok" }];
@@ -115,15 +120,63 @@ describe("receive", () => {
     expect(released).toEqual([]);
   });
 
-  it("does not retry when Meta refuses the message outright", async () => {
+  it("does not retry when Meta refuses this message outright", async () => {
     sendError = new MetaSendError(400, 131047);
     const res = await receive(post(payload(["w1"])), deps());
     expect(res.status).toBe(200);
     expect(released).toEqual([]);
+    expect(finished).toEqual(["w1"]);
   });
 
-  it("refuses a body that is not Meta's payload", async () => {
-    expect((await receive(post('{"hello":1}'), deps())).status).toBe(400);
+  it("asks Meta to retry when the token is bad and nothing was sent", async () => {
+    sendError = new MetaSendError(401, 190);
+    const res = await receive(post(payload(["w1"])), deps());
+    expect(res.status).toBe(500);
+    expect(released).toEqual(["w1"]);
+  });
+
+  it("retries a passing send failure once on the spot", async () => {
+    sendError = new MetaSendError(503, undefined);
+    sendFailures = 1;
+    const res = await receive(post(payload(["w1"])), deps());
+    expect(res.status).toBe(200);
+    expect(sent).toHaveLength(1);
+    expect(finished).toEqual(["w1"]);
+  });
+
+  it("finishes a message once any reply reached the student", async () => {
+    process = async () => [{ text: "one" }, { text: "two" }];
+    let calls = 0;
+    const d = deps();
+    d.messenger = {
+      send: async (to, reply) => {
+        if (calls++ > 0) throw new MetaSendError(503, undefined);
+        sent.push({ to, reply });
+      },
+    };
+    const res = await receive(post(payload(["w1"])), d);
+    expect(res.status).toBe(200);
+    expect(sent.map((s) => s.reply.text)).toEqual(["one"]);
+    expect(finished).toEqual(["w1"]);
+    expect(released).toEqual([]);
+  });
+
+  it("leaves messages unclaimed for Meta's retry when time runs short", async () => {
+    let t = 0;
+    const d = { ...deps(), now: () => t };
+    process = async () => {
+      t += 7_000;
+      return [{ text: "ok" }];
+    };
+    const res = await receive(post(payload(["w1", "w2"])), d);
+    expect(res.status).toBe(500);
+    expect(finished).toEqual(["w1"]);
+    expect(claimed.has("w2")).toBe(false);
+  });
+
+  it("accepts a signed body it cannot read, since a retry would not help", async () => {
+    expect((await receive(post('{"hello":1}'), deps())).status).toBe(200);
+    expect(sent).toEqual([]);
   });
 });
 

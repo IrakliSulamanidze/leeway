@@ -5,6 +5,7 @@ import { keyedHash } from "./hash";
 // Redelivery check: Meta may send the same message more than once.
 export interface Inbox {
   claim(messageId: string): Promise<boolean>;
+  finish(messageId: string): Promise<void>;
   release(messageId: string): Promise<void>;
 }
 
@@ -41,6 +42,9 @@ export function dbGate(
         [hash(messageId)],
       );
       return rows[0]?.fresh === true;
+    },
+    async finish(messageId) {
+      await db().query("select wa_api.finish_message($1)", [hash(messageId)]);
     },
     async release(messageId) {
       await db().query("select wa_api.release_message($1)", [hash(messageId)]);
