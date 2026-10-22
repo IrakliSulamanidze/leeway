@@ -1,7 +1,7 @@
 import type { Reader, Reading } from "../ports";
 
-// A reader that answers from a fixed table, for tests and the simulator when
-// no API key is set. Unknown text reads as unavailable.
+// A reader that answers from a fixed table: for tests, and wherever no API key
+// is set (then the table is empty and free text gets the menu).
 export class ScriptedReader implements Reader {
   readonly calls: string[] = [];
   private readonly table: Record<string, Reading>;

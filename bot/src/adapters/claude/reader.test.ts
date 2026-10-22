@@ -2,69 +2,108 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it } from "vitest";
 import { claudeReader } from "./reader";
 
-type Parse = (body: Record<string, unknown>) => Promise<unknown>;
-const client = (parse: Parse) =>
-  ({ messages: { parse } }) as unknown as Anthropic;
-const usage = {
-  input_tokens: 600,
-  output_tokens: 40,
-  cache_read_input_tokens: 0,
-  cache_creation_input_tokens: 0,
-};
+type Create = (body: Record<string, unknown>) => Promise<unknown>;
+const client = (create: Create) =>
+  ({ messages: { create } }) as unknown as Anthropic;
+const usage = { input_tokens: 600, output_tokens: 40 };
+const answer = (text: string, stop_reason = "end_turn") => ({
+  stop_reason,
+  usage,
+  content: [
+    { type: "thinking", thinking: "" },
+    { type: "text", text },
+  ],
+});
+const openBudget = (spent: number[] = []) => ({
+  left: async () => true,
+  spend: async (m: number) => void spent.push(m),
+});
 
 describe("claudeReader", () => {
-  it("sends only the message and the date, and records the cost", async () => {
+  it("sends only the message and the date, keeps the request list as an enum, and charges the call", async () => {
     const bodies: Record<string, unknown>[] = [];
     const spent: number[] = [];
     const reader = claudeReader(
-      client(async (body) => {
-        bodies.push(body);
-        return {
-          stop_reason: "end_turn",
-          usage,
-          parsed_output: { kind: "lives", course: null },
-        };
-      }),
-      { left: async () => true, spend: async (m) => void spent.push(m) },
+      client(
+        async (body) => (
+          bodies.push(body),
+          answer('{"kind":"lives","course":null}')
+        ),
+      ),
+      openBudget(spent),
     );
     expect(await reader.read("am i cooked", "2026-10-26")).toEqual({
       kind: "lives",
       course: null,
     });
     expect(bodies[0].model).toBe("claude-haiku-5-5");
+    expect(JSON.stringify(bodies[0].output_config)).toContain(
+      '"enum":["lives"',
+    );
     expect(JSON.stringify(bodies[0].messages)).toContain("am i cooked");
     expect(bodies[0]).not.toHaveProperty("tools");
     expect(spent).toEqual([80]);
   });
 
-  it("does not call the model once the daily ceiling is reached", async () => {
-    let called = false;
-    const reader = claudeReader(
-      client(async () => ((called = true), {})),
-      { left: async () => false, spend: async () => undefined },
+  it("does not call the model once the daily ceiling is reached, or for long messages", async () => {
+    let calls = 0;
+    const closed = claudeReader(
+      client(async () => (calls++, {})),
+      {
+        left: async () => false,
+        spend: async () => undefined,
+      },
     );
-    expect(await reader.read("hi", "2026-10-26")).toBeNull();
-    expect(called).toBe(false);
-  });
-
-  it("reads a refusal as unclear and an outage as unavailable", async () => {
-    const budget = { left: async () => true, spend: async () => undefined };
-    const refused = claudeReader(
-      client(async () => ({
-        stop_reason: "refusal",
-        usage,
-        parsed_output: null,
-      })),
-      budget,
+    expect(await closed.read("hi", "2026-10-26")).toBeNull();
+    const open = claudeReader(
+      client(async () => (calls++, {})),
+      openBudget(),
     );
-    expect(await refused.read("x", "2026-10-26")).toEqual({
+    expect(await open.read("x".repeat(601), "2026-10-26")).toEqual({
       kind: "unclear",
       course: null,
     });
+    expect(calls).toBe(0);
+  });
+
+  it("charges a call whose answer is unusable, and reads it as unclear", async () => {
+    for (const bad of [
+      answer("not json"),
+      answer('{"kind":"delete_account","course":null}'),
+      answer("", "refusal"),
+    ]) {
+      const spent: number[] = [];
+      const reader = claudeReader(
+        client(async () => bad),
+        openBudget(spent),
+      );
+      expect(await reader.read("x", "2026-10-26")).toEqual({
+        kind: "unclear",
+        course: null,
+      });
+      expect(spent).toEqual([80]);
+    }
+  });
+
+  it("reads an outage as unavailable", async () => {
     const down = claudeReader(
       client(async () => Promise.reject(new Error("timeout"))),
-      budget,
+      openBudget(),
     );
     expect(await down.read("x", "2026-10-26")).toBeNull();
+  });
+
+  it("keeps a good reading when recording the spend fails", async () => {
+    const reader = claudeReader(
+      client(async () => answer('{"kind":"tests","course":null}')),
+      {
+        left: async () => true,
+        spend: async () => Promise.reject(new Error("db down")),
+      },
+    );
+    expect(await reader.read("any exams", "2026-10-26")).toEqual({
+      kind: "tests",
+      course: null,
+    });
   });
 });

@@ -52,13 +52,26 @@ describe("free text through the reader", () => {
     expect(r.text).toMatch(/^Your lives:/);
   });
 
-  it("saves a skip the reader found, through the same checks", async () => {
+  it("asks before saving a skip the reader found, and saves on the tap", async () => {
     const student = new MemoryStudent(sampleSnapshot(new Date(NOW)));
     const reader = new ScriptedReader({
       "didnt go to micro": { kind: "log_skip", course: "micro" },
     });
-    const [r] = await run("didnt go to micro", reader, student);
-    expect(r.text).toMatch(/^Saved: Microeconomics/);
+    const [ask] = await run("didnt go to micro", reader, student);
+    expect(ask.text).toBe(
+      "Save a skip for Microeconomics, Mon 26 Oct? 2 lives left after it.",
+    );
+    expect(student.data.skips).toHaveLength(0);
+    const [saved] = await handle(
+      {
+        id: "wamid.tap",
+        from: "ES.a",
+        at: new Date(NOW),
+        body: { kind: "button", id: ask.buttons![0].id },
+      },
+      { clock: fixedClock(NOW), student, reader },
+    );
+    expect(saved.text).toMatch(/^Saved: Microeconomics/);
     expect(student.data.skips).toHaveLength(1);
   });
 

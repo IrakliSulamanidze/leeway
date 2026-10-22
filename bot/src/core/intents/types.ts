@@ -9,6 +9,9 @@ export type Turn = {
   // Reply-button id, or null when the message is not a button tap.
   button: string | null;
   now: Date;
+  // True when the AI reader chose this request. Writes then always wait for
+  // a tap, because a misread message must never change a student's lives.
+  viaReader: boolean;
 };
 
 // What handling a turn produced. Writes happen inside the intent through the

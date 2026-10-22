@@ -11,7 +11,8 @@ export const env = {
   accessToken: () => required("WHATSAPP_ACCESS_TOKEN"),
   phoneNumberId: () => required("WHATSAPP_PHONE_NUMBER_ID"),
   hashKey: () => required("WA_HASH_KEY"),
-  anthropicKey: () => required("ANTHROPIC_API_KEY"),
+  // Optional: without it the bot answers commands and buttons only.
+  anthropicKey: () => process.env.ANTHROPIC_API_KEY || null,
   // Public values: the Supabase project the web app uses, and this bot's address.
   supabaseUrl: () => required("SUPABASE_URL"),
   supabasePublishableKey: () => required("SUPABASE_PUBLISHABLE_KEY"),

@@ -1,4 +1,5 @@
 import type { Deps } from "../ports";
+import { MENU } from "./intents/help";
 import { INTENTS } from "./intents/registry";
 import type { Outcome, Turn } from "./intents/types";
 import { LINES } from "./lines";
@@ -27,14 +28,9 @@ export function toTurn(msg: Inbound, now: Date): Turn {
     text: body.kind === "text" ? normalise(body.text) : null,
     button: body.kind === "button" ? body.id : null,
     now,
+    viaReader: false,
   };
 }
-
-const MENU = [
-  { id: "lives", title: "My lives" },
-  { id: "week", title: "This week" },
-  { id: "tests", title: "My tests" },
-];
 
 // No intent matched. Text goes to the AI reader, which picks a request from a
 // fixed list; code turns that into a command and answers it as if typed.
@@ -55,11 +51,16 @@ async function fallback(
     };
   const command = reading ? commandFor(reading) : null;
   const intent = command
-    ? INTENTS.find((i) => i.matches({ ...turn, text: command }))
+    ? INTENTS.find((i) =>
+        i.matches({ ...turn, text: command, viaReader: true }),
+      )
     : undefined;
   if (intent && command)
     return {
-      outcome: await intent.run({ ...turn, text: command }, deps),
+      outcome: await intent.run(
+        { ...turn, text: command, viaReader: true },
+        deps,
+      ),
       via: intent.name,
     };
   return {
