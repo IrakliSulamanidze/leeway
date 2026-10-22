@@ -17,4 +17,8 @@ export const env = {
   supabaseUrl: () => required("SUPABASE_URL"),
   supabasePublishableKey: () => required("SUPABASE_PUBLISHABLE_KEY"),
   publicUrl: () => required("BOT_PUBLIC_URL"),
+  // Sent by the scheduler (Vercel Cron) as a bearer token.
+  cronSecret: () => required("CRON_SECRET"),
+  // "true" once Meta has approved the reminder templates.
+  templatesReady: () => process.env.WA_TEMPLATES_READY === "true",
 };
