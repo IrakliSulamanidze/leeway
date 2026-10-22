@@ -33,8 +33,8 @@ describe("share", () => {
   it("shows the classmate exactly what would be shared, with three choices", async () => {
     sharing.preview_ = { outcome: "ok", courses: ["Statistics II"] };
     const [r] = await say("share k7q2m9xz");
-    expect(r.text).toContain("courses you both take: Statistics II");
-    expect(r.text).toContain("Never your timetable, absences, skips or notes.");
+    expect(r.text).toContain("courses you both take: Statistics II.");
+    expect(r.text).toContain("Never your timetable, absences, skips or notes, and no course you add later.");
     expect(r.buttons?.map((b) => b.id)).toEqual([
       "share.allow:K7Q2M9XZ",
       "share.not_now:K7Q2M9XZ",
@@ -48,6 +48,11 @@ describe("share", () => {
     expect(sharing.answers).toEqual(["K7Q2M9XZ:allow"]);
   });
 
+  it("stays closed until sharing in chat is switched on", async () => {
+    sharing.preview_ = { outcome: "closed" };
+    expect((await say("share k7q2m9xz"))[0].text).toMatch(/isn't open yet/);
+  });
+
   it("says nothing about the asker for a used or blocked code", async () => {
     sharing.preview_ = { outcome: "expired" };
     expect((await say("share k7q2m9xz"))[0].text).toBe(
@@ -57,23 +62,37 @@ describe("share", () => {
 });
 
 describe("tests with classmates' dates", () => {
-  it("adds a classmate's test the student doesn't have, and shows disagreeing dates side by side", async () => {
-    const stats = "00000000-0000-4000-a000-000000000002";
-    const micro = "00000000-0000-4000-a000-000000000001";
+  const stats = "00000000-0000-4000-a000-000000000002";
+  const micro = "00000000-0000-4000-a000-000000000001";
+
+  it("adds classmates' tests by date, keeps one classmate's repeats apart, and shows disagreement", async () => {
     sharing.shared = [
-      { courseId: stats, title: "Quiz", onDate: "2026-10-29" }, // the student already has this one
-      { courseId: micro, title: "Midterm", onDate: "2026-11-04" },
-      { courseId: micro, title: "Midterm", onDate: "2026-11-05" },
-      { courseId: stats, title: "Presentation", onDate: "2026-11-10" },
+      { courseId: stats, title: "Quiz", onDate: "2026-10-29", source: 1 }, // the student has this one
+      { courseId: micro, title: "Midterm", onDate: "2026-11-04", source: 1 },
+      { courseId: micro, title: "Midterm", onDate: "2026-11-05", source: 2 },
+      { courseId: stats, title: "Lab", onDate: "2026-11-02", source: 1 },
+      { courseId: stats, title: "Lab", onDate: "2026-11-09", source: 1 },
     ];
     const [r] = await say("tests");
     expect(r.text).toBe(
       [
         "Tests in the next three weeks:",
         "Thu 29 Oct · Statistics II · Quiz",
+        "Mon 2 Nov · Statistics II · Lab (from a classmate)",
         "Microeconomics · Midterm: classmates say Wed 4 Nov or Thu 5 Nov",
-        "Tue 10 Nov · Statistics II · Presentation (from a classmate)",
+        "Mon 9 Nov · Statistics II · Lab (from a classmate)",
       ].join("\n"),
+    );
+  });
+
+  it("says classmates agree when they do", async () => {
+    sharing.shared = [
+      { courseId: micro, title: "Midterm", onDate: "2026-11-04", source: 1 },
+      { courseId: micro, title: "Midterm", onDate: "2026-11-04", source: 2 },
+    ];
+    const [r] = await say("tests");
+    expect(r.text).toContain(
+      "Wed 4 Nov · Microeconomics · Midterm (from classmates)",
     );
   });
 });

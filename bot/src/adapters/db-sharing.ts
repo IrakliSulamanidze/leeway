@@ -33,13 +33,14 @@ export function dbSharing(hashKey: string): Sharing {
       inTurn(sender, async (tx) =>
         (
           await tx.query(
-            "select course_id, title, on_date::text as on_date from wa_api.shared_tests($1, $2)",
+            "select course_id, title, on_date::text as on_date, source from wa_api.shared_tests($1, $2)",
             [range.from, range.to],
           )
         ).rows.map((r) => ({
           courseId: r.course_id as string,
           title: r.title as string,
           onDate: r.on_date as string,
+          source: r.source as number,
         })),
       ),
     stopSharing: async (sender) =>

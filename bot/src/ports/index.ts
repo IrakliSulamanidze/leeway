@@ -117,24 +117,32 @@ export interface Speech {
 
 export type SharePreview =
   | { outcome: "ok"; courses: string[] }
-  | { outcome: "expired" | "self" | "already" | "nothing_shared" };
+  | { outcome: "expired" | "self" | "nothing_shared" | "closed" };
 
 export type ShareAnswer = "allow" | "not_now" | "block";
 
-export type SharedTest = { courseId: string; title: string; onDate: string };
+// `source` tells classmates apart within one answer; it is not an id.
+export type SharedTest = {
+  courseId: string;
+  title: string;
+  onDate: string;
+  source: number;
+};
 
 // Classmates sharing test dates, with consent. Each call is a turn for the
-// sender only; codes are hashed before they leave the process.
+// sender only; codes are hashed before they leave the process. Everything is
+// closed until sharing in chat is switched on.
 export interface Sharing {
-  newCode(sender: string, code: string): Promise<"ok" | "too_many" | "full">;
+  newCode(
+    sender: string,
+    code: string,
+  ): Promise<"ok" | "too_many" | "full" | "closed">;
   preview(sender: string, code: string): Promise<SharePreview>;
   answer(
     sender: string,
     code: string,
     answer: ShareAnswer,
-  ): Promise<ShareAnswer | "expired" | "full">;
-  // Classmates' tests in a range, on the sender's own courses. Empty until
-  // sharing in chat is switched on.
+  ): Promise<ShareAnswer | "expired" | "closed" | "you_full" | "they_full">;
   sharedTests(
     sender: string,
     range: { from: string; to: string },
