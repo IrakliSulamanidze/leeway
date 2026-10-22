@@ -41,8 +41,10 @@ select set_eq(
      where n.nspname not in ('pg_catalog', 'information_schema')
        and has_schema_privilege('wa_gateway', n.oid, 'usage')
        and has_function_privilege('wa_gateway', p.oid, 'execute') $$,
-  array['wa_api.begin_turn', 'wa_api.setting', 'wa_api.claim_message', 'wa_api.finish_message', 'wa_api.release_message',
-        'wa_api.count_message', 'wa_api.set_opt_out'],
+  array['wa_api.begin_turn', 'wa_api.setting', 'wa_api.claim_message', 'wa_api.finish_message',
+        'wa_api.release_message', 'wa_api.count_message', 'wa_api.set_opt_out', 'wa_api.link_state',
+        'wa_api.issue_link_token', 'wa_api.link_token_ok', 'wa_api.link_failed', 'wa_api.complete_link',
+        'wa_api.set_adult', 'wa_api.my_link'],
   'outside the catalog, wa_gateway can call exactly the wa_api functions listed here');
 select is_empty(
   $$ select n.nspname || '.' || c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
