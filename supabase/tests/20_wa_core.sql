@@ -50,7 +50,8 @@ select set_eq(
         'wa_api.unclaim_reminder', 'wa_api.mark_inbound',
         'wa_api.new_share_code', 'wa_api.share_preview', 'wa_api.answer_share', 'wa_api.shared_tests',
         'wa_api.stop_sharing', 'wa_api.stop_following', 'wa_api.my_snapshot', 'wa_api.log_skip_on',
-        'wa_api.undo_skip', 'wa_api.ai_budget_left', 'wa_api.add_ai_spend'],
+        'wa_api.undo_skip', 'wa_api.ai_budget_left', 'wa_api.add_ai_spend', 'wa_api.count_sent',
+        'wa_api.budget_alert'],
   'outside the catalog, wa_gateway can call exactly the wa_api functions listed here');
 select is_empty(
   $$ select n.nspname || '.' || c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
