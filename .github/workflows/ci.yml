@@ -63,7 +63,7 @@ jobs:
       - run: node scripts/contract-check.mjs
 
   bot:
-    name: whatsapp bot (format, types, lint, unit, boundaries, build)
+    name: whatsapp bot (types, lint, unit, boundaries, build)
     runs-on: ubuntu-latest
     defaults:
       run: { working-directory: bot }
