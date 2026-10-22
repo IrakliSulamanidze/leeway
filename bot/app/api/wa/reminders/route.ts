@@ -1,4 +1,8 @@
-import { budgetAlert, cronAllowed, reminderJob } from "../../../../src/adapters/wiring";
+import {
+  budgetAlert,
+  cronAllowed,
+  reminderJob,
+} from "../../../../src/adapters/wiring";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
