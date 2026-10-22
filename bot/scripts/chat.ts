@@ -2,10 +2,12 @@
 // Type a message, or "/tap <button id>" to press a button. Ctrl+D quits.
 import { createInterface } from "node:readline";
 import { systemClock } from "../src/adapters/clock";
-import { handle } from "../src/core/pipeline";
+import { MemoryGate } from "../src/adapters/memory-gate";
+import { processInbound } from "../src/core/inbound";
 import type { InboundBody, Reply } from "../src/core/types";
 
 const FROM = "34600000000";
+const gate = new MemoryGate();
 let seq = 0;
 
 function show(reply: Reply) {
@@ -28,9 +30,9 @@ for await (const line of rl) {
   const body: InboundBody = tap
     ? { kind: "button", id: tap[1] }
     : { kind: "text", text: line };
-  const replies = await handle(
+  const replies = await processInbound(
     { id: `sim.${++seq}`, from: FROM, at: new Date(), body },
-    { clock: systemClock },
+    { clock: systemClock, gate },
   );
   replies.forEach(show);
   rl.prompt();
