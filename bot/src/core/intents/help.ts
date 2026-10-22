@@ -7,5 +7,16 @@ export const help: Intent = {
   name: "help",
   matches: (turn) =>
     turn.button === "help" || (turn.text !== null && WORDS.has(turn.text)),
-  run: () => ({ replies: [{ text: LINES.help }] }),
+  run: () => ({
+    replies: [
+      {
+        text: LINES.help,
+        buttons: [
+          { id: "lives", title: "My lives" },
+          { id: "week", title: "This week" },
+          { id: "tests", title: "My tests" },
+        ],
+      },
+    ],
+  }),
 };

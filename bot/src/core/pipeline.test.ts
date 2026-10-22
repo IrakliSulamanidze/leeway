@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { fixedClock } from "../adapters/clock";
+import { MemoryStudent, sampleSnapshot } from "../adapters/memory-student";
 import { INTENTS } from "./intents/registry";
 import { LINES } from "./lines";
 import { handle } from "./pipeline";
 import { replyProblems } from "./reply";
 import type { Inbound, InboundBody } from "./types";
 
-const deps = { clock: fixedClock("2026-10-26T09:00:00Z") };
+const deps = {
+  clock: fixedClock("2026-10-26T09:00:00Z"),
+  student: new MemoryStudent(sampleSnapshot(new Date("2026-10-26T09:00:00Z"))),
+};
 const msg = (body: InboundBody): Inbound => ({
   id: "wamid.1",
   from: "34600000000",
@@ -18,13 +22,13 @@ const text = (t: string) => msg({ kind: "text", text: t });
 describe("handle", () => {
   it("answers help in any case and with punctuation", async () => {
     for (const t of ["help", "HELP!", " Menu ", "hi"])
-      expect(await handle(text(t), deps)).toEqual([{ text: LINES.help }]);
+      expect((await handle(text(t), deps))[0].text).toBe(LINES.help);
   });
 
   it("answers the help button", async () => {
-    expect(await handle(msg({ kind: "button", id: "help" }), deps)).toEqual([
-      { text: LINES.help },
-    ]);
+    expect(
+      (await handle(msg({ kind: "button", id: "help" }), deps))[0].text,
+    ).toBe(LINES.help);
   });
 
   it("points unknown text and unknown buttons to help", async () => {
