@@ -1,13 +1,11 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 
-// The bot builds from bot/ but compiles the web app's pure rule modules in
-// ../src, so both roots point at the repository root.
-const root = path.resolve(import.meta.dirname, "..");
-
+// The bot compiles the web app's pure rule modules from ../src, so file
+// tracing starts at the repository root. Builds use webpack (see package.json):
+// Turbopack with a repository-wide root also bundles the web app's src/proxy.ts.
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: root,
-  turbopack: { root },
+  outputFileTracingRoot: path.resolve(import.meta.dirname, ".."),
   poweredByHeader: false,
 };
 

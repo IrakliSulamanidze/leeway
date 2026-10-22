@@ -7,8 +7,8 @@
     "node": ">=22.18"
   },
   "scripts": {
-    "dev": "next dev --port 3100",
-    "build": "next build",
+    "dev": "next dev --webpack --port 3100",
+    "build": "next build --webpack",
     "start": "next start --port 3100",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",

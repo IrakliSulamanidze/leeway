@@ -77,7 +77,13 @@ jobs:
       - run: npm ci
       - run: npx next typegen
       - run: npm run check
-      - run: npx next build
+      - run: npm run build
+      - name: No web app sign-in code in the bot bundle
+        run: |
+          if grep -rIlE '@supabase/ssr|src/proxy' .next/server; then
+            echo "the bot bundle includes web app code"; exit 1
+          fi
+          echo "bot bundle clean"
 
   secrets:
     runs-on: ubuntu-latest
