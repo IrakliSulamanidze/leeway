@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MemorySharing } from "../adapters/memory-sharing";
 import { fixedClock } from "../adapters/clock";
 import { ScriptedReader } from "../adapters/memory-reader";
 import { MemoryStudent, sampleSnapshot } from "../adapters/memory-student";
@@ -41,7 +42,13 @@ describe("free text through the reader", () => {
         at: new Date(NOW),
         body: { kind: "text", text },
       },
-      { clock: fixedClock(NOW), student, reader },
+      {
+        clock: fixedClock(NOW),
+        student,
+        reader,
+        sharing: new MemorySharing(),
+        newCode: () => "K7Q2M9XZ",
+      },
     );
 
   it("answers what the reader found, as if the command was typed", async () => {
@@ -69,7 +76,13 @@ describe("free text through the reader", () => {
         at: new Date(NOW),
         body: { kind: "button", id: ask.buttons![0].id },
       },
-      { clock: fixedClock(NOW), student, reader },
+      {
+        clock: fixedClock(NOW),
+        student,
+        reader,
+        sharing: new MemorySharing(),
+        newCode: () => "K7Q2M9XZ",
+      },
     );
     expect(saved.text).toMatch(/^Saved: Microeconomics/);
     expect(student.data.skips).toHaveLength(1);

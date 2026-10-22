@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MemorySharing } from "../adapters/memory-sharing";
 import { fixedClock } from "../adapters/clock";
 import { MemoryStudent, sampleSnapshot } from "../adapters/memory-student";
 import { ScriptedReader } from "../adapters/memory-reader";
@@ -12,6 +13,8 @@ const deps = {
   clock: fixedClock("2026-10-26T09:00:00Z"),
   student: new MemoryStudent(sampleSnapshot(new Date("2026-10-26T09:00:00Z"))),
   reader: new ScriptedReader(),
+  sharing: new MemorySharing(),
+  newCode: () => "K7Q2M9XZ",
 };
 const msg = (body: InboundBody): Inbound => ({
   id: "wamid.1",

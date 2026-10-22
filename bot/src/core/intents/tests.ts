@@ -45,7 +45,30 @@ export const tests: Intent = {
           x.day !== null && x.day >= today && x.day <= until,
       )
       .sort((x, y) => x.day.localeCompare(y.day));
-    if (!upcoming.length)
+    const own = new Set(upcoming.map(({ a, day }) => `${a.course_id}|${day}`));
+
+    // Classmates' dates the student doesn't already have, grouped so two
+    // classmates who disagree show as two dates to pick from.
+    const theirs = new Map<
+      string,
+      { courseId: string; title: string; days: Set<string> }
+    >();
+    for (const t of await deps.sharing.sharedTests(turn.msg.from, {
+      from: today,
+      to: until,
+    })) {
+      if (own.has(`${t.courseId}|${t.onDate}`)) continue;
+      const key = `${t.courseId}|${t.title.toLowerCase()}`;
+      const entry = theirs.get(key) ?? {
+        courseId: t.courseId,
+        title: t.title,
+        days: new Set(),
+      };
+      entry.days.add(t.onDate);
+      theirs.set(key, entry);
+    }
+
+    if (!upcoming.length && !theirs.size)
       return {
         replies: [
           {
@@ -54,10 +77,19 @@ export const tests: Intent = {
           },
         ],
       };
-    const lines = upcoming.map(
-      ({ a, day }) =>
-        `${dayName(day)} · ${names.get(a.course_id) ?? "Course"} · ${a.title ?? "Test"}`,
-    );
+    const lines = [
+      ...upcoming.map(
+        ({ a, day }) =>
+          `${dayName(day)} · ${names.get(a.course_id) ?? "Course"} · ${a.title || "Test"}`,
+      ),
+      ...[...theirs.values()].map(({ courseId, title, days }) => {
+        const sorted = [...days].sort().map(dayName);
+        const course = names.get(courseId) ?? "Course";
+        return sorted.length === 1
+          ? `${sorted[0]} · ${course} · ${title} (from a classmate)`
+          : `${course} · ${title}: classmates say ${sorted.join(" or ")}`;
+      }),
+    ];
     return {
       replies: [
         {

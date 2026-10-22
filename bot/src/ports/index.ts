@@ -115,6 +115,34 @@ export interface Speech {
   transcribe(mediaId: string): Promise<Transcript>;
 }
 
+export type SharePreview =
+  | { outcome: "ok"; courses: string[] }
+  | { outcome: "expired" | "self" | "already" | "nothing_shared" };
+
+export type ShareAnswer = "allow" | "not_now" | "block";
+
+export type SharedTest = { courseId: string; title: string; onDate: string };
+
+// Classmates sharing test dates, with consent. Each call is a turn for the
+// sender only; codes are hashed before they leave the process.
+export interface Sharing {
+  newCode(sender: string, code: string): Promise<"ok" | "too_many" | "full">;
+  preview(sender: string, code: string): Promise<SharePreview>;
+  answer(
+    sender: string,
+    code: string,
+    answer: ShareAnswer,
+  ): Promise<ShareAnswer | "expired" | "full">;
+  // Classmates' tests in a range, on the sender's own courses. Empty until
+  // sharing in chat is switched on.
+  sharedTests(
+    sender: string,
+    range: { from: string; to: string },
+  ): Promise<SharedTest[]>;
+  stopSharing(sender: string): Promise<number>;
+  stopFollowing(sender: string): Promise<number>;
+}
+
 export interface Messenger {
   send(to: string, reply: Reply): Promise<void>;
   // A Meta-approved template, for messages outside the 24-hour window after
@@ -128,6 +156,9 @@ export type Deps = {
   clock: Clock;
   student: Student;
   reader: Reader;
+  sharing: Sharing;
+  // Makes a fresh share code; random in production, fixed in tests.
+  newCode: () => string;
 };
 
 export type InboundDeps = Deps & {
