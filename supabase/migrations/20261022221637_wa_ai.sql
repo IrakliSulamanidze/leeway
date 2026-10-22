@@ -28,7 +28,8 @@ language plpgsql security definer
 set search_path = ''
 as $$
 begin
-  if p_micros < 0 or p_micros > 1000000 then
+  -- One call costs well under a tenth of a cent; more means a pricing bug.
+  if p_micros < 0 or p_micros > 5000 then
     raise exception 'one call cannot cost that much' using errcode = '22023';
   end if;
   insert into wa.ai_spend (day, micros) values ((now() at time zone 'Europe/Madrid')::date, p_micros)
