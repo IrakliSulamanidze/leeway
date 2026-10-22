@@ -2,7 +2,7 @@
 -- per sender and day, and STOP is recorded.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(9);
+select plan(13);
 
 grant wa_gateway to postgres;
 create function pg_temp.as_bot(p_sql text) returns text
@@ -17,7 +17,15 @@ begin
 end $f$;
 
 select is(pg_temp.as_bot($$ select wa_api.claim_message(sha256('m1')) $$), 'true', 'a new message is claimed');
-select is(pg_temp.as_bot($$ select wa_api.claim_message(sha256('m1')) $$), 'false', 'a redelivery is not');
+select is(pg_temp.as_bot($$ select wa_api.claim_message(sha256('m1')) $$), 'false',
+  'a redelivery while the first attempt is running is not');
+update wa.seen_messages set seen_at = now() - interval '1 minute' where id_hash = sha256('m1');
+select is(pg_temp.as_bot($$ select wa_api.claim_message(sha256('m1')) $$), 'true',
+  'an attempt that died without finishing can be claimed again');
+select lives_ok($$ select pg_temp.as_bot('select wa_api.finish_message(sha256(''m1''))') $$, 'a message is finished');
+update wa.seen_messages set seen_at = now() - interval '1 minute' where id_hash = sha256('m1');
+select is(pg_temp.as_bot($$ select wa_api.claim_message(sha256('m1')) $$), 'false',
+  'a finished message is never handled again');
 select lives_ok($$ select pg_temp.as_bot('select wa_api.release_message(sha256(''m1''))') $$, 'a failed message is released');
 select is(pg_temp.as_bot($$ select wa_api.claim_message(sha256('m1')) $$), 'true', 'and can be claimed again');
 select throws_ok($$ select pg_temp.as_bot('select wa_api.claim_message(''\x01'')') $$, '23514', null,
@@ -29,6 +37,9 @@ select is(pg_temp.as_bot($$ select (wa_api.count_message(sha256('s1'))).msg_coun
 select is(pg_temp.as_bot($$ select (wa_api.count_message(sha256('s2'))).msg_count $$), '1', 'and is separate for each sender');
 
 select lives_ok($$ select pg_temp.as_bot('select wa_api.set_opt_out(sha256(''s1''), true)') $$, 'STOP is recorded');
+update wa.settings set value = '80.5' where name = 'daily_message_cap';
+select is(pg_temp.as_bot($$ select (wa_api.count_message(sha256('s3'))).cap $$), '60',
+  'a cap that is not a whole number falls back to 60');
 
 select * from finish();
 rollback;

@@ -41,7 +41,7 @@ select set_eq(
      where n.nspname not in ('pg_catalog', 'information_schema')
        and has_schema_privilege('wa_gateway', n.oid, 'usage')
        and has_function_privilege('wa_gateway', p.oid, 'execute') $$,
-  array['wa_api.begin_turn', 'wa_api.setting', 'wa_api.claim_message', 'wa_api.release_message',
+  array['wa_api.begin_turn', 'wa_api.setting', 'wa_api.claim_message', 'wa_api.finish_message', 'wa_api.release_message',
         'wa_api.count_message', 'wa_api.set_opt_out'],
   'outside the catalog, wa_gateway can call exactly the wa_api functions listed here');
 select is_empty(
