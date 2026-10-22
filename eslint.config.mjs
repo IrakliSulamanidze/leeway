@@ -19,6 +19,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "playwright-report/**",
     "test-results/**",
+    // The WhatsApp bot lints with its own config (bot/eslint.config.mjs).
+    "bot/**",
   ]),
 ]);
 

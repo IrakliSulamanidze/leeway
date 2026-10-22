@@ -1,7 +1,7 @@
 // Repo hygiene: Conventional Commit subjects (and PR title), no emoji, and no
-// console.log / debugger / TODO left in src/. Compares against BASE_REF (default origin/main).
+// console.log / debugger / TODO left in src/ and the bot's source. Compares against BASE_REF (default origin/main).
 import { execSync } from "node:child_process";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const SUBJECT =
@@ -46,7 +46,8 @@ function walk(dir) {
     return statSync(path).isDirectory() ? walk(path) : [path];
   });
 }
-for (const file of walk("src").filter((f) =>
+const SOURCE_DIRS = ["src", "bot/src", "bot/app"].filter((d) => existsSync(d));
+for (const file of SOURCE_DIRS.flatMap(walk).filter((f) =>
   /\.(ts|tsx|js|jsx|mjs|css)$/.test(f),
 )) {
   readFileSync(file, "utf8")
