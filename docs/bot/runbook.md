@@ -26,6 +26,16 @@ Set in `bot/.env.local` locally and in the bot's Vercel project. Names are in
 - `WA_HASH_KEY`: a long random string. Message ids and senders are stored as
   keyed hashes; changing the key resets redelivery checks and daily counts.
 - `WA_DB_URL`, `WA_DB_CA`: see [database.md](database.md).
+- `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`: the web app's public Supabase
+  values; the link page signs students in with them.
+- `BOT_PUBLIC_URL`: the bot's own address, used in sign-in links.
+
+## Waitlist
+
+Students past the cap are in `wa.waitlist`, oldest first. Raising
+`student_cap` lets new sign-ins through; moving waiting students in, and
+messaging them, is a later slice (a message offering a place counts as
+marketing for Meta, about €0.06 each).
 
 ## Connecting Meta
 
