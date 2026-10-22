@@ -62,6 +62,24 @@ jobs:
         with: { node-version: "${{ env.NODE_VERSION }}" }
       - run: node scripts/contract-check.mjs
 
+  bot:
+    name: whatsapp bot (format, types, lint, unit, boundaries, build)
+    runs-on: ubuntu-latest
+    if: hashFiles('bot/package.json') != ''
+    defaults:
+      run: { working-directory: bot }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "${{ env.NODE_VERSION }}"
+          cache: npm
+          cache-dependency-path: bot/package-lock.json
+      - run: npm ci
+      - run: npx next typegen
+      - run: npm run check
+      - run: npx next build
+
   secrets:
     runs-on: ubuntu-latest
     permissions:
