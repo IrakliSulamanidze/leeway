@@ -8,11 +8,11 @@ Why it lives here and how it is split: [ADR 0001](../docs/adr/0001-whatsapp-bot-
 ## Layout
 
 ```
-app/api/wa/         route handlers (health now; webhook next)
-src/core/           pure logic: normalise, intents, pipeline, reply limits
+app/api/wa/         route handlers: health, and the Meta webhook
+src/core/           pure logic: safety checks, the inbound order, intents, reply limits
 src/core/intents/   one file per kind of request, listed in registry.ts
 src/ports/          what the core needs from outside (clock, messenger, ...)
-src/adapters/       implementations of the ports, including test fakes
+src/adapters/       database, Meta, webhook, wiring, and fakes for tests
 scripts/            chat simulator, boundary check, check script
 ```
 
@@ -26,6 +26,8 @@ Run from `bot/`.
   (formatting is checked from the repository root).
 - `npm run build` production build.
 - `npm run dev` local server on port 3100; `GET /api/wa/health` answers.
+
+How to pause the bot, change caps and connect Meta: [runbook](../docs/bot/runbook.md).
 
 ## Adding a request type
 
