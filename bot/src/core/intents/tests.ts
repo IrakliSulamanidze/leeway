@@ -47,7 +47,12 @@ export const tests: Intent = {
       .sort((x, y) => x.day.localeCompare(y.day));
     if (!upcoming.length)
       return {
-        replies: [{ text: "No tests marked in the next three weeks." }],
+        replies: [
+          {
+            text: "No tests marked in the next three weeks.",
+            situation: "tests_none",
+          },
+        ],
       };
     const lines = upcoming.map(
       ({ a, day }) =>
@@ -55,7 +60,10 @@ export const tests: Intent = {
     );
     return {
       replies: [
-        { text: `Tests in the next three weeks:\n${lines.join("\n")}` },
+        {
+          text: `Tests in the next three weeks:\n${lines.join("\n")}`,
+          situation: "tests_some",
+        },
       ],
     };
   },

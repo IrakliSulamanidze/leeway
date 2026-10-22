@@ -124,6 +124,7 @@ const alreadySaved = (p: Plan): Outcome => ({
     {
       text: `Already saved: ${p.name}, ${dayName(p.day)}.`,
       buttons: [{ id: `skip.undo:${p.existing}`, title: "Undo" }],
+      situation: "skip_already",
     },
   ],
 });
@@ -148,6 +149,13 @@ async function save(turn: Turn, deps: Deps, p: Plan): Promise<Outcome> {
       {
         text: `Saved: ${p.name}, ${dayName(p.day)}. ${lives}`,
         buttons: [{ id: `skip.undo:${id}`, title: "Undo" }],
+        // No joke after a skip that took a test day, the last life or more.
+        situation:
+          p.test || p.after <= 0
+            ? undefined
+            : p.after === 1
+              ? "skip_saved_tight"
+              : "skip_saved",
       },
     ],
   };
@@ -182,6 +190,7 @@ function confirmOrSave(
           ? `${p.name}, ${dayName(p.day)}: ${reason}. Save the skip anyway?`
           : `Save a skip for ${p.name}, ${dayName(p.day)}? ${livesWord(p.after)} left after it.`,
         buttons: [yes, { id: "skip.no", title: "Don't save" }],
+        situation: "skip_ask",
       },
     ],
   };

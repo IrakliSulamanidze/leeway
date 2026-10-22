@@ -1,9 +1,11 @@
+import type { Voice } from "../core/voice/types";
 import type { Accounts, LinkResult, LinkState } from "../ports";
 
 // In-memory Accounts for tests and the chat simulator.
 export class MemoryAccounts implements Accounts {
   readonly states = new Map<string, LinkState>();
   readonly ages = new Map<string, boolean>();
+  readonly voices = new Map<string, Voice>();
   issued = 0;
 
   constructor(linkedByDefault = false) {
@@ -36,8 +38,15 @@ export class MemoryAccounts implements Accounts {
     return { outcome: "linked" };
   }
 
-  async adult(sender: string) {
-    return this.ages.get(sender) ?? null;
+  async profile(sender: string) {
+    return {
+      adult: this.ages.get(sender) ?? null,
+      voice: this.voices.get(sender) ?? null,
+    };
+  }
+
+  async setVoice(sender: string, voice: Voice) {
+    this.voices.set(sender, voice);
   }
 
   async setAdult(sender: string, adult: boolean) {

@@ -44,6 +44,9 @@ async function fallback(
     return { outcome: { replies: [{ text }] }, via: "fallback" };
   }
   const reading = await deps.reader.read(turn.text, madridToday(turn.now));
+  // Something personal or hard gets one gentle fixed line, never a joke.
+  if (reading?.kind === "personal")
+    return { outcome: { replies: [{ text: LINES.personal }] }, via: "reader" };
   if (reading?.kind === "off_topic")
     return {
       outcome: { replies: [{ text: LINES.offTopic, buttons: MENU }] },
@@ -64,7 +67,14 @@ async function fallback(
       via: intent.name,
     };
   return {
-    outcome: { replies: [{ text: LINES.notUnderstood, buttons: MENU }] },
+    outcome: {
+      replies: [
+        {
+          text: LINES.notUnderstood,
+          buttons: MENU,
+        },
+      ],
+    },
     via: "reader",
   };
 }

@@ -52,6 +52,14 @@ export const week: Intent = {
         ? `\n…and ${answer.classes.length - MAX_ROWS} more`
         : "";
     const list = rows.length ? `\n\n${rows.join("\n")}${more}` : "";
-    return { replies: [{ text: `${label}: ${answer.verdict}${list}` }] };
+    const situation =
+      answer.state === "safe"
+        ? "week_safe"
+        : answer.state === "none"
+          ? undefined
+          : "week_risky";
+    return {
+      replies: [{ text: `${label}: ${answer.verdict}${list}`, situation }],
+    };
   },
 };

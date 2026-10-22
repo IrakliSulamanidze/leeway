@@ -4,6 +4,8 @@ import { normalise } from "./normalise";
 import { handle } from "./pipeline";
 import { isCrisis, optCommand } from "./safety";
 import type { Inbound, Reply } from "./types";
+import { applyVoice } from "./voice/apply";
+import type { Voice } from "./voice/types";
 
 // Meta retries undelivered webhooks for up to 7 days.
 const STALE_MS = 24 * 60 * 60 * 1000;
@@ -15,8 +17,8 @@ const STALE_MS = 24 * 60 * 60 * 1000;
 // 4. the kill switch answers with one fixed line;
 // 5. the daily cap: one notice when it is crossed, then silence until tomorrow;
 // 6. who the sender is: a sign-in link, the waitlist, or a paused link;
-// 7. the age question, once;
-// 8. the request itself.
+// 7. the age question and the voice question, once each;
+// 8. the request itself, in the student's voice.
 export async function processInbound(
   msg: Inbound,
   deps: InboundDeps,
@@ -44,28 +46,56 @@ export async function processInbound(
   if (link.state === "waitlisted") return [{ text: waitlisted(link.place) }];
   if (link.state === "suspended") return [{ text: LINES.suspended }];
 
-  const ageButton =
-    msg.body.kind === "button" ? AGE_BUTTONS[msg.body.id] : undefined;
-  if (
-    ageButton !== undefined &&
-    (await deps.accounts.adult(msg.from)) === null
-  ) {
-    await deps.accounts.setAdult(msg.from, ageButton);
-    return [{ text: LINES.ageThanks }];
-  }
-  if ((await deps.accounts.adult(msg.from)) === null)
-    return [
-      {
-        text: LINES.askAge,
-        buttons: [
-          { id: "age.adult", title: "Yes, 18 or older" },
-          { id: "age.minor", title: "No, under 18" },
-        ],
-      },
-    ];
+  const profile = await deps.accounts.profile(msg.from);
+  const button = msg.body.kind === "button" ? msg.body.id : null;
 
-  return handle(msg, deps);
+  const age =
+    button && Object.hasOwn(AGE_BUTTONS, button)
+      ? AGE_BUTTONS[button]
+      : undefined;
+  if (age !== undefined && profile.adult === null) {
+    await deps.accounts.setAdult(msg.from, age);
+    return [ASK_VOICE];
+  }
+  if (profile.adult === null) return [ASK_AGE];
+
+  const voice =
+    button && Object.hasOwn(VOICE_BUTTONS, button)
+      ? VOICE_BUTTONS[button]
+      : undefined;
+  if (voice) {
+    await deps.accounts.setVoice(msg.from, voice);
+    return [{ text: LINES.voiceSet }];
+  }
+  if (text === "voice" || text === "change voice") return [ASK_VOICE];
+  // The voice question comes once, right after the age answer. Until one is
+  // picked, replies are Straight; a request is never held back for it.
+
+  return applyVoice(await handle(msg, deps), profile, msg.id);
 }
+
+const ASK_AGE: Reply = {
+  text: LINES.askAge,
+  buttons: [
+    { id: "age.adult", title: "Yes, 18 or older" },
+    { id: "age.minor", title: "No, under 18" },
+  ],
+};
+
+const ASK_VOICE: Reply = {
+  text: LINES.askVoice,
+  buttons: [
+    { id: "voice.straight", title: "Straight" },
+    { id: "voice.friendly", title: "Friendly" },
+    { id: "voice.roast", title: "Roast" },
+  ],
+};
+
+const VOICE_BUTTONS: Record<string, Voice> = {
+  "voice.straight": "straight",
+  "voice.friendly": "friendly",
+  "voice.roast": "roast",
+};
 
 const AGE_BUTTONS: Record<string, boolean> = {
   "age.adult": true,

@@ -54,11 +54,18 @@ export function dbAccounts(
       if (outcome === "waitlisted") return { outcome, place: place ?? 0 };
       return { outcome } as LinkResult;
     },
-    async adult(sender) {
+    async profile(sender) {
       return inTurn(sender, async (tx) => {
-        const { rows } = await tx.query("select adult from wa_api.my_link()");
-        return (rows[0]?.adult as boolean | null | undefined) ?? null;
+        const { rows } = await tx.query(
+          "select adult, voice from wa_api.my_profile()",
+        );
+        return { adult: rows[0]?.adult ?? null, voice: rows[0]?.voice ?? null };
       });
+    },
+    async setVoice(sender, voice) {
+      await inTurn(sender, (tx) =>
+        tx.query("select wa_api.set_voice($1)", [voice]),
+      );
     },
     async setAdult(sender, adult) {
       await inTurn(sender, (tx) =>

@@ -37,6 +37,14 @@ export const lives: Intent = {
         const extra = notes.length ? ` (${notes.join("; ")})` : "";
         return `${c.name}: ${Math.max(c.left, 0)} of ${c.lives} left${status(c.left)}${extra}`;
       });
-    return { replies: [{ text: `Your lives:\n${lines.join("\n")}` }] };
+    const tight = courseLives(snap, today).some((c) => c.left <= 1);
+    return {
+      replies: [
+        {
+          text: `Your lives:\n${lines.join("\n")}`,
+          situation: tight ? "lives_tight" : "lives_ok",
+        },
+      ],
+    };
   },
 };

@@ -1,6 +1,8 @@
 // Everything the core needs from the outside world. Each port has a production
 // adapter and a fake in src/adapters.
 import type { Reply } from "../core/types";
+import type { Profile } from "../core/voice/apply";
+import type { Voice } from "../core/voice/types";
 import type { CourseRow, SkipRow } from "@/lib/rules/lives";
 import type {
   Range,
@@ -42,9 +44,11 @@ export interface Accounts {
   newLinkUrl(sender: string): Promise<string>;
   // The 6-digit code the sign-in page showed, sent back from WhatsApp.
   confirmCode(sender: string, code: string): Promise<LinkResult>;
-  // The linked student's age answer: true for 18 or over, null if not given.
-  adult(sender: string): Promise<boolean | null>;
+  // The linked student's answers: 18 or over (null if not given) and the
+  // voice they picked (null if not yet).
+  profile(sender: string): Promise<Profile>;
   setAdult(sender: string, adult: boolean): Promise<void>;
+  setVoice(sender: string, voice: Voice): Promise<void>;
 }
 
 // One student's data, in the shapes the web app's rule functions take.
@@ -82,6 +86,7 @@ export type ReadingKind =
   | "log_skip"
   | "plan_skip"
   | "help"
+  | "personal"
   | "off_topic"
   | "unclear";
 

@@ -3,7 +3,7 @@
 -- student cap sends later students to the waitlist in order.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(27);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000d1', 'link-a@test.local'),
@@ -80,6 +80,10 @@ select throws_ok($$ select pg_temp.as_bot('select wa_api.issue_link_token(''ES.b
 -- Age, once.
 select lives_ok($$ select pg_temp.as_bot('select wa_api.begin_turn(''ES.aaa'')') $$, 'A opens a turn');
 select lives_ok($$ select pg_temp.as_bot('select wa_api.set_adult(true)') $$, 'and answers the age question');
+select lives_ok($$ select pg_temp.as_bot('select wa_api.set_voice(''roast'')') $$, 'and picks a voice');
+select is(pg_temp.as_bot($$ select row(p.adult, p.voice)::text from wa_api.my_profile() p $$), '(t,roast)',
+  'the profile holds both answers');
+select throws_ok($$ select pg_temp.as_bot('select wa_api.set_voice(''pirate'')') $$, '22023', null, 'only known voices');
 
 select * from finish();
 rollback;
