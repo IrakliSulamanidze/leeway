@@ -45,7 +45,8 @@ select set_eq(
         'wa_api.release_message', 'wa_api.count_message', 'wa_api.set_opt_out', 'wa_api.link_state',
         'wa_api.issue_link_token', 'wa_api.link_token_ok', 'wa_api.take_link_attempt',
         'wa_api.prepare_link', 'wa_api.confirm_link', 'wa_api.count_ip_attempt',
-        'wa_api.set_adult', 'wa_api.my_profile', 'wa_api.set_voice', 'wa_api.my_snapshot', 'wa_api.log_skip_on',
+        'wa_api.set_adult', 'wa_api.my_profile', 'wa_api.set_voice',
+        'wa_api.reminder_targets', 'wa_api.opted_out', 'wa_api.claim_reminder', 'wa_api.set_hide_details', 'wa_api.my_snapshot', 'wa_api.log_skip_on',
         'wa_api.undo_skip', 'wa_api.ai_budget_left', 'wa_api.add_ai_spend'],
   'outside the catalog, wa_gateway can call exactly the wa_api functions listed here');
 select is_empty(
