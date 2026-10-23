@@ -8,7 +8,8 @@ after the migration is applied and only when Irakli says so:
    password never lands in statement logs. Keep it in a password manager; never
    put it in git or a chat.
 2. Build the connection string for Supabase's transaction pooler (port 6543)
-   with user `wa_gateway.<project ref>` and that password.
+   with user `wa_gateway.<project ref>` and that password. Add no `sslmode`
+   to it: a value there would override the certificate check below.
 3. In the Supabase dashboard, Database settings, SSL, download the CA
    certificate. The bot verifies the server against it.
 4. Set `WA_DB_URL` to the connection string and `WA_DB_CA` to the certificate's
