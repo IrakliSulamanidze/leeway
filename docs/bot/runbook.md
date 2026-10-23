@@ -34,11 +34,22 @@ Set in `bot/.env.local` locally and in the bot's Vercel project. Names are in
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`: the web app's public Supabase
   values; the link page signs students in with them.
 - `BOT_PUBLIC_URL`: the bot's own address, used in sign-in links.
-- `CRON_SECRET`: a long random string. Vercel Cron sends it to
-  `/api/wa/reminders`, and the database checks its sha256 before listing
-  anyone: `update wa.settings set value = to_jsonb('<sha256 hex of the secret>'::text) where name = 'reminder_secret_hash';`
+- `CRON_SECRET`: a long random string (`openssl rand -hex 32`). Vercel Cron
+  sends it to `/api/wa/reminders`, and the database checks its sha256 before
+  listing anyone. Make the hash with `printf %s "$CRON_SECRET" | shasum -a 256`
+  (not `echo`, which adds a line break), then:
+  `update wa.settings set value = to_jsonb('<hash>'::text) where name = 'reminder_secret_hash';`
 - `WA_TEMPLATES_READY`: `true` once Meta approves the templates in
   [templates.md](templates.md).
+
+## A lost phone or a number to cut off
+
+By the Leeway account's email:
+
+- Pause the link: `update wa.links set status = 'suspended' where user_id = (select id from auth.users where email = '<email>');`
+- Remove it (also ends any sharing): `delete from wa.links where user_id = (select id from auth.users where email = '<email>');`
+
+The student can link again from a new number with the usual sign-in and code.
 
 ## Reminders
 
@@ -46,6 +57,10 @@ Once a day at 19:00 UTC (21:00 in Madrid in summer, 20:00 in winter) the job
 sends each linked student at most one reminder: on Sundays a look at the week
 ahead, otherwise a heads-up for tomorrow, or nothing. Students who sent STOP
 get none; "hide details" switches to counts only.
+
+The monthly bill warning sent to `admin_wa_id` is plain text, so WhatsApp
+delivers it only if you wrote to the bot in the last day. The Vercel log line
+`meta: monthly messages passed the alert line` is the alert to rely on.
 
 ## Waitlist
 

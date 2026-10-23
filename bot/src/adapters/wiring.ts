@@ -13,14 +13,25 @@ import { dbSharing } from "./db-sharing";
 import { CODE_ALPHABET } from "../core/intents/share";
 import { env } from "./env";
 import { keyedHash } from "./hash";
+import { log } from "./log";
 import type { LinkPageDeps, Prepared } from "./link-page";
 import { cloudApiMessenger } from "./meta/cloud-api";
+import { countingMessenger } from "./counting";
 import { sameToken } from "./meta/signature";
 import { type JobResult, runReminders } from "./reminders-job";
 import { signIn, signOut } from "./supabase-auth";
 import type { WebhookDeps } from "./webhook";
 
 let deps: WebhookDeps | undefined;
+
+function messenger() {
+  return countingMessenger(
+    cloudApiMessenger(env.phoneNumberId(), env.accessToken()),
+    async () => {
+      await sharedPool().query("select wa_api.count_sent()");
+    },
+  );
+}
 
 const shareCode = () =>
   Array.from(
@@ -51,7 +62,7 @@ export function webhookDeps(): WebhookDeps {
   deps = {
     appSecret: env.appSecret(),
     inbox: gate,
-    messenger: cloudApiMessenger(env.phoneNumberId(), env.accessToken()),
+    messenger: messenger(),
     process: (msg) =>
       processInbound(msg, {
         clock: systemClock,
@@ -143,9 +154,28 @@ export function reminderJob(now: Date): Promise<JobResult> {
       ),
     student: dbStudent(hashKey),
     accounts: dbAccounts(env.publicUrl(), hashKey),
-    messenger: cloudApiMessenger(env.phoneNumberId(), env.accessToken()),
+    messenger: messenger(),
     templatesReady: env.templatesReady(),
   });
+}
+
+// The monthly watch on Meta's bill: warns once when sends pass the line.
+export async function budgetAlert(): Promise<number | null> {
+  const { rows } = await sharedPool().query(
+    "select sent, admin_wa_id from wa_api.budget_alert($1)",
+    [env.cronSecret()],
+  );
+  const sent = rows[0]?.sent as number | null;
+  if (!sent) return null;
+  log.error("meta: monthly messages passed the alert line", String(sent));
+  const admin = rows[0]?.admin_wa_id as string | null;
+  if (admin)
+    await messenger()
+      .send(admin, {
+        text: `Leeway sent ${sent} WhatsApp messages this month, past your alert line. Check Meta's billing.`,
+      })
+      .catch(() => log.error("meta: could not send the budget alert"));
+  return sent;
 }
 
 export function cronAllowed(header: string | null): boolean {

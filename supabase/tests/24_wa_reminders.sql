@@ -2,7 +2,7 @@
 -- student gets at most one reminder a day.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(13);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000f7', 'rem@test.local');
 insert into wa.links (wa_id, user_id, adult) values ('ES.remind', '00000000-0000-0000-0000-0000000000f7', true);
@@ -36,6 +36,13 @@ select is(pg_temp.as_bot($$ select count(*) from wa_api.reminder_targets('s3cret
 select lives_ok($$ select pg_temp.as_bot('select wa_api.set_hide_details(true)') $$, 'details can be hidden');
 select lives_ok($$ select pg_temp.as_bot('select wa_api.unclaim_reminder()') $$, 'a refused reminder gives the day back');
 select is(pg_temp.as_bot($$ select wa_api.claim_reminder() $$), 'true', 'so it can be claimed again');
+
+-- The monthly watch on Meta's bill.
+update wa.settings set value = '2' where name = 'meta_monthly_alert_at';
+select lives_ok($$ select pg_temp.as_bot('select wa_api.count_sent()') $$, 'sends are counted');
+select pg_temp.as_bot($$ select wa_api.count_sent() $$);
+select is(pg_temp.as_bot($$ select (wa_api.budget_alert('s3cret')).sent $$), '2', 'past the threshold the alert fires');
+select is(pg_temp.as_bot($$ select (wa_api.budget_alert('s3cret')).sent $$), null, 'once a month');
 
 select * from finish();
 rollback;

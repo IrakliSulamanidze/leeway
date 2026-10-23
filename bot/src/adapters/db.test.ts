@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inTurn, readSetting } from "./db";
+import { inTurn } from "./db";
 
 function fakePool(fail?: string, failRollback = false) {
   const log: string[] = [];
@@ -99,14 +99,5 @@ describe("inTurn with a broken connection", () => {
     const db = fakePool();
     await inTurn("34600000001", async () => undefined, db.pool);
     expect(db.releasedWith()).toBeUndefined();
-  });
-});
-
-describe("readSetting", () => {
-  it("passes the name as a parameter", async () => {
-    const db = fakePool();
-    const client = await (db.pool as { connect(): Promise<never> }).connect();
-    expect(await readSetting("paused", client)).toBe(false);
-    expect(db.log).toEqual(['select wa_api.setting($1) as value ["paused"]']);
   });
 });

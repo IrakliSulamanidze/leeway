@@ -50,7 +50,8 @@ select set_eq(
         'wa_api.unclaim_reminder', 'wa_api.mark_inbound',
         'wa_api.new_share_code', 'wa_api.share_preview', 'wa_api.answer_share', 'wa_api.shared_tests',
         'wa_api.stop_sharing', 'wa_api.stop_following', 'wa_api.my_snapshot', 'wa_api.log_skip_on',
-        'wa_api.undo_skip', 'wa_api.ai_budget_left', 'wa_api.add_ai_spend'],
+        'wa_api.undo_skip', 'wa_api.ai_budget_left', 'wa_api.add_ai_spend', 'wa_api.count_sent',
+        'wa_api.budget_alert'],
   'outside the catalog, wa_gateway can call exactly the wa_api functions listed here');
 select is_empty(
   $$ select n.nspname || '.' || c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -95,7 +96,7 @@ begin
 end $f$;
 
 select is(pg_temp.as_bot($$ select wa_api.setting('paused') $$), 'false', 'the bot starts unpaused');
-select is(pg_temp.as_bot($$ select wa_api.setting('student_cap') $$), '50', 'the student cap starts at 50');
+select is(pg_temp.as_bot($$ select wa_api.setting('student_cap') $$), null, 'the bot can read no setting but the kill switch');
 select throws_ok($$ select pg_temp.as_bot('select count(*) from wa.links') $$, '42501', null,
   'the bot cannot read links');
 select throws_ok($$ select pg_temp.as_bot('select wa.acting_user()') $$, '42501', null,

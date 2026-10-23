@@ -41,6 +41,9 @@ public table) has to wait.
 - The migration is additive: new schemas, a new role, new tables and
   functions. The grading bot checks only the `public` schema, so it never
   sees them.
+- With the password alone someone could also switch the AI off for the day
+  (by recording fake spend) or set off the monthly bill warning, but read no
+  setting except the kill switch.
 - Anyone holding the `wa_gateway` password can act for a linked student whose
   WhatsApp number they know, but never for web-only students, never for two
   students in one transaction, and never on the `auth` schema. Checking Meta's signature

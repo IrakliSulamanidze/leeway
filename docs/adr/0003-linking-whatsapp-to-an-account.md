@@ -22,7 +22,9 @@ phone:
    account, created after the link was issued. The page then shows a 6-digit
    code.
 3. The student sends the code from WhatsApp. It counts only from the number
-   that asked for the link, so a link forwarded to someone else is useless.
+   that asked for the link, so a link forwarded to someone else is useless on
+   its own. A student talked into reading their code out to someone else can
+   still be tricked; the page says to send it only to Leeway.
 
 Limits: 5 sign-in attempts per number per day (a new link does not reset
 them, and the attempt is taken before the password is checked), 5 wrong codes,
