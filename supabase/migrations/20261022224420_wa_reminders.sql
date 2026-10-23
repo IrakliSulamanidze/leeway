@@ -19,7 +19,7 @@ as $$
   where wa_id = p_wa_id and (last_inbound_at is null or last_inbound_at < now() - interval '1 minute')
 $$;
 
--- sha256 of the scheduler's secret, as lowercase hex. Empty until set.
+-- sha256 of the scheduler's secret, as hex in small letters. Empty until set.
 insert into wa.settings (name, value) values ('reminder_secret_hash', '""');
 
 -- Linked students who have answered the age question and have not had a

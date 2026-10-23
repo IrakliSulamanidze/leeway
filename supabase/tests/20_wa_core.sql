@@ -96,7 +96,7 @@ begin
 end $f$;
 
 select is(pg_temp.as_bot($$ select wa_api.setting('paused') $$), 'false', 'the bot starts unpaused');
-select is(pg_temp.as_bot($$ select wa_api.setting('student_cap') $$), '50', 'the student cap starts at 50');
+select is(pg_temp.as_bot($$ select wa_api.setting('student_cap') $$), null, 'the bot can read no setting but the kill switch');
 select throws_ok($$ select pg_temp.as_bot('select count(*) from wa.links') $$, '42501', null,
   'the bot cannot read links');
 select throws_ok($$ select pg_temp.as_bot('select wa.acting_user()') $$, '42501', null,
