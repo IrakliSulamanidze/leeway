@@ -1,14 +1,15 @@
 # Leeway on WhatsApp
 
-The WhatsApp channel for Leeway. A student asks about lives, skips, trips and
-tests in a chat; the answers come from the same rule code as the web app.
+The WhatsApp channel for Leeway. A student asks about lives, skips, the week
+and tests in a chat; the answers come from the same rule code as the web app.
 
 Why it lives here and how it is split: [ADR 0001](../docs/adr/0001-whatsapp-bot-in-its-own-folder.md).
 
 ## Layout
 
 ```
-app/api/wa/         route handlers: health, and the Meta webhook
+app/api/wa/         route handlers: health, the Meta webhook, the daily reminders
+app/link/           the sign-in page that links a number to an account
 src/core/           pure logic: safety checks, the inbound order, intents, reply limits
 src/core/intents/   one file per kind of request, listed in registry.ts
 src/ports/          what the core needs from outside (clock, messenger, ...)

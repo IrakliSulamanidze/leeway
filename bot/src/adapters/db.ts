@@ -66,12 +66,3 @@ export async function inTurn<T>(
   client.release();
   return result;
 }
-
-// One switch from wa.settings; null when it is not set.
-export async function readSetting(
-  name: string,
-  db: Queryable = sharedPool(),
-): Promise<unknown> {
-  const { rows } = await db.query("select wa_api.setting($1) as value", [name]);
-  return rows[0]?.value ?? null;
-}
