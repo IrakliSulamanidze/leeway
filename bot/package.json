@@ -14,12 +14,14 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "chat": "node --import ./scripts/register.mjs scripts/chat.ts",
+    "pilot": "node --import ./scripts/register.mjs src/adapters/whatsapp-web/main.ts",
     "boundaries": "node scripts/boundaries.mjs",
     "eval:reader": "node --import ./scripts/register.mjs scripts/eval-reader.ts",
     "check": "bash scripts/check.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.1.0",
+    "@whiskeysockets/baileys": "7.0.0-rc14",
     "next": "16.3.6",
     "pg": "^8.23.1",
     "react": "19.2.8",
