@@ -1,5 +1,7 @@
 # Running the bot
 
+The pilot on an ordinary WhatsApp number runs differently: see [pilot.md](pilot.md).
+
 ## Switches
 
 Run in the Supabase SQL editor. Each takes effect on the next message.

@@ -96,6 +96,18 @@ describe("processInbound", () => {
     expect((await accounts.state(FROM)).state).toBe("active");
   });
 
+  it("in the pilot, tells an unknown number to ask for an invite and sends no link", async () => {
+    accounts.states.set(FROM, { state: "none" });
+    accounts.pendingCode = "482913";
+    const pilot = { ...deps(), manualLinking: true };
+    for (const t of ["hi", "482913"]) {
+      expect((await processInbound(text(t), pilot)).map((r) => r.text)).toEqual(
+        [LINES.pilotOnly],
+      );
+    }
+    expect((await accounts.state(FROM)).state).toBe("none");
+  });
+
   it("sends a new link when a code arrives with nothing waiting for it", async () => {
     accounts.states.set(FROM, { state: "none" });
     expect(await replyTo("123456")).toEqual([

@@ -19,6 +19,8 @@ export type ReminderJobDeps = {
   messenger: Messenger;
   // Meta has approved Leeway's reminder templates.
   templatesReady: boolean;
+  // An ordinary number has no templates: every reminder goes as text.
+  textOnly?: boolean;
   // Milliseconds since the run started; the run stops early to finish in time.
   elapsed?: () => number;
 };
@@ -90,8 +92,9 @@ export async function runReminders(deps: ReminderJobDeps): Promise<JobResult> {
   async function one(target: Target) {
     if (await deps.optedOut(target.waId)) return void result.skipped++;
     const inWindow =
-      target.lastSeenAt !== null &&
-      deps.now.getTime() - target.lastSeenAt.getTime() < WINDOW_MS;
+      deps.textOnly === true ||
+      (target.lastSeenAt !== null &&
+        deps.now.getTime() - target.lastSeenAt.getTime() < WINDOW_MS);
     if (!inWindow && !deps.templatesReady) return void result.skipped++;
     const [snap, profile] = await Promise.all([
       deps.student.snapshot(target.waId, {

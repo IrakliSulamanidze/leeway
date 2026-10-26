@@ -173,4 +173,7 @@ export type InboundDeps = Deps & {
   gate: Gate;
   accounts: Accounts;
   speech: Speech;
+  // In the pilot on an ordinary number students are linked by hand, so an
+  // unknown sender is told how to join instead of getting a sign-in link.
+  manualLinking?: boolean;
 };
