@@ -21,13 +21,16 @@ anyone depends on, and keep the pilot small.
 | Groups | not possible | ignored |
 
 To look less like a script, the bot only ever replies, shows "typing", and
-waits one to two seconds before each message.
+waits about one to two seconds before each message. Messages sent while it
+was off are answered when it comes back, unless they are more than a day
+old.
 
 ## Before the first run
 
 1. The `wa` migrations are on the database (needs a "go migrate" while the
    web app is being graded), and `wa_gateway` has a password (runbook.md).
-2. `.env` next to the process, never in git:
+2. `bot/.env` (read by `npm run pilot`; never in git), or the same names in
+   the service's environment file:
    - `WA_DB_URL`, `WA_DB_CA`: the bot's database login (database.md)
    - `WA_HASH_KEY`: 32+ random bytes, the same value for the life of the bot
    - `WA_PILOT_NUMBER`: the pilot phone's number with country code, digits only
@@ -50,8 +53,8 @@ type the code. The session is saved in `WA_SESSION_DIR`; keep that folder
 private (it is a full login to the number) and out of git and backups that
 others can read.
 
-If the bot prints "logged out", WhatsApp ended the session: delete the folder
-and pair again. If it happens more than once, stop the pilot.
+If the bot prints "logged out", WhatsApp ended the session and the process
+stops (without systemd restarting it): delete the folder and pair again. If it happens more than once, stop the pilot.
 
 ## Adding a student
 

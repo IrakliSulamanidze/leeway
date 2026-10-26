@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "chat": "node --import ./scripts/register.mjs scripts/chat.ts",
-    "pilot": "node --import ./scripts/register.mjs src/adapters/whatsapp-web/main.ts",
+    "pilot": "node --env-file-if-exists=.env --import ./scripts/register.mjs src/adapters/whatsapp-web/main.ts",
     "boundaries": "node scripts/boundaries.mjs",
     "eval:reader": "node --import ./scripts/register.mjs scripts/eval-reader.ts",
     "check": "bash scripts/check.sh"

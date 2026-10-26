@@ -7,6 +7,8 @@ import { randomInt } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import makeWASocket, {
+  type WAMessage,
+  type WASocket,
   DisconnectReason,
   useMultiFileAuthState,
 } from "@whiskeysockets/baileys";
@@ -62,6 +64,45 @@ const accounts = dbAccounts("https://leeway.invalid", hashKey);
 const student = dbStudent(hashKey);
 const menus = new NumberedMenus();
 
+// The socket in use. A reconnect replaces it, so senders read it on each send.
+let current: WASocket | null = null;
+
+// Plain text only; a pause before each reply so the account reads less like
+// a script.
+const raw: Messenger = {
+  async send(to, reply) {
+    if (!current) throw new Error("not connected");
+    await current.sendPresenceUpdate("composing", to).catch(() => undefined);
+    await sleep(800 + randomInt(1200));
+    await current.sendMessage(to, { text: toText(reply) });
+  },
+  async sendTemplate() {
+    throw new Error("an ordinary number has no templates");
+  },
+};
+const messenger = countingMessenger(
+  raw,
+  async () => void (await call("select wa_api.count_sent()")),
+);
+
+const deps: InboundDeps = {
+  clock: systemClock,
+  gate,
+  accounts,
+  student,
+  reader: process.env.ANTHROPIC_API_KEY
+    ? claudeReader(anthropicClient(process.env.ANTHROPIC_API_KEY), budget)
+    : new ScriptedReader(),
+  speech: { transcribe: async () => ({ ok: false, reason: "off" }) },
+  sharing: dbSharing(hashKey!),
+  newCode: () =>
+    Array.from(
+      { length: 8 },
+      () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)],
+    ).join(""),
+  manualLinking: true,
+};
+
 async function start(): Promise<void> {
   const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
   const sock = makeWASocket({
@@ -69,81 +110,58 @@ async function start(): Promise<void> {
     logger: quiet,
     markOnlineOnConnect: false,
   });
+  current = sock;
   sock.ev.on("creds.update", saveCreds);
 
-  // Plain text only; a pause before each reply so the account reads less
-  // like a script.
-  const raw: Messenger = {
-    async send(to, reply) {
-      await sock.sendPresenceUpdate("composing", to).catch(() => undefined);
-      await sleep(800 + randomInt(1200));
-      await sock.sendMessage(to, { text: toText(reply) });
-    },
-    async sendTemplate() {
-      throw new Error("an ordinary number has no templates");
-    },
-  };
-  const messenger = countingMessenger(
-    raw,
-    async () => void (await call("select wa_api.count_sent()")),
-  );
-
-  const deps: InboundDeps = {
-    clock: systemClock,
-    gate,
-    accounts,
-    student,
-    reader: process.env.ANTHROPIC_API_KEY
-      ? claudeReader(anthropicClient(process.env.ANTHROPIC_API_KEY), budget)
-      : new ScriptedReader(),
-    speech: { transcribe: async () => ({ ok: false, reason: "off" }) },
-    sharing: dbSharing(hashKey!),
-    newCode: () =>
-      Array.from(
-        { length: 8 },
-        () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)],
-      ).join(""),
-    manualLinking: true,
-  };
-
+  // WhatsApp sends a new QR every 20 seconds while unpaired; a new pairing
+  // code each time would cancel the one being typed.
+  let pairing = false;
   sock.ev.on(
     "connection.update",
     async ({ connection, lastDisconnect, qr }) => {
-      if (qr && !state.creds.registered) {
-        if (!PAIR_NUMBER) {
-          log.error("pilot: set WA_PILOT_NUMBER to pair this number");
-          process.exit(1);
-        }
-        const code = await sock.requestPairingCode(PAIR_NUMBER);
-        process.stdout.write(
-          `\nOn the pilot phone: WhatsApp, Linked devices, Link with phone number, and enter: ${code}\n`,
-        );
-      }
-      if (connection === "open") process.stdout.write("pilot: connected\n");
-      if (connection === "close") {
-        const status = (
-          lastDisconnect?.error as
-            { output?: { statusCode?: number } } | undefined
-        )?.output?.statusCode;
-        if (status === DisconnectReason.loggedOut) {
-          log.error(
-            "pilot: logged out by WhatsApp; delete the session folder and pair again",
+      try {
+        if (qr && !state.creds.registered && !pairing) {
+          pairing = true;
+          if (!PAIR_NUMBER) {
+            log.error("pilot: set WA_PILOT_NUMBER to pair this number");
+            process.exit(1);
+          }
+          const code = await sock.requestPairingCode(PAIR_NUMBER);
+          process.stdout.write(
+            `\nOn the pilot phone: WhatsApp, Linked devices, Link with phone number, and enter: ${code}\n`,
           );
-          process.exit(1);
         }
-        log.warn(
-          "pilot: connection closed, reconnecting",
-          String(status ?? ""),
-        );
-        setTimeout(() => void start(), 3000);
+        if (connection === "open") process.stdout.write("pilot: connected\n");
+        if (connection === "close") {
+          const status = (
+            lastDisconnect?.error as
+              { output?: { statusCode?: number } } | undefined
+          )?.output?.statusCode;
+          if (status === DisconnectReason.loggedOut) {
+            // Exit 0 so systemd does not restart into the same dead session.
+            log.error(
+              "pilot: logged out by WhatsApp; delete the session folder and pair again",
+            );
+            process.exit(0);
+          }
+          log.warn(
+            "pilot: connection closed, reconnecting",
+            String(status ?? ""),
+          );
+          setTimeout(() => void connect(), 3000);
+        }
+      } catch (error) {
+        log.error("pilot: connection handling failed", nameOf(error));
       }
     },
   );
 
   sock.ev.on("messages.upsert", async ({ messages, type }) => {
-    if (type !== "notify") return;
+    // 'append' is what came in while the bot was offline; anything more than
+    // a day old is dropped by processInbound.
+    if (type !== "notify" && type !== "append") return;
     for (const m of messages) {
-      const incoming = toInbound(m, new Date());
+      const incoming = await incomingOf(sock, m);
       if (!incoming) continue;
       try {
         if (!(await gate.claim(incoming.msg.id))) continue;
@@ -162,16 +180,42 @@ async function start(): Promise<void> {
       }
     }
   });
+}
 
-  startReminders(messenger);
+// A chat known only by its LID, without the phone number alongside, is looked
+// up in Baileys' own LID-to-phone map before it is given up on.
+async function incomingOf(sock: WASocket, m: WAMessage) {
+  const now = new Date();
+  const first = toInbound(m, now);
+  const { remoteJid, remoteJidAlt } = m.key;
+  if (first || !remoteJid?.endsWith("@lid") || remoteJidAlt || m.key.fromMe)
+    return first;
+  const pn = await sock.signalRepository.lidMapping
+    .getPNForLID(remoteJid)
+    .catch(() => null);
+  const found = pn
+    ? toInbound({ ...m, key: { ...m.key, remoteJidAlt: pn } }, now)
+    : null;
+  if (!found) log.warn("pilot: message from an unknown LID skipped");
+  return found;
+}
+
+const nameOf = (error: unknown) =>
+  error instanceof Error ? error.name : "unknown";
+
+// Connects, and tries again in a minute when even that fails.
+async function connect() {
+  try {
+    await start();
+  } catch (error) {
+    log.error("pilot: could not connect", nameOf(error));
+    setTimeout(() => void connect(), 60_000);
+  }
 }
 
 // Once a day at 20:00 in Madrid, the same reminders as the Cloud API path,
 // all as plain text.
-let remindersStarted = false;
-function startReminders(messenger: Messenger) {
-  if (remindersStarted) return;
-  remindersStarted = true;
+function startReminders() {
   let lastRun = "";
   setInterval(async () => {
     const now = new Date();
@@ -236,4 +280,8 @@ function startReminders(messenger: Messenger) {
   }, 60_000);
 }
 
-void start();
+process.on("unhandledRejection", (error) =>
+  log.error("pilot: unhandled", nameOf(error)),
+);
+startReminders();
+void connect();
