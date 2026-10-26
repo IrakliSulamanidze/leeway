@@ -101,7 +101,9 @@ describe("processInbound", () => {
     accounts.pendingCode = "482913";
     const pilot = { ...deps(), manualLinking: true };
     for (const t of ["hi", "482913"]) {
-      expect((await processInbound(text(t), pilot)).map((r) => r.text)).toEqual([LINES.pilotOnly]);
+      expect((await processInbound(text(t), pilot)).map((r) => r.text)).toEqual(
+        [LINES.pilotOnly],
+      );
     }
     expect((await accounts.state(FROM)).state).toBe("none");
   });
