@@ -28,6 +28,8 @@ export const LINES = {
   detailsShown:
     'Done. Reminders will name the test or class again. Send "hide details" to undo.',
   linked: "You're connected to Leeway.",
+  pilotOnly:
+    "Leeway on WhatsApp is in a small test right now. Ask the person who told you about it to add you.",
   personal:
     "I'm sorry, that sounds hard. I'm only an attendance helper, but if you'd like to talk to someone, you can call 024 any time in Spain, free and confidential.",
   offTopic:
